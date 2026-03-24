@@ -9,11 +9,6 @@ public sealed class EditorProject
     public string Name { get; set; } = "New Project";
 
     /// <summary>
-    /// タイルセット画像パス
-    /// </summary>
-    public string TilesetImagePath { get; set; } = string.Empty;
-
-    /// <summary>
     /// ステージ定義ファイル保存先ルートなど、将来拡張用
     /// </summary>
     public string BaseDirectory { get; set; } = string.Empty;

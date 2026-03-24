@@ -18,6 +18,8 @@ public sealed class Stage
     /// </summary>
     public string Key { get; set; } = string.Empty;
 
+    public string TilesetImagePath { get; set; } = string.Empty;
+
     public List<Page> Pages { get; init; } = new();
 
     public Page AddPage(string? name = null)

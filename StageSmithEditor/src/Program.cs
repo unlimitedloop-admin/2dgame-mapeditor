@@ -9,7 +9,7 @@ internal static class Program
     {
         ApplicationConfiguration.Initialize();
 
-        // ここに書くよ
+        // Test
         RunTest();
 
         Application.Run(new MainForm());
@@ -20,10 +20,11 @@ internal static class Program
         var project = new EditorProject
         {
             Name = "Test Project",
-            TilesetImagePath = @"Assets\DEMOSTAGE2_N0_ALL_PATTERN.png"
+            //TilesetImagePath = @"Assets\DEMOSTAGE2_N0_ALL_PATTERN.png"
         };
 
         var stage = project.AddStage("Stage 1");
+        stage.TilesetImagePath = @"Assets\DEMOSTAGE2_N0_ALL_PATTERN.png";
         var page = stage.AddPage("Start Page");
 
         page.TileMap.SetTile(0, 0, 5);
