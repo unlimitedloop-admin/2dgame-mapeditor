@@ -1,4 +1,6 @@
-﻿namespace StageSmithEditor.src
+using StageSmith.Editor.Controls;
+
+namespace StageSmith.Editor
 {
     partial class MainForm
     {
@@ -28,12 +30,32 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Text = "MainForm";
+            panel1 = new DoubleBufferedPanel();
+            SuspendLayout();
+            // 
+            // panel1
+            // 
+            panel1.Location = new Point(0, 0);
+            panel1.Name = "panel1";
+            panel1.Size = new Size(256, 240);
+            panel1.TabIndex = 0;
+            panel1.Paint += panel1_Paint;
+            panel1.MouseDown += panel1_MouseDown;
+            // 
+            // MainForm
+            // 
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(799, 450);
+            Controls.Add(panel1);
+            Name = "MainForm";
+            Text = "MainForm";
+            Load += MainForm_Load;
+            ResumeLayout(false);
         }
 
         #endregion
+
+        private DoubleBufferedPanel panel1;
     }
 }
