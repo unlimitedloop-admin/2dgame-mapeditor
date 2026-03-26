@@ -31,22 +31,33 @@ namespace StageSmith.Editor
         private void InitializeComponent()
         {
             panel1 = new DoubleBufferedPanel();
+            panelPalette = new DoubleBufferedPanel();
             SuspendLayout();
             // 
             // panel1
             // 
-            panel1.Location = new Point(0, 0);
+            panel1.Location = new Point(12, 12);
             panel1.Name = "panel1";
             panel1.Size = new Size(256, 240);
             panel1.TabIndex = 0;
             panel1.Paint += panel1_Paint;
             panel1.MouseDown += panel1_MouseDown;
             // 
+            // panelPalette
+            // 
+            panelPalette.Location = new Point(12, 294);
+            panelPalette.Name = "panelPalette";
+            panelPalette.Size = new Size(435, 123);
+            panelPalette.TabIndex = 1;
+            panelPalette.Paint += panelPalette_Paint;
+            panelPalette.MouseDown += panelPalette_MouseDown;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(799, 450);
+            Controls.Add(panelPalette);
             Controls.Add(panel1);
             Name = "MainForm";
             Text = "MainForm";
@@ -57,5 +68,6 @@ namespace StageSmith.Editor
         #endregion
 
         private DoubleBufferedPanel panel1;
+        private DoubleBufferedPanel panelPalette;
     }
 }
