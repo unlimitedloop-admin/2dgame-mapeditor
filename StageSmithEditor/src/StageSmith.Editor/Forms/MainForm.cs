@@ -1,128 +1,150 @@
+using StageSmith.Application.Commands;
 using StageSmith.Core.Models;
 
-namespace StageSmith.Editor
+namespace StageSmith.Editor;
+
+public partial class MainForm : Form
 {
-    public partial class MainForm : Form
+    private EditorProject? _project;
+    private Stage? _stage;
+    private Page? _page;
+    private int _selectedTileId = -1; // 仮の選択タイルID
+    private Bitmap? _tileset;
+
+    private CommandManager _commandManager = new();
+
+    public MainForm()
     {
-        private EditorProject? _project;
-        private Stage? _stage;
-        private Page? _page;
-        private int _selectedTileId = -1; // 仮の選択タイルID
-        private Bitmap? _tileset;
+        InitializeComponent();
+        this.KeyPreview = true;
+        this.KeyDown += MainForm_KeyDown;
+    }
 
-        public MainForm()
+    private void MainForm_Load(object sender, EventArgs e)
+    {
+        // テストデータ
+        _project = new EditorProject();
+
+        _stage = _project.AddStage("Stage 1");
+        _stage.TilesetImagePath = @"Assets\DEMOSTAGE2_N0_ALL_PATTERN.png";
+
+        _page = _stage.AddPage("Start");
+
+        // タイルセット読み込み
+        _tileset = new Bitmap(_stage.TilesetImagePath);
+
+        panel1.Invalidate(); // 再描画
+    }
+
+    private void MainForm_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Control && e.KeyCode == Keys.Z)
         {
-            InitializeComponent();
+            _commandManager.Undo();
+            panel1.Invalidate();
+            e.SuppressKeyPress = true;
         }
-
-        private void MainForm_Load(object sender, EventArgs e)
+        else if (e.Control && e.KeyCode == Keys.Y)
         {
-            // テストデータ
-            _project = new EditorProject();
-
-            _stage = _project.AddStage("Stage 1");
-            _stage.TilesetImagePath = @"Assets\DEMOSTAGE2_N0_ALL_PATTERN.png";
-
-            _page = _stage.AddPage("Start");
-
-            // タイルセット読み込み
-            _tileset = new Bitmap(_stage.TilesetImagePath);
-
-            panel1.Invalidate(); // 再描画
+            _commandManager.Redo();
+            panel1.Invalidate();
+            e.SuppressKeyPress = true;
         }
+    }
 
-        private void panel1_Paint(object sender, PaintEventArgs e)
+    private void panel1_Paint(object sender, PaintEventArgs e)
+    {
+        if (_tileset == null) return;
+        if (e.Graphics == null) return;
+        if (_page == null) return;
+
+        var g = e.Graphics;
+
+        var tileSize = 16;
+
+        for (var y = 0; y < _page.TileMap.Height; y++)
         {
-            if (_tileset == null) return;
-            if (e.Graphics == null) return;
-            if (_page == null) return;
-
-            var g = e.Graphics;
-
-            int tileSize = 16;
-
-            for (int y = 0; y < _page.TileMap.Height; y++)
+            for (var x = 0; x < _page.TileMap.Width; x++)
             {
-                for (int x = 0; x < _page.TileMap.Width; x++)
-                {
-                    int tileId = _page.TileMap.GetTile(x, y);
+                int tileId = _page.TileMap.GetTile(x, y);
 
-                    // タイル番号 → 画像内位置
-                    int tilesPerRow = _tileset.Width / tileSize;
+                // タイル番号 → 画像内位置
+                int tilesPerRow = _tileset.Width / tileSize;
 
-                    int sx = (tileId % tilesPerRow) * tileSize;
-                    int sy = (tileId / tilesPerRow) * tileSize;
-
-                    var srcRect = new Rectangle(sx, sy, tileSize, tileSize);
-                    var dstRect = new Rectangle(x * tileSize, y * tileSize, tileSize, tileSize);
-
-                    g.DrawImage(_tileset, dstRect, srcRect, GraphicsUnit.Pixel);
-                }
-            }
-        }
-
-        private void panel1_MouseDown(object sender, MouseEventArgs e)
-        {
-            if (_page == null) return;
-            if (_selectedTileId < 0) return; // タイルが選択されていない
-
-            int tileSize = 16;
-
-            int x = e.X / tileSize;
-            int y = e.Y / tileSize;
-
-            // クリックした位置にタイルを配置
-            var selectTile = (byte)_selectedTileId;
-            _page.TileMap.SetTile(x, y, selectTile);
-            panel1.Invalidate(); // 再描画
-        }
-
-        private void panelPalette_Paint(object sender, PaintEventArgs e)
-        {
-            if (_tileset == null) return;
-
-            var g = e.Graphics;
-
-            int tileSize = 16;
-            int tilesPerRow = _tileset.Width / tileSize;
-            int totalTiles = (_tileset.Width / tileSize) * (_tileset.Height / tileSize);
-
-            for (int i = 0; i < totalTiles; i++)
-            {
-                int sx = (i % tilesPerRow) * tileSize;
-                int sy = (i / tilesPerRow) * tileSize;
+                int sx = (tileId % tilesPerRow) * tileSize;
+                int sy = (tileId / tilesPerRow) * tileSize;
 
                 var srcRect = new Rectangle(sx, sy, tileSize, tileSize);
-
-                int dx = (i % tilesPerRow) * tileSize;
-                int dy = (i / tilesPerRow) * tileSize;
-
-                var dstRect = new Rectangle(dx, dy, tileSize, tileSize);
+                var dstRect = new Rectangle(x * tileSize, y * tileSize, tileSize, tileSize);
 
                 g.DrawImage(_tileset, dstRect, srcRect, GraphicsUnit.Pixel);
-
-                // 選択枠
-                if (i == _selectedTileId)
-                {
-                    g.DrawRectangle(Pens.Red, dstRect);
-                }
             }
         }
+    }
 
-        private void panelPalette_MouseDown(object sender, MouseEventArgs e)
+    private void panel1_MouseDown(object sender, MouseEventArgs e)
+    {
+        if (_page == null) return;
+        if (_selectedTileId < 0) return; // タイルが選択されていない
+
+        var tileSize = 16;
+
+        int x = e.X / tileSize;
+        int y = e.Y / tileSize;
+
+        // クリックした位置にタイルを配置
+        var selectTile = (byte)_selectedTileId;
+        _commandManager.Execute(
+            new SetTileCommand(_page.TileMap, x, y, selectTile)
+        );
+        panel1.Invalidate(); // 再描画
+    }
+
+    private void panelPalette_Paint(object sender, PaintEventArgs e)
+    {
+        if (_tileset == null) return;
+
+        var g = e.Graphics;
+
+        var tileSize = 16;
+        int tilesPerRow = _tileset.Width / tileSize;
+        int totalTiles = (_tileset.Width / tileSize) * (_tileset.Height / tileSize);
+
+        for (int i = 0; i < totalTiles; i++)
         {
-            if (_tileset == null) return;
+            int sx = (i % tilesPerRow) * tileSize;
+            int sy = (i / tilesPerRow) * tileSize;
 
-            int tileSize = 16;
-            int tilesPerRow = _tileset.Width / tileSize;
+            var srcRect = new Rectangle(sx, sy, tileSize, tileSize);
 
-            int x = e.X / tileSize;
-            int y = e.Y / tileSize;
+            int dx = (i % tilesPerRow) * tileSize;
+            int dy = (i / tilesPerRow) * tileSize;
 
-            int tileId = y * tilesPerRow + x;
+            var dstRect = new Rectangle(dx, dy, tileSize, tileSize);
 
-            _selectedTileId = tileId;
-            panelPalette.Invalidate(); // 再描画
+            g.DrawImage(_tileset, dstRect, srcRect, GraphicsUnit.Pixel);
+
+            // 選択枠
+            if (i == _selectedTileId)
+            {
+                g.DrawRectangle(Pens.Red, dstRect);
+            }
         }
+    }
+
+    private void panelPalette_MouseDown(object sender, MouseEventArgs e)
+    {
+        if (_tileset == null) return;
+
+        var tileSize = 16;
+        int tilesPerRow = _tileset.Width / tileSize;
+
+        int x = e.X / tileSize;
+        int y = e.Y / tileSize;
+
+        int tileId = y * tilesPerRow + x;
+
+        _selectedTileId = tileId;
+        panelPalette.Invalidate(); // 再描画
     }
 }

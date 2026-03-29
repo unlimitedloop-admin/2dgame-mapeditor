@@ -36,7 +36,7 @@ namespace StageSmith.Editor
             // 
             // panel1
             // 
-            panel1.Location = new Point(12, 12);
+            panel1.Location = new Point(12, 38);
             panel1.Name = "panel1";
             panel1.Size = new Size(256, 240);
             panel1.TabIndex = 0;
@@ -47,7 +47,7 @@ namespace StageSmith.Editor
             // 
             panelPalette.Location = new Point(12, 294);
             panelPalette.Name = "panelPalette";
-            panelPalette.Size = new Size(435, 123);
+            panelPalette.Size = new Size(512, 128);
             panelPalette.TabIndex = 1;
             panelPalette.Paint += panelPalette_Paint;
             panelPalette.MouseDown += panelPalette_MouseDown;

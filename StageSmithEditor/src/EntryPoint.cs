@@ -1,11 +1,13 @@
+using WinFormsApp = System.Windows.Forms.Application;
+
 namespace StageSmith.Editor;
 
-internal static class Program
+internal static class EntryPoint
 {
     static void Main()
     {
         ApplicationConfiguration.Initialize();
-        Application.Run(new MainForm
+        WinFormsApp.Run(new MainForm
         {
             Icon = new Icon("Assets/SSE-Signature.ico")
         });
