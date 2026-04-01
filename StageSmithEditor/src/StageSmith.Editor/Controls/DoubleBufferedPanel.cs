@@ -6,5 +6,11 @@ public class DoubleBufferedPanel : Panel
     {
         this.DoubleBuffered = true;
         this.ResizeRedraw = true;
+        this.AutoScroll = true;
+
+        this.SetStyle(ControlStyles.AllPaintingInWmPaint |
+                      ControlStyles.UserPaint |
+                      ControlStyles.OptimizedDoubleBuffer,
+                      true);
     }
 }

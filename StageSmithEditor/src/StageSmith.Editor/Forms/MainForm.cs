@@ -33,6 +33,9 @@ public partial class MainForm : Form
         // タイルセット読み込み
         _tileset = new Bitmap(_stage.TilesetImagePath);
 
+        // パレットのスクロール範囲を設定
+        panelPalette.AutoScrollMinSize = new Size(_tileset.Width, _tileset.Height);
+
         panel1.Invalidate(); // 再描画
     }
 
@@ -92,12 +95,27 @@ public partial class MainForm : Form
         int x = e.X / tileSize;
         int y = e.Y / tileSize;
 
-        // クリックした位置にタイルを配置
-        var selectTile = (byte)_selectedTileId;
-        _commandManager.Execute(
-            new SetTileCommand(_page.TileMap, x, y, selectTile)
-        );
-        panel1.Invalidate(); // 再描画
+        // 範囲チェック（重要）
+        if (x < 0 || x >= _page.TileMap.Width ||
+            y < 0 || y >= _page.TileMap.Height)
+            return;
+
+        // 左クリック → 描画
+        if (e.Button == MouseButtons.Left)
+        {
+            _commandManager.Execute(
+                new SetTileCommand(_page.TileMap, x, y, (byte)_selectedTileId)
+            );
+        }
+        // 右クリック → スポイト
+        else if (e.Button == MouseButtons.Right)
+        {
+            _selectedTileId = _page.TileMap.GetTile(x, y);
+
+            panelPalette.Invalidate(); // パレット更新
+        }
+
+        panel1.Invalidate();
     }
 
     private void panelPalette_Paint(object sender, PaintEventArgs e)
@@ -105,6 +123,9 @@ public partial class MainForm : Form
         if (_tileset == null) return;
 
         var g = e.Graphics;
+        g.Clear(panelPalette.BackColor);
+
+        var offset = panelPalette.AutoScrollPosition;
 
         var tileSize = 16;
         int tilesPerRow = _tileset.Width / tileSize;
@@ -120,14 +141,26 @@ public partial class MainForm : Form
             int dx = (i % tilesPerRow) * tileSize;
             int dy = (i / tilesPerRow) * tileSize;
 
-            var dstRect = new Rectangle(dx, dy, tileSize, tileSize);
+            var dstRect = new Rectangle(
+                dx + offset.X,
+                dy + offset.Y,
+                tileSize,
+                tileSize
+            );
 
             g.DrawImage(_tileset, dstRect, srcRect, GraphicsUnit.Pixel);
 
-            // 選択枠
             if (i == _selectedTileId)
             {
-                g.DrawRectangle(Pens.Red, dstRect);
+                var rect = new Rectangle(
+                    dstRect.X,
+                    dstRect.Y,
+                    dstRect.Width - 1,
+                    dstRect.Height - 1
+                );
+
+                using var pen = new Pen(Color.FromArgb(180, Color.Red), 2);
+                g.DrawRectangle(pen, rect);
             }
         }
     }
@@ -137,11 +170,12 @@ public partial class MainForm : Form
         if (_tileset == null) return;
 
         var tileSize = 16;
+        var offset = panelPalette.AutoScrollPosition;
+
+        int x = (e.X - offset.X) / tileSize;
+        int y = (e.Y - offset.Y) / tileSize;
+
         int tilesPerRow = _tileset.Width / tileSize;
-
-        int x = e.X / tileSize;
-        int y = e.Y / tileSize;
-
         int tileId = y * tilesPerRow + x;
 
         _selectedTileId = tileId;
