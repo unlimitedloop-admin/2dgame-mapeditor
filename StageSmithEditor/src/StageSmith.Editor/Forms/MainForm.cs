@@ -13,6 +13,8 @@ public partial class MainForm : Form
 
     private CommandManager _commandManager = new();
 
+    private bool _isMouseDown = false;
+
     public MainForm()
     {
         InitializeComponent();
@@ -103,6 +105,8 @@ public partial class MainForm : Form
         // 左クリック → 描画
         if (e.Button == MouseButtons.Left)
         {
+            _isMouseDown = true;
+
             _commandManager.Execute(
                 new SetTileCommand(_page.TileMap, x, y, (byte)_selectedTileId)
             );
@@ -111,11 +115,40 @@ public partial class MainForm : Form
         else if (e.Button == MouseButtons.Right)
         {
             _selectedTileId = _page.TileMap.GetTile(x, y);
-
             panelPalette.Invalidate(); // パレット更新
         }
 
         panel1.Invalidate();
+    }
+
+    private void panel1_MouseMove(object sender, MouseEventArgs e)
+    {
+        if (_page == null) return;
+        if (!_isMouseDown) return;
+
+        var tileSize = 16;
+
+        var x = e.X / tileSize;
+        var y = e.Y / tileSize;
+
+        if (x < 0 || x >= _page.TileMap.Width ||
+            y < 0 || y >= _page.TileMap.Height)
+            return;
+
+        // 同じタイルなら何もしない（超重要）
+        if (_page.TileMap.GetTile(x, y) == _selectedTileId)
+            return;
+
+        _commandManager.Execute(
+            new SetTileCommand(_page.TileMap, x, y, (byte)_selectedTileId)
+        );
+
+        panel1.Invalidate();
+    }
+
+    private void panel1_MouseUp(object sender, MouseEventArgs e)
+    {
+        _isMouseDown = false;
     }
 
     private void panelPalette_Paint(object sender, PaintEventArgs e)

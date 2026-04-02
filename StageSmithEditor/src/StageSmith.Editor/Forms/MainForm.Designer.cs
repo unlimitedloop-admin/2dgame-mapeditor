@@ -36,15 +36,19 @@ namespace StageSmith.Editor
             // 
             // panel1
             // 
+            panel1.AutoScroll = true;
             panel1.Location = new Point(12, 38);
             panel1.Name = "panel1";
             panel1.Size = new Size(256, 240);
             panel1.TabIndex = 0;
             panel1.Paint += panel1_Paint;
             panel1.MouseDown += panel1_MouseDown;
+            panel1.MouseMove += panel1_MouseMove;
+            panel1.MouseUp += panel1_MouseUp;
             // 
             // panelPalette
             // 
+            panelPalette.AutoScroll = true;
             panelPalette.Location = new Point(12, 294);
             panelPalette.Name = "panelPalette";
             panelPalette.Size = new Size(512, 128);
