@@ -59,5 +59,15 @@ namespace StageSmithEditor.Properties {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
+        internal static System.Drawing.Bitmap icons8_グリッド_24 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-グリッド-24", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
     }
 }

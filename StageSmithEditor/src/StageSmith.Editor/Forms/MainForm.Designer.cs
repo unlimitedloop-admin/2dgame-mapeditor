@@ -32,12 +32,13 @@ namespace StageSmith.Editor
         {
             panel1 = new DoubleBufferedPanel();
             panelPalette = new DoubleBufferedPanel();
+            btnGrid = new Button();
             SuspendLayout();
             // 
             // panel1
             // 
             panel1.AutoScroll = true;
-            panel1.Location = new Point(12, 38);
+            panel1.Location = new Point(83, 48);
             panel1.Name = "panel1";
             panel1.Size = new Size(256, 240);
             panel1.TabIndex = 0;
@@ -56,11 +57,23 @@ namespace StageSmith.Editor
             panelPalette.Paint += panelPalette_Paint;
             panelPalette.MouseDown += panelPalette_MouseDown;
             // 
+            // btnGrid
+            // 
+            btnGrid.BackgroundImageLayout = ImageLayout.Stretch;
+            btnGrid.Image = StageSmithEditor.Properties.Resources.icons8_グリッド_24;
+            btnGrid.Location = new Point(12, 48);
+            btnGrid.Name = "btnGrid";
+            btnGrid.Size = new Size(30, 30);
+            btnGrid.TabIndex = 2;
+            btnGrid.UseVisualStyleBackColor = true;
+            btnGrid.Click += btnGrid_Click;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(799, 450);
+            Controls.Add(btnGrid);
             Controls.Add(panelPalette);
             Controls.Add(panel1);
             Name = "MainForm";
@@ -73,5 +86,6 @@ namespace StageSmith.Editor
 
         private DoubleBufferedPanel panel1;
         private DoubleBufferedPanel panelPalette;
+        private Button btnGrid;
     }
 }
