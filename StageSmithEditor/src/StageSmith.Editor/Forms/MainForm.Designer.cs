@@ -33,6 +33,9 @@ namespace StageSmith.Editor
             panel1 = new DoubleBufferedPanel();
             panelPalette = new DoubleBufferedPanel();
             btnGrid = new Button();
+            btnUndo = new Button();
+            btnRedo = new Button();
+            btnSave = new Button();
             SuspendLayout();
             // 
             // panel1
@@ -68,11 +71,44 @@ namespace StageSmith.Editor
             btnGrid.UseVisualStyleBackColor = true;
             btnGrid.Click += btnGrid_Click;
             // 
+            // btnUndo
+            // 
+            btnUndo.Image = StageSmithEditor.Properties.Resources.icons8_元に戻す_30;
+            btnUndo.Location = new Point(12, 12);
+            btnUndo.Name = "btnUndo";
+            btnUndo.Size = new Size(32, 32);
+            btnUndo.TabIndex = 3;
+            btnUndo.UseVisualStyleBackColor = true;
+            btnUndo.Click += btnUndo_Click;
+            // 
+            // btnRedo
+            // 
+            btnRedo.Image = StageSmithEditor.Properties.Resources.icons8_やり直す_30;
+            btnRedo.Location = new Point(45, 12);
+            btnRedo.Name = "btnRedo";
+            btnRedo.Size = new Size(32, 32);
+            btnRedo.TabIndex = 4;
+            btnRedo.UseVisualStyleBackColor = true;
+            btnRedo.Click += btnRedo_Click;
+            // 
+            // btnSave
+            // 
+            btnSave.Image = StageSmithEditor.Properties.Resources.icons8_上書き保存_30;
+            btnSave.Location = new Point(95, 12);
+            btnSave.Name = "btnSave";
+            btnSave.Size = new Size(32, 32);
+            btnSave.TabIndex = 5;
+            btnSave.UseVisualStyleBackColor = true;
+            btnSave.Click += btnSave_Click;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(799, 450);
+            Controls.Add(btnSave);
+            Controls.Add(btnRedo);
+            Controls.Add(btnUndo);
             Controls.Add(btnGrid);
             Controls.Add(panelPalette);
             Controls.Add(panel1);
@@ -87,5 +123,8 @@ namespace StageSmith.Editor
         private DoubleBufferedPanel panel1;
         private DoubleBufferedPanel panelPalette;
         private Button btnGrid;
+        private Button btnUndo;
+        private Button btnRedo;
+        private Button btnSave;
     }
 }

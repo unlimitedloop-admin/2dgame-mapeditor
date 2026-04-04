@@ -18,9 +18,14 @@ public partial class MainForm
             panel1.Invalidate();
             e.SuppressKeyPress = true;
         }
+        else if (e.Control && e.Shift && e.KeyCode == Keys.S)
+        {
+            btnSave_Click(sender!, e);
+            e.SuppressKeyPress = true;
+        }
     }
 
-    private void panel1_MouseDown(object sender, MouseEventArgs e)
+    private void panel1_MouseDown(object? sender, MouseEventArgs e)
     {
         if (_page == null) return;
         if (_selectedTileId < 0) return;
@@ -49,7 +54,7 @@ public partial class MainForm
         panel1.Invalidate();
     }
 
-    private void panel1_MouseMove(object sender, MouseEventArgs e)
+    private void panel1_MouseMove(object? sender, MouseEventArgs e)
     {
         if (_page == null) return;
         if (!_isMouseDown) return;
@@ -72,12 +77,12 @@ public partial class MainForm
         panel1.Invalidate();
     }
 
-    private void panel1_MouseUp(object sender, MouseEventArgs e)
+    private void panel1_MouseUp(object? sender, MouseEventArgs e)
     {
         _isMouseDown = false;
     }
 
-    private void panelPalette_MouseDown(object sender, MouseEventArgs e)
+    private void panelPalette_MouseDown(object? sender, MouseEventArgs e)
     {
         if (_tileset == null) return;
 
@@ -93,5 +98,11 @@ public partial class MainForm
 
         _selectedTileId = tileId;
         panelPalette.Invalidate();
+    }
+
+    private void btnGrid_Click(object? sender, EventArgs e)
+    {
+        _showGrid = !_showGrid;
+        panel1.Invalidate();
     }
 }
