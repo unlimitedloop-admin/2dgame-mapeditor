@@ -5,8 +5,8 @@ namespace StageSmith.Core.Models;
 
 public sealed class TileMap
 {
-    public int Width => 16;
-    public int Height => 15;
+    public int Width => MapConstants.PageTileWidth;
+    public int Height => MapConstants.PageTileHeight;
 
     [JsonIgnore]
     public byte[] Tiles { get; set; }
