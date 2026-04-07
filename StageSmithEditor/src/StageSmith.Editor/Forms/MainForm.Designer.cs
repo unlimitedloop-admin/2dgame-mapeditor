@@ -30,22 +30,11 @@ namespace StageSmith.Editor
         /// </summary>
         private void InitializeComponent()
         {
-            panelPalette = new DoubleBufferedPanel();
             btnGrid = new Button();
             btnUndo = new Button();
             btnRedo = new Button();
             btnSave = new Button();
             SuspendLayout();
-            // 
-            // panelPalette
-            // 
-            panelPalette.AutoScroll = true;
-            panelPalette.Location = new Point(12, 294);
-            panelPalette.Name = "panelPalette";
-            panelPalette.Size = new Size(512, 128);
-            panelPalette.TabIndex = 1;
-            panelPalette.Paint += panelPalette_Paint;
-            panelPalette.MouseDown += panelPalette_MouseDown;
             // 
             // btnGrid
             // 
@@ -97,7 +86,6 @@ namespace StageSmith.Editor
             Controls.Add(btnRedo);
             Controls.Add(btnUndo);
             Controls.Add(btnGrid);
-            Controls.Add(panelPalette);
             Name = "MainForm";
             Text = "MainForm";
             Load += MainForm_Load;
@@ -105,7 +93,6 @@ namespace StageSmith.Editor
         }
 
         #endregion
-        private DoubleBufferedPanel panelPalette;
         private Button btnGrid;
         private Button btnUndo;
         private Button btnRedo;

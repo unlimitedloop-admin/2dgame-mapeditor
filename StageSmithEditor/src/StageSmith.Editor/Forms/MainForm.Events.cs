@@ -1,6 +1,3 @@
-using StageSmith.Application.Commands;
-using StageSmith.Core.Constants;
-
 namespace StageSmith.Editor;
 
 public partial class MainForm
@@ -24,24 +21,6 @@ public partial class MainForm
             btnSave_Click(sender!, e);
             e.SuppressKeyPress = true;
         }
-    }
-
-    private void panelPalette_MouseDown(object? sender, MouseEventArgs e)
-    {
-        if (_tileset == null) return;
-
-        var spacing = 2;
-        var tileSize = MapConstants.TilePixelSize;
-        var offset = panelPalette.AutoScrollPosition;
-
-        var x = (e.X - offset.X) / (tileSize + spacing);
-        var y = (e.Y - offset.Y) / (tileSize + spacing);
-
-        var tilesPerRow = _tileset.Width / tileSize;
-        var tileId = y * tilesPerRow + x;
-
-        _selectedTileId = tileId;
-        panelPalette.Invalidate();
     }
 
     private void btnGrid_Click(object? sender, EventArgs e)

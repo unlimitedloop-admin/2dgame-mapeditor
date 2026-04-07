@@ -10,6 +10,7 @@ public partial class MainForm : Form
     private readonly CommandManager _commandManager = new();
 
     private readonly MapViewControl _mapView;
+    private readonly TilePaletteControl _tilePalette;
 
     private EditorProject? _project;
     private Stage? _stage;
@@ -31,6 +32,13 @@ public partial class MainForm : Form
             Size = ViewerConstants.MapViewSize
         };
         Controls.Add(_mapView);
+
+        _tilePalette = new TilePaletteControl
+        {
+            Location = ViewerConstants.TilePaletteLocation,
+            Size = ViewerConstants.TilePaletteSize
+        };
+        Controls.Add(_tilePalette);
 
         // テスト用のダミーデータをロード
         LoadTest();

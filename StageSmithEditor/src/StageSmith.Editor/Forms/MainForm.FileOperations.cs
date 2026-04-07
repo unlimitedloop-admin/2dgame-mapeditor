@@ -23,6 +23,7 @@ public partial class MainForm
         if (_page != null && !string.IsNullOrEmpty(_stage?.TilesetImagePath))
         {
             _tileset = new Bitmap(_stage.TilesetImagePath);
+            _tilePalette.SetTileset(_tileset);
 
             var spacing = 2;
             var tileSize = MapConstants.TilePixelSize;
@@ -31,7 +32,12 @@ public partial class MainForm
             var width = tilesPerRow * (tileSize + spacing);
             var height = tilesPerColumn * (tileSize + spacing);
 
-            panelPalette.AutoScrollMinSize = new Size(width, height);
+            _tilePalette.AutoScrollMinSize = new Size(width, height);
+
+            _tilePalette.TileSelected += index =>
+            {
+                _selectedTileId = index;
+            };
 
             _mapView.SetTileMap(_page.TileMap);
             _mapView.SetTileset(_tileset);
@@ -53,11 +59,11 @@ public partial class MainForm
             _mapView.TilePicked += (tileId) =>
             {
                 _selectedTileId = tileId;
-                panelPalette.Invalidate();
+                _tilePalette.Invalidate();
             };
         }
 
         _mapView.Invalidate();
-        panelPalette.Invalidate();
+        _tilePalette.Invalidate();
     }
 }

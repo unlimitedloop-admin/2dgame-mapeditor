@@ -3,7 +3,7 @@ using StageSmith.Core.Models;
 
 namespace StageSmith.Editor.Controls;
 
-public class MapViewControl : Panel
+public class MapViewControl : DoubleBufferedPanel
 {
     private TileMap? _tileMap;
     private Bitmap? _tileset;
