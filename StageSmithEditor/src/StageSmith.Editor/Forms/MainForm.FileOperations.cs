@@ -31,6 +31,7 @@ public partial class MainForm
         _tilePalette.TileSelected += index =>
         {
             _selectedTileId = index;
+            _mapView.PreviewTileId = index;
         };
 
         // --- MapView ---

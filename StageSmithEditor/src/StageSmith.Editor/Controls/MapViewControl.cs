@@ -2,7 +2,7 @@ using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
 using StageSmith.Editor.Tools;
 using System.ComponentModel;
-using System.Diagnostics;
+using System.Drawing.Imaging;
 
 namespace StageSmith.Editor.Controls;
 
@@ -14,6 +14,8 @@ public class MapViewControl : DoubleBufferedPanel
     private bool _showGrid = true;
     private bool _isMouseDown = false;
 
+    private Point _hoverTile = new(-1, -1);
+
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public ITool? CurrentTool { get; set; }
@@ -21,6 +23,10 @@ public class MapViewControl : DoubleBufferedPanel
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public ITool? PickerTool { get; set; }
+
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public int PreviewTileId { get; set; } = -1;
 
     public MapViewControl()
     {
@@ -44,28 +50,6 @@ public class MapViewControl : DoubleBufferedPanel
     {
         _showGrid = show;
         Invalidate();
-    }
-
-    protected override void OnPaint(PaintEventArgs e)
-    {
-        base.OnPaint(e);
-
-        if (_tileMap == null) return;
-
-        var g = e.Graphics;
-        g.Clear(this.BackColor);
-
-        // --- タイル描画 ---
-        if (_tileset != null)
-        {
-            DrawTiles(g);
-        }
-
-        // --- グリッド ---
-        if (_showGrid)
-        {
-            DrawGrid(g);
-        }
     }
 
     private void DrawTiles(Graphics g)
@@ -113,11 +97,81 @@ public class MapViewControl : DoubleBufferedPanel
         }
     }
 
+    private void DrawPreview(Graphics g)
+    {
+        if (_tileset == null || PreviewTileId < 0) return;
+        if (_hoverTile.X < 0 || _hoverTile.Y < 0) return;
+
+        var tileSize = MapConstants.TilePixelSize;
+        var tilesPerRow = _tileset.Width / tileSize;
+
+        var sx = (PreviewTileId % tilesPerRow) * tileSize;
+        var sy = (PreviewTileId / tilesPerRow) * tileSize;
+
+        var srcRect = new Rectangle(sx, sy, tileSize, tileSize);
+        var dstRect = new Rectangle(
+            _hoverTile.X * tileSize,
+            _hoverTile.Y * tileSize,
+            tileSize,
+            tileSize
+        );
+
+        // 半透明描画
+        using var attr = new ImageAttributes();
+
+        var matrix = new ColorMatrix
+        {
+            Matrix33 = 0.5f // ←透明度🔥
+        };
+
+        attr.SetColorMatrix(matrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+
+        g.DrawImage(
+            _tileset,
+            dstRect,
+            srcRect.X,
+            srcRect.Y,
+            srcRect.Width,
+            srcRect.Height,
+            GraphicsUnit.Pixel,
+            attr
+        );
+
+        // 枠（任意）
+        using var pen = new Pen(Color.Yellow, 2);
+        g.DrawRectangle(pen, dstRect);
+    }
+
+    protected override void OnPaint(PaintEventArgs e)
+    {
+        base.OnPaint(e);
+
+        if (_tileMap == null) return;
+
+        var g = e.Graphics;
+        g.Clear(this.BackColor);
+
+        // --- タイル描画 ---
+        if (_tileset != null)
+        {
+            DrawTiles(g);
+        }
+
+        // --- グリッド ---
+        if (_showGrid)
+        {
+            DrawGrid(g);
+        }
+
+        // --- プレビュー ---
+        DrawPreview(g);
+    }
+
     protected override void OnMouseDown(MouseEventArgs e)
     {
         base.OnMouseDown(e);
 
-        if (_tileMap == null || _tileset == null) return;
+        if (_tileMap == null) return;
 
         var tileSize = MapConstants.TilePixelSize;
         var x = e.X / tileSize;
@@ -143,7 +197,7 @@ public class MapViewControl : DoubleBufferedPanel
     {
         base.OnMouseMove(e);
 
-        if (!_isMouseDown || _tileMap == null) return;
+        if (_tileMap == null) return;
 
         var tileSize = MapConstants.TilePixelSize;
         var x = e.X / tileSize;
@@ -151,9 +205,19 @@ public class MapViewControl : DoubleBufferedPanel
 
         if (x < 0 || x >= _tileMap.Width ||
             y < 0 || y >= _tileMap.Height)
-            return;
+        {
+            _hoverTile = new Point(-1, -1);
+            Invalidate();   // 範囲外でもプレビューを消すために再描画
+            return; 
+        }
+        _hoverTile = new Point(x, y);
 
-        CurrentTool?.OnMouseMove(x, y);
+        if (_isMouseDown)
+        {
+            CurrentTool?.OnMouseMove(x, y);
+        }
+
+        Invalidate();   // ホバー更新
     }
 
     protected override void OnMouseUp(MouseEventArgs e)
@@ -170,5 +234,13 @@ public class MapViewControl : DoubleBufferedPanel
         }
 
         _isMouseDown = false;
+    }
+
+    protected override void OnMouseLeave(EventArgs e)
+    {
+        base.OnMouseLeave(e);
+
+        _hoverTile = new Point(-1, -1);
+        Invalidate();   // コントロールから離れたらプレビューを消す
     }
 }

@@ -28,10 +28,11 @@ public partial class MainForm
             (x, y) => _page?.TileMap.GetTile(x, y) ?? -1,
             tileId =>
             {
-                if (tileId < 0) return;
+                //if (tileId < 0) return;
 
                 _selectedTileId = tileId;
                 _tilePalette.SetSelected(tileId);
+                _mapView.PreviewTileId = tileId;
             });
     }
 }
