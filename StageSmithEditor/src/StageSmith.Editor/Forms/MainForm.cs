@@ -2,6 +2,7 @@ using StageSmith.Application.Commands;
 using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
 using StageSmith.Editor.Controls;
+using StageSmith.Editor.Tools;
 
 namespace StageSmith.Editor;
 
@@ -19,10 +20,13 @@ public partial class MainForm : Form
     private Bitmap? _tileset;
 
     private bool _showGrid = true;
+    private ITool? _penTool;
+    private ITool? _pickerTool;
 
     public MainForm()
     {
         InitializeComponent();
+        this.StartPosition = FormStartPosition.CenterScreen;
         this.KeyPreview = true;
         this.KeyDown += MainForm_KeyDown;
 

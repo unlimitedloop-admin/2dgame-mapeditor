@@ -9,17 +9,7 @@ public class PenTool : ITool
         _paint = paint;
     }
 
-    public void OnMouseDown(int x, int y)
-    {
-        _paint(x, y);
-    }
-
-    public void OnMouseMove(int x, int y)
-    {
-        _paint(x, y);
-    }
-
-    public void OnMouseUp(int x, int y)
-    {
-    }
+    public void OnMouseDown(int x, int y) => _paint(x, y);
+    public void OnMouseMove(int x, int y) => _paint(x, y);
+    public void OnMouseUp(int x, int y) { }
 }

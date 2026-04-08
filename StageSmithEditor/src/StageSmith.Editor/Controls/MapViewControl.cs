@@ -1,5 +1,8 @@
 using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
+using StageSmith.Editor.Tools;
+using System.ComponentModel;
+using System.Diagnostics;
 
 namespace StageSmith.Editor.Controls;
 
@@ -9,13 +12,20 @@ public class MapViewControl : DoubleBufferedPanel
     private Bitmap? _tileset;
 
     private bool _showGrid = true;
-
     private bool _isMouseDown = false;
+
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public ITool? CurrentTool { get; set; }
+
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public ITool? PickerTool { get; set; }
 
     public MapViewControl()
     {
-        this.DoubleBuffered = true;
-        this.ResizeRedraw = true;
+        DoubleBuffered = true;
+        ResizeRedraw = true;
     }
 
     public void SetTileMap(TileMap map)
@@ -36,18 +46,31 @@ public class MapViewControl : DoubleBufferedPanel
         Invalidate();
     }
 
-    public event Action<int, int>? TilePaintRequested;
-    public event Action<int>? TilePicked;
-
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
 
-        if (e.Graphics == null || _tileMap == null || _tileset == null) return;
+        if (_tileMap == null) return;
 
         var g = e.Graphics;
-
         g.Clear(this.BackColor);
+
+        // --- タイル描画 ---
+        if (_tileset != null)
+        {
+            DrawTiles(g);
+        }
+
+        // --- グリッド ---
+        if (_showGrid)
+        {
+            DrawGrid(g);
+        }
+    }
+
+    private void DrawTiles(Graphics g)
+    {
+        if (_tileMap == null || _tileset == null) return;
 
         var tileSize = MapConstants.TilePixelSize;
         var tilesPerRow = _tileset.Width / tileSize;
@@ -66,11 +89,6 @@ public class MapViewControl : DoubleBufferedPanel
 
                 g.DrawImage(_tileset, dstRect, srcRect, GraphicsUnit.Pixel);
             }
-        }
-
-        if (_showGrid)
-        {
-            DrawGrid(g);
         }
     }
 
@@ -99,7 +117,7 @@ public class MapViewControl : DoubleBufferedPanel
     {
         base.OnMouseDown(e);
 
-        if (_tileMap == null) return;
+        if (_tileMap == null || _tileset == null) return;
 
         var tileSize = MapConstants.TilePixelSize;
         var x = e.X / tileSize;
@@ -112,12 +130,12 @@ public class MapViewControl : DoubleBufferedPanel
         if (e.Button == MouseButtons.Left)
         {
             _isMouseDown = true;
-            TilePaintRequested?.Invoke(x, y);
+            CurrentTool?.OnMouseDown(x, y);
         }
         else if (e.Button == MouseButtons.Right)
         {
-            int tileId = _tileMap.GetTile(x, y);
-            TilePicked?.Invoke(tileId);
+            // 一時スポイト（切替しない）
+            PickerTool?.OnMouseDown(x, y);
         }
     }
 
@@ -135,12 +153,22 @@ public class MapViewControl : DoubleBufferedPanel
             y < 0 || y >= _tileMap.Height)
             return;
 
-        TilePaintRequested?.Invoke(x, y);
+        CurrentTool?.OnMouseMove(x, y);
     }
 
     protected override void OnMouseUp(MouseEventArgs e)
     {
         base.OnMouseUp(e);
+
+        if (_tileMap != null)
+        {
+            var tileSize = MapConstants.TilePixelSize;
+            var x = e.X / tileSize;
+            var y = e.Y / tileSize;
+
+            CurrentTool?.OnMouseUp(x, y);
+        }
+
         _isMouseDown = false;
     }
 }

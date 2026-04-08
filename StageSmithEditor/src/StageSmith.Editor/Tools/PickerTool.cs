@@ -17,11 +17,6 @@ public class PickerTool : ITool
         _onPicked(tile);
     }
 
-    public void OnMouseMove(int x, int y)
-    {
-    }
-
-    public void OnMouseUp(int x, int y)
-    {
-    }
+    public void OnMouseMove(int x, int y) { }
+    public void OnMouseUp(int x, int y) { }
 }
