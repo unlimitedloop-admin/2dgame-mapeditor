@@ -12,6 +12,7 @@ public class MapViewControl : DoubleBufferedPanel
     private Bitmap? _tileset;
 
     private bool _showGrid = true;
+    private bool _showPreview = false;
     private bool _isMouseDown = false;
 
     private Point _hoverTile = new(-1, -1);
@@ -27,6 +28,20 @@ public class MapViewControl : DoubleBufferedPanel
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public int PreviewTileId { get; set; } = -1;
+
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public bool ShowPreview
+    {
+        get => _showPreview;
+        set
+        {
+            if (_showPreview == value) return;
+
+            _showPreview = value;
+            Invalidate(); // 自動更新🔥
+        }
+    }
 
     public MapViewControl()
     {
@@ -164,7 +179,10 @@ public class MapViewControl : DoubleBufferedPanel
         }
 
         // --- プレビュー ---
-        DrawPreview(g);
+        if (_showPreview)
+        {
+            DrawPreview(g);
+        }
     }
 
     protected override void OnMouseDown(MouseEventArgs e)
@@ -210,14 +228,18 @@ public class MapViewControl : DoubleBufferedPanel
             Invalidate();   // 範囲外でもプレビューを消すために再描画
             return; 
         }
-        _hoverTile = new Point(x, y);
+        var newHover = new Point(x, y);
 
         if (_isMouseDown)
         {
             CurrentTool?.OnMouseMove(x, y);
         }
 
-        Invalidate();   // ホバー更新
+        if (_hoverTile != newHover)  // 毎フレーム更新回避（軽量化）
+        {
+            _hoverTile = newHover;
+            Invalidate();   // ホバー更新
+        }
     }
 
     protected override void OnMouseUp(MouseEventArgs e)

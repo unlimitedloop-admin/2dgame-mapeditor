@@ -34,11 +34,11 @@ namespace StageSmith.Editor
             btnUndo = new Button();
             btnRedo = new Button();
             btnSave = new Button();
+            btnTilePreview = new Button();
             SuspendLayout();
             // 
             // btnGrid
             // 
-            btnGrid.BackgroundImageLayout = ImageLayout.Stretch;
             btnGrid.Image = StageSmithEditor.Properties.Resources.icons8_グリッド_24;
             btnGrid.Location = new Point(12, 48);
             btnGrid.Name = "btnGrid";
@@ -77,11 +77,22 @@ namespace StageSmith.Editor
             btnSave.UseVisualStyleBackColor = true;
             btnSave.Click += btnSave_Click;
             // 
+            // btnTilePreview
+            // 
+            btnTilePreview.Image = StageSmithEditor.Properties.Resources.icons8_目に見える_24;
+            btnTilePreview.Location = new Point(44, 48);
+            btnTilePreview.Name = "btnTilePreview";
+            btnTilePreview.Size = new Size(30, 30);
+            btnTilePreview.TabIndex = 6;
+            btnTilePreview.UseVisualStyleBackColor = true;
+            btnTilePreview.Click += btnTilePreview_Click;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(799, 450);
+            Controls.Add(btnTilePreview);
             Controls.Add(btnSave);
             Controls.Add(btnRedo);
             Controls.Add(btnUndo);
@@ -97,5 +108,6 @@ namespace StageSmith.Editor
         private Button btnUndo;
         private Button btnRedo;
         private Button btnSave;
+        private Button btnTilePreview;
     }
 }
