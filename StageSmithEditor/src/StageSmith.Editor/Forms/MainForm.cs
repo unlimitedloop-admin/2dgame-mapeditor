@@ -20,6 +20,7 @@ public partial class MainForm : Form
     private Bitmap? _tileset;
 
     private bool _showGrid = true;
+    private bool _showPreview = false;
     private ITool? _penTool;
     private ITool? _pickerTool;
 
@@ -46,6 +47,9 @@ public partial class MainForm : Form
 
         // テスト用のダミーデータをロード
         LoadTest();
+
+        // 初期状態のアイコンを設定
+        UpdateTilePreviewIcon();
     }
 
     private void MainForm_Load(object sender, EventArgs e)

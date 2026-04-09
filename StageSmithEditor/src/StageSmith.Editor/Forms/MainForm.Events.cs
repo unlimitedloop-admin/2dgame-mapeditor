@@ -28,4 +28,23 @@ public partial class MainForm
         _showGrid = !_showGrid;
         _mapView.SetShowGrid(_showGrid);
     }
+
+    private void btnTilePreview_Click(object sender, EventArgs e)
+    {
+        _showPreview = !_showPreview;
+        _mapView.ShowPreview = _showPreview;
+        UpdateTilePreviewIcon();
+    }
+
+    private void UpdateTilePreviewIcon()
+    {
+        if (_showPreview)
+        {
+            btnTilePreview.Image = StageSmithEditor.Properties.Resources.icons8_目に見えない_24;
+        }
+        else
+        {
+            btnTilePreview.Image = StageSmithEditor.Properties.Resources.icons8_目に見える_24;
+        }
+    }
 }
