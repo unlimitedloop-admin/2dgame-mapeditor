@@ -34,5 +34,35 @@ public partial class MainForm
                 _tilePalette.SetSelected(tileId);
                 _mapView.PreviewTileId = tileId;
             });
+
+        _fillTool = new FillTool(
+            () => _page?.TileMap,
+            positions =>
+            {
+                if (_page == null || _selectedTileId < 0) return;
+
+                var commands = new List<ICommand>();
+
+                foreach (var (px, py) in positions)
+                {
+                    var current = _page.TileMap.GetTile(px, py);
+
+                    if (current == _selectedTileId)
+                        continue;
+
+                    commands.Add(new SetTileCommand(
+                        _page.TileMap,
+                        px,
+                        py,
+                        (byte)_selectedTileId));
+                }
+
+                if (commands.Count > 0)
+                {
+                    _commandManager.Execute(new CompositeCommand(commands));
+                }
+
+                _mapView.Invalidate();
+            });
     }
 }

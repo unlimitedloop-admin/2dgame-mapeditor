@@ -23,6 +23,7 @@ public partial class MainForm : Form
     private bool _showPreview = false;
     private ITool? _penTool;
     private ITool? _pickerTool;
+    private ITool? _fillTool;
 
     public MainForm()
     {

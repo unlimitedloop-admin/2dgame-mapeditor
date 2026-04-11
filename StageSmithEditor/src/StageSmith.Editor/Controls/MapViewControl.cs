@@ -43,6 +43,10 @@ public class MapViewControl : DoubleBufferedPanel
         }
     }
 
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public ITool? FillTool { get; set; }
+
     public MapViewControl()
     {
         DoubleBuffered = true;
@@ -199,6 +203,14 @@ public class MapViewControl : DoubleBufferedPanel
             y < 0 || y >= _tileMap.Height)
             return;
 
+        // 🔥 Shift押されてるか判定
+        if ((ModifierKeys & Keys.Shift) != 0)
+        {
+            // Fill発動
+            FillTool?.OnMouseDown(x, y);
+            return;
+        }
+
         if (e.Button == MouseButtons.Left)
         {
             _isMouseDown = true;
@@ -206,7 +218,6 @@ public class MapViewControl : DoubleBufferedPanel
         }
         else if (e.Button == MouseButtons.Right)
         {
-            // 一時スポイト（切替しない）
             PickerTool?.OnMouseDown(x, y);
         }
     }
