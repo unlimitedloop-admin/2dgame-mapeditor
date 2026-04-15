@@ -13,6 +13,8 @@ public partial class MainForm : Form
     private readonly MapViewControl _mapView;
     private readonly TilePaletteControl _tilePalette;
 
+    private DragPaintCommand? _currentDragCommand;
+
     private EditorProject? _project;
     private Stage? _stage;
     private Page? _page;
