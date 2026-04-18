@@ -53,6 +53,7 @@ public partial class MainForm
         if (keyData == Keys.Escape)
         {
             CancelDrag();
+            _mapView.ClearSelection();
             return true;
         }
 

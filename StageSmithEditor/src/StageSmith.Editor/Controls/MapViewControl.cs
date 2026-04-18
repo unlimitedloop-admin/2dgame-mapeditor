@@ -11,6 +11,11 @@ public class MapViewControl : DoubleBufferedPanel
     private TileMap? _tileMap;
     private Bitmap? _tileset;
 
+    private Point? _selectionStart;
+    private Point? _selectionEnd;
+    private readonly System.Windows.Forms.Timer _marchTimer = new() { Interval = 80 };
+    private float _dashOffset = 0f;
+
     private bool _showGrid = true;
     private bool _showPreview = false;
     private bool _isMouseDown = false;
@@ -47,10 +52,19 @@ public class MapViewControl : DoubleBufferedPanel
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public ITool? FillTool { get; set; }
 
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public Rectangle? SelectionRect { get; private set; }
+
     public MapViewControl()
     {
         DoubleBuffered = true;
         ResizeRedraw = true;
+        _marchTimer.Tick += (_, _) =>
+        {
+            _dashOffset = (_dashOffset + 1f) % 12f;
+            Invalidate();
+        };
     }
 
     public void SetTileMap(TileMap map)
@@ -69,6 +83,66 @@ public class MapViewControl : DoubleBufferedPanel
     {
         _showGrid = show;
         Invalidate();
+    }
+
+    public void ClearSelection()
+    {
+        SelectionRect = null;
+        _selectionStart = null;
+        _selectionEnd = null;
+        StopMarching();   // アニメーション停止（後述）
+        Invalidate();
+    }
+
+    // タイマー制御
+    private void StartMarching() => _marchTimer.Start();
+    private void StopMarching()
+    {
+        _marchTimer.Stop();
+        _dashOffset = 0f;
+    }
+
+    private void UpdateSelectionRect()
+    {
+        if (!_selectionStart.HasValue || !_selectionEnd.HasValue)
+        {
+            SelectionRect = null;
+            return;
+        }
+
+        var x1 = _selectionStart.Value.X;
+        var y1 = _selectionStart.Value.Y;
+        var x2 = _selectionEnd.Value.X;
+        var y2 = _selectionEnd.Value.Y;
+
+        var left = Math.Min(x1, x2);
+        var top = Math.Min(y1, y2);
+        var right = Math.Max(x1, x2);
+        var bottom = Math.Max(y1, y2);
+
+        SelectionRect = new Rectangle(left, top, right - left + 1, bottom - top + 1);
+    }
+
+    private void DrawSelection(Graphics g, Rectangle rect)
+    {
+        var tileSize = MapConstants.TilePixelSize;
+        var pxRect = new Rectangle(
+            rect.X * tileSize,
+            rect.Y * tileSize,
+            rect.Width * tileSize,
+            rect.Height * tileSize
+        );
+
+        // 白い下地線（視認性確保）
+        using var bgPen = new Pen(Color.White, 2f);
+        g.DrawRectangle(bgPen, pxRect);
+
+        // 点線アニメーション
+        using var pen = new Pen(Color.Black, 1.5f);
+        pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Custom;
+        pen.DashPattern = [4f, 4f];
+        pen.DashOffset = _dashOffset;
+        g.DrawRectangle(pen, pxRect);
     }
 
     private void DrawTiles(Graphics g)
@@ -140,7 +214,7 @@ public class MapViewControl : DoubleBufferedPanel
 
         var matrix = new ColorMatrix
         {
-            Matrix33 = 0.5f // ←透明度🔥
+            Matrix33 = 0.5f // 透明度
         };
 
         attr.SetColorMatrix(matrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
@@ -187,6 +261,12 @@ public class MapViewControl : DoubleBufferedPanel
         {
             DrawPreview(g);
         }
+
+        // --- 選択範囲 ---
+        if (SelectionRect.HasValue)
+        {
+            DrawSelection(e.Graphics, SelectionRect.Value);
+        }
     }
 
     protected override void OnMouseDown(MouseEventArgs e)
@@ -203,7 +283,17 @@ public class MapViewControl : DoubleBufferedPanel
             y < 0 || y >= _tileMap.Height)
             return;
 
-        // 🔥 Shift押されてるか判定
+        if ((ModifierKeys & Keys.Control) != 0)
+        {
+            // 選択開始
+            _selectionStart = new Point(x, y);
+            _selectionEnd = null;
+            UpdateSelectionRect();
+            Invalidate();
+            return;
+        }
+
+        // Shift押されてるか判定
         if ((ModifierKeys & Keys.Shift) != 0)
         {
             // Fill発動
@@ -241,6 +331,15 @@ public class MapViewControl : DoubleBufferedPanel
         }
         var newHover = new Point(x, y);
 
+        // 選択範囲更新
+        if (_selectionStart.HasValue)
+        {
+            _selectionEnd = new Point(x, y);
+            UpdateSelectionRect();
+            Invalidate();
+            return;
+        }
+
         if (_isMouseDown)
         {
             CurrentTool?.OnMouseMove(x, y);
@@ -263,6 +362,19 @@ public class MapViewControl : DoubleBufferedPanel
             var x = e.X / tileSize;
             var y = e.Y / tileSize;
 
+            if (_selectionStart.HasValue)
+            {
+                _selectionEnd = new Point(x, y);
+                UpdateSelectionRect();
+
+                _selectionStart = null;
+                _selectionEnd = null;
+
+                StartMarching();  // ← アニメ開始
+                Invalidate();
+                return;
+            }
+
             CurrentTool?.OnMouseUp(x, y);
         }
 
@@ -275,5 +387,11 @@ public class MapViewControl : DoubleBufferedPanel
 
         _hoverTile = new Point(-1, -1);
         Invalidate();   // コントロールから離れたらプレビューを消す
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing) _marchTimer.Dispose();
+        base.Dispose(disposing);
     }
 }
