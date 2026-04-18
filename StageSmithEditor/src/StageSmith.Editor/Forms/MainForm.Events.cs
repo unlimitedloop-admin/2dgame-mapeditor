@@ -40,11 +40,28 @@ public partial class MainForm
     {
         if (_showPreview)
         {
-            btnTilePreview.Image = StageSmithEditor.Properties.Resources.icons8_目に見えない_24;
+            btnTilePreview.Image = StageSmithEditor.Properties.Resources.icons8_目に見える_24;
         }
         else
         {
-            btnTilePreview.Image = StageSmithEditor.Properties.Resources.icons8_目に見える_24;
+            btnTilePreview.Image = StageSmithEditor.Properties.Resources.icons8_目に見えない_24;
         }
+    }
+
+    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+    {
+        if (keyData == Keys.Escape)
+        {
+            CancelDrag();
+            return true;
+        }
+
+        return base.ProcessCmdKey(ref msg, keyData);
+    }
+
+    private void CancelDrag()
+    {
+        _currentDragCommand = null;
+        _mapView.Invalidate();
     }
 }
