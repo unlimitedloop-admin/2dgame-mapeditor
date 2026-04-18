@@ -44,7 +44,7 @@ public class MapViewControl : DoubleBufferedPanel
             if (_showPreview == value) return;
 
             _showPreview = value;
-            Invalidate(); // 自動更新🔥
+            Invalidate(); // 自動更新
         }
     }
 

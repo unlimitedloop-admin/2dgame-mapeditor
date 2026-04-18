@@ -21,6 +21,11 @@ public partial class MainForm
             btnSave_Click(sender!, e);
             e.SuppressKeyPress = true;
         }
+        else if (e.KeyCode == Keys.Insert)
+        {
+            ApplySelectionFill();
+            e.SuppressKeyPress = true;
+        }
     }
 
     private void btnGrid_Click(object? sender, EventArgs e)
