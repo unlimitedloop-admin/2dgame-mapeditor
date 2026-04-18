@@ -62,7 +62,7 @@ public class MapViewControl : DoubleBufferedPanel
         ResizeRedraw = true;
         _marchTimer.Tick += (_, _) =>
         {
-            _dashOffset = (_dashOffset + 1f) % 12f;
+            _dashOffset = (_dashOffset + 1f) % 24f;
             Invalidate();
         };
     }
@@ -134,11 +134,11 @@ public class MapViewControl : DoubleBufferedPanel
         );
 
         // 白い下地線（視認性確保）
-        using var bgPen = new Pen(Color.White, 2f);
+        using var bgPen = new Pen(Color.Black, 2f);
         g.DrawRectangle(bgPen, pxRect);
 
         // 点線アニメーション
-        using var pen = new Pen(Color.Black, 1.5f);
+        using var pen = new Pen(Color.YellowGreen, 2f);
         pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Custom;
         pen.DashPattern = [4f, 4f];
         pen.DashOffset = _dashOffset;
