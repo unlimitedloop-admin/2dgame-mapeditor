@@ -13,8 +13,6 @@ public partial class MainForm : Form
     private readonly MapViewControl _mapView;
     private readonly TilePaletteControl _tilePalette;
 
-    private DragPaintCommand? _currentDragCommand;
-
     private EditorProject? _project;
     private Stage? _stage;
     private Page? _page;
@@ -23,9 +21,16 @@ public partial class MainForm : Form
 
     private bool _showGrid = true;
     private bool _showPreview = false;
+
     private ITool? _penTool;
     private ITool? _pickerTool;
     private ITool? _fillTool;
+
+    private DragPaintCommand? _currentDragCommand;
+
+    private byte[,]? _clipboardTiles;
+    private int _clipboardWidth;
+    private int _clipboardHeight;
 
     public MainForm()
     {

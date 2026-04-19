@@ -26,6 +26,16 @@ public partial class MainForm
             ApplySelectionFill();
             e.SuppressKeyPress = true;
         }
+        else if (e.Control && e.KeyCode == Keys.C)
+        {
+            CopySelection();
+            e.SuppressKeyPress = true;
+        }
+        else if (e.Control && e.KeyCode == Keys.V)
+        {
+            PasteClipboard();
+            e.SuppressKeyPress = true;
+        }
     }
 
     private void btnGrid_Click(object? sender, EventArgs e)

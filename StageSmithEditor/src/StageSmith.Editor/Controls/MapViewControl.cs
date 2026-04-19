@@ -56,6 +56,10 @@ public class MapViewControl : DoubleBufferedPanel
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public Rectangle? SelectionRect { get; private set; }
 
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public Point GetHoverTile() => _hoverTile;
+
     public MapViewControl()
     {
         DoubleBuffered = true;
