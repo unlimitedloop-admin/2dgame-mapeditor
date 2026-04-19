@@ -1,4 +1,5 @@
 using StageSmith.Application.Commands;
+using StageSmith.Core.Models;
 
 namespace StageSmith.Editor;
 
@@ -53,45 +54,38 @@ public partial class MainForm
     {
         if (_page == null) return;
 
-        // 選択範囲を取得する、現状は選択範囲は矩形のみをサポート
         var rect = _mapView.SelectionRect;
         if (rect == null) return;
 
         var tileMap = _page.TileMap;
+        var tiles = new byte[rect.Value.Width, rect.Value.Height];
 
-        _clipboardWidth = rect.Value.Width;
-        _clipboardHeight = rect.Value.Height;
-
-        _clipboardTiles = new byte[_clipboardWidth, _clipboardHeight];
-
-        for (var y = 0; y < _clipboardHeight; y++)
+        for (var y = 0; y < rect.Value.Height; y++)
         {
-            for (var x = 0; x < _clipboardWidth; x++)
+            for (var x = 0; x < rect.Value.Width; x++)
             {
-                var mapX = rect.Value.X + x;
-                var mapY = rect.Value.Y + y;
-
-                _clipboardTiles[x, y] = tileMap.GetTile(mapX, mapY);
+                tiles[x, y] = tileMap.GetTile(rect.Value.X + x, rect.Value.Y + y);
             }
         }
+
+        _clipboard = new ClipboardData(tiles);
     }
 
     private void PasteClipboard()
     {
         if (_page == null) return;
-        if (_clipboardTiles == null) return;
+        if (_clipboard == null) return;         // null チェックが1行になる
 
         var rect = _mapView.SelectionRect;
-        if (rect == null) return;          // 選択範囲がなければペースト不可
+        if (rect == null) return;
 
         var tileMap = _page.TileMap;
-        var start = rect.Value.Location;   // 選択範囲の起点を使う
-
+        var start = rect.Value.Location;
         var commands = new List<ICommand>();
 
-        for (var y = 0; y < _clipboardHeight; y++)
+        for (var y = 0; y < _clipboard.Height; y++)
         {
-            for (var x = 0; x < _clipboardWidth; x++)
+            for (var x = 0; x < _clipboard.Width; x++)
             {
                 var mapX = start.X + x;
                 var mapY = start.Y + y;
@@ -100,7 +94,7 @@ public partial class MainForm
                     mapY < 0 || mapY >= tileMap.Height)
                     continue;
 
-                var newValue = _clipboardTiles[x, y];
+                var newValue = _clipboard.Tiles[x, y];
                 var current = tileMap.GetTile(mapX, mapY);
 
                 if (current == newValue)

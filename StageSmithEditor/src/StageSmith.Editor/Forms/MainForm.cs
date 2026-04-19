@@ -30,9 +30,7 @@ public partial class MainForm : Form
 
     private DragPaintCommand? _currentDragCommand;
 
-    private byte[,]? _clipboardTiles;
-    private int _clipboardWidth;
-    private int _clipboardHeight;
+    private ClipboardData? _clipboard;
 
     public MainForm()
     {
