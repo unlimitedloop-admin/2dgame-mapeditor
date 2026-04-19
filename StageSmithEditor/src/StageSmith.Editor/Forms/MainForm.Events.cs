@@ -1,3 +1,5 @@
+using StageSmith.Core.Constants;
+
 namespace StageSmith.Editor;
 
 public partial class MainForm
@@ -19,6 +21,16 @@ public partial class MainForm
         else if (e.Control && e.Shift && e.KeyCode == Keys.S)
         {
             btnSave_Click(sender!, e);
+            e.SuppressKeyPress = true;
+        }
+        else if (e.KeyCode == Keys.P)
+        {
+            SetToolMode(EditorToolMode.Pen);
+            e.SuppressKeyPress = true;
+        }
+        else if (e.KeyCode == Keys.S)
+        {
+            SetToolMode(EditorToolMode.Selection);
             e.SuppressKeyPress = true;
         }
         else if (e.KeyCode == Keys.Insert)

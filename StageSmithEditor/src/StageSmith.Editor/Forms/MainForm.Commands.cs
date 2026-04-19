@@ -81,11 +81,11 @@ public partial class MainForm
         if (_page == null) return;
         if (_clipboardTiles == null) return;
 
-        var tileMap = _page.TileMap;
-        var start = _mapView.GetHoverTile();
+        var rect = _mapView.SelectionRect;
+        if (rect == null) return;          // 選択範囲がなければペースト不可
 
-        if (start.X < 0 || start.Y < 0)
-            return;
+        var tileMap = _page.TileMap;
+        var start = rect.Value.Location;   // 選択範囲の起点を使う
 
         var commands = new List<ICommand>();
 
@@ -96,7 +96,6 @@ public partial class MainForm
                 var mapX = start.X + x;
                 var mapY = start.Y + y;
 
-                // 範囲チェック🔥
                 if (mapX < 0 || mapX >= tileMap.Width ||
                     mapY < 0 || mapY >= tileMap.Height)
                     continue;

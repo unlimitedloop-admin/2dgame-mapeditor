@@ -22,9 +22,11 @@ public partial class MainForm : Form
     private bool _showGrid = true;
     private bool _showPreview = false;
 
+    private EditorToolMode _currentMode = EditorToolMode.Pen;
+
     private ITool? _penTool;
     private ITool? _pickerTool;
-    private ITool? _fillTool;
+    private ITool? _selectionTool;
 
     private DragPaintCommand? _currentDragCommand;
 

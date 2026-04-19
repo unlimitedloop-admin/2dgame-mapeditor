@@ -44,7 +44,6 @@ public partial class MainForm
         // --- Tool 設定 ---
         _mapView.CurrentTool = _penTool;
         _mapView.PickerTool = _pickerTool;
-        _mapView.FillTool = _fillTool;
 
         _mapView.Invalidate();
         _tilePalette.Invalidate();

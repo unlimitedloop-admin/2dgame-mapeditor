@@ -1,4 +1,5 @@
 using StageSmith.Application.Commands;
+using StageSmith.Core.Constants;
 using StageSmith.Editor.Tools;
 
 namespace StageSmith.Editor;
@@ -27,35 +28,7 @@ public partial class MainForm
                 _mapView.PreviewTileId = tileId;
             });
 
-        _fillTool = new FillTool(
-            () => _page?.TileMap,
-            positions =>
-            {
-                if (_page == null || _selectedTileId < 0) return;
-
-                var commands = new List<ICommand>();
-
-                foreach (var (px, py) in positions)
-                {
-                    var current = _page.TileMap.GetTile(px, py);
-
-                    if (current == _selectedTileId)
-                        continue;
-
-                    commands.Add(new SetTileCommand(
-                        _page.TileMap,
-                        px,
-                        py,
-                        (byte)_selectedTileId));
-                }
-
-                if (commands.Count > 0)
-                {
-                    _commandManager.Execute(new CompositeCommand(commands));
-                }
-
-                _mapView.Invalidate();
-            });
+        _selectionTool = new SelectionTool(_mapView);
 
         _mapView.MouseDown += (s, e) =>
         {
@@ -64,7 +37,6 @@ public partial class MainForm
                 _currentDragCommand = new DragPaintCommand(_page.TileMap);
             }
         };
-
 
         _mapView.MouseUp += (s, e) =>
         {
@@ -76,5 +48,20 @@ public partial class MainForm
 
             _currentDragCommand = null;
         };
+    }
+
+    private void SetToolMode(EditorToolMode mode)
+    {
+        _currentMode = mode;
+        switch (mode)
+        {
+            case EditorToolMode.Pen:
+                _mapView.CurrentTool = _penTool;
+                _mapView.ClearSelection();   // ペンに戻ったら選択解除
+                break;
+            case EditorToolMode.Selection:
+                _mapView.CurrentTool = _selectionTool;
+                break;
+        }
     }
 }
