@@ -23,6 +23,16 @@ public partial class MainForm
             btnSave_Click(sender!, e);
             e.SuppressKeyPress = true;
         }
+        else if (e.Control && e.KeyCode == Keys.C)
+        {
+            CopySelection();
+            e.SuppressKeyPress = true;
+        }
+        else if (e.Control && e.KeyCode == Keys.V)
+        {
+            PasteClipboard();
+            e.SuppressKeyPress = true;
+        }
         else if (e.KeyCode == Keys.P)
         {
             SetToolMode(EditorToolMode.Pen);
@@ -38,14 +48,9 @@ public partial class MainForm
             ApplySelectionFill();
             e.SuppressKeyPress = true;
         }
-        else if (e.Control && e.KeyCode == Keys.C)
+        else if (e.KeyCode == Keys.Delete)
         {
-            CopySelection();
-            e.SuppressKeyPress = true;
-        }
-        else if (e.Control && e.KeyCode == Keys.V)
-        {
-            PasteClipboard();
+            DeleteSelection();
             e.SuppressKeyPress = true;
         }
     }

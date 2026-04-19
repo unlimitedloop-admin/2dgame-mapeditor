@@ -111,4 +111,33 @@ public partial class MainForm
 
         _mapView.Invalidate();
     }
+
+    private void DeleteSelection()
+    {
+        if (_page == null) return;
+
+        var rect = _mapView.SelectionRect;
+        if (rect == null) return;
+
+        var tileMap = _page.TileMap;
+        var commands = new List<ICommand>();
+
+        for (var y = rect.Value.Top; y < rect.Value.Bottom; y++)
+        {
+            for (var x = rect.Value.Left; x < rect.Value.Right; x++)
+            {
+                if (tileMap.GetTile(x, y) == 0)
+                    continue;
+
+                commands.Add(new SetTileCommand(tileMap, x, y, 0));
+            }
+        }
+
+        if (commands.Count > 0)
+        {
+            _commandManager.Execute(new CompositeCommand(commands));
+        }
+
+        _mapView.Invalidate();
+    }
 }
