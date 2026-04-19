@@ -33,6 +33,10 @@ public partial class MainForm
             PasteClipboard();
             e.SuppressKeyPress = true;
         }
+        else if (e.KeyCode == Keys.ControlKey)
+        {
+            _mapView.ShowPastePreview = _clipboard != null && _mapView.SelectionRect.HasValue;
+        }
         else if (e.KeyCode == Keys.P)
         {
             SetToolMode(EditorToolMode.Pen);
@@ -52,6 +56,14 @@ public partial class MainForm
         {
             DeleteSelection();
             e.SuppressKeyPress = true;
+        }
+    }
+
+    private void MainForm_KeyUp(object? sender, KeyEventArgs e)
+    {
+        if (e.KeyCode == Keys.ControlKey)
+        {
+            _mapView.ShowPastePreview = false;
         }
     }
 

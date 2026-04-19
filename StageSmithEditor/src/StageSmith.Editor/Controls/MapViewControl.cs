@@ -19,6 +19,8 @@ public class MapViewControl : DoubleBufferedPanel
     private bool _showGrid = true;
     private bool _showPreview = false;
     private bool _isMouseDown = false;
+    private bool _showPastePreview = false;
+    private Bitmap? _pastePreviewBitmap;
 
     private Point _hoverTile = new(-1, -1);
 
@@ -46,6 +48,25 @@ public class MapViewControl : DoubleBufferedPanel
             _showPreview = value;
             Invalidate(); // 自動更新
         }
+    }
+
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public bool ShowPastePreview
+    {
+        get => _showPastePreview;
+        set
+        {
+            if (_showPastePreview == value) return;
+            _showPastePreview = value;
+            Invalidate();
+        }
+    }
+
+    public void SetPastePreview(Bitmap? bmp)
+    {
+        _pastePreviewBitmap = bmp;
+        Invalidate();
     }
 
     [Browsable(false)]
@@ -263,6 +284,36 @@ public class MapViewControl : DoubleBufferedPanel
         g.DrawRectangle(pen, dstRect);
     }
 
+    private void DrawPastePreview(Graphics g)
+    {
+        if (_pastePreviewBitmap == null) return;
+        if (!SelectionRect.HasValue) return;
+
+        var tileSize = MapConstants.TilePixelSize;
+        var origin = SelectionRect.Value.Location;
+
+        var dstRect = new Rectangle(
+            origin.X * tileSize,
+            origin.Y * tileSize,
+            _pastePreviewBitmap.Width,
+            _pastePreviewBitmap.Height
+        );
+
+        using var attr = new ImageAttributes();
+        var matrix = new ColorMatrix { Matrix33 = 0.5f };
+        attr.SetColorMatrix(matrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+
+        g.DrawImage(
+            _pastePreviewBitmap,
+            dstRect,
+            0, 0,
+            _pastePreviewBitmap.Width,
+            _pastePreviewBitmap.Height,
+            GraphicsUnit.Pixel,
+            attr
+        );
+    }
+
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
@@ -288,6 +339,12 @@ public class MapViewControl : DoubleBufferedPanel
         if (_showPreview)
         {
             DrawPreview(g);
+        }
+
+        // --- 貼り付けプレビュー ---
+        if (_showPastePreview)
+        {
+            DrawPastePreview(g);
         }
 
         // --- 選択範囲 ---

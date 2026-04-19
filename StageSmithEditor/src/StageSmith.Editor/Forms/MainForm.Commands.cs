@@ -1,4 +1,5 @@
 using StageSmith.Application.Commands;
+using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
 
 namespace StageSmith.Editor;
@@ -69,6 +70,7 @@ public partial class MainForm
         }
 
         _clipboard = new ClipboardData(tiles);
+        _mapView.SetPastePreview(BuildPreviewBitmap(_clipboard));
     }
 
     private void PasteClipboard()
@@ -139,5 +141,37 @@ public partial class MainForm
         }
 
         _mapView.Invalidate();
+    }
+
+    private Bitmap BuildPreviewBitmap(ClipboardData clipboard)
+    {
+        var tileSize = MapConstants.TilePixelSize;
+        var bmp = new Bitmap(
+            clipboard.Width * tileSize,
+            clipboard.Height * tileSize
+        );
+
+        using var g = Graphics.FromImage(bmp);
+
+        for (var y = 0; y < clipboard.Height; y++)
+        {
+            for (var x = 0; x < clipboard.Width; x++)
+            {
+                var tileId = clipboard.Tiles[x, y];
+                var tilesPerRow = _tileset!.Width / tileSize;
+
+                var sx = (tileId % tilesPerRow) * tileSize;
+                var sy = (tileId / tilesPerRow) * tileSize;
+
+                g.DrawImage(
+                    _tileset,
+                    new Rectangle(x * tileSize, y * tileSize, tileSize, tileSize),
+                    new Rectangle(sx, sy, tileSize, tileSize),
+                    GraphicsUnit.Pixel
+                );
+            }
+        }
+
+        return bmp;
     }
 }

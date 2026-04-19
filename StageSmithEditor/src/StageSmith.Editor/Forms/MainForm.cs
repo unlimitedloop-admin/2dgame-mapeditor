@@ -38,6 +38,7 @@ public partial class MainForm : Form
         this.StartPosition = FormStartPosition.CenterScreen;
         this.KeyPreview = true;
         this.KeyDown += MainForm_KeyDown;
+        this.KeyUp += MainForm_KeyUp;
 
         _mapView = new MapViewControl
         {
