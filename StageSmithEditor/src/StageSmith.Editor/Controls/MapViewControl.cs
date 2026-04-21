@@ -32,17 +32,17 @@ public class MapViewControl : DoubleBufferedPanel
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public int PreviewTileId { get; set; } = -1;
 
-    private bool _showPreview = true;
+    private bool _showPastePreview = true;
 
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public bool ShowPreview
+    public bool ShowPastePreview
     {
-        get => _showPreview;
+        get => _showPastePreview;
         set
         {
-            if (_showPreview == value) return;
-            _showPreview = value;
+            if (_showPastePreview == value) return;
+            _showPastePreview = value;
             Invalidate();
         }
     }
@@ -163,7 +163,7 @@ public class MapViewControl : DoubleBufferedPanel
 
     private void DrawPreview(Graphics g)
     {
-        if (!_showPreview) return;
+        if (!_showPastePreview) return;
         if (_tileset == null || PreviewTileId < 0) return;
         if (_hoverTile.X < 0 || _hoverTile.Y < 0) return;
 
@@ -207,6 +207,7 @@ public class MapViewControl : DoubleBufferedPanel
 
     private void DrawPastePreview(Graphics g)
     {
+        if (!ShowPastePreview) return;
         if (_pastePreviewBitmap == null) return;
         if (_hoverTile.X < 0 || _hoverTile.Y < 0) return;
 

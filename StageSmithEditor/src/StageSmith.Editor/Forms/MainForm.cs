@@ -22,6 +22,7 @@ public partial class MainForm : Form
     private bool _showGrid = true;
     private bool _showPreview = false;
 
+    private bool _isCtrlPressed = false;
     private ClipboardData? _clipboard;
 
     public MainForm()

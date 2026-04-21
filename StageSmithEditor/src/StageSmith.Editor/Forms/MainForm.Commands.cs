@@ -64,7 +64,6 @@ public partial class MainForm
 
         var width = rect.Value.Width;
         var height = rect.Value.Height;
-
         var tiles = new byte[width, height];
 
         for (var y = 0; y < height; y++)
@@ -77,23 +76,19 @@ public partial class MainForm
             }
         }
 
-        // クリップボードに保存
         _clipboard = new ClipboardData(tiles);
 
-        // SelectionToolへ移動
         _selectionTool.SetSelectionCopied(true);
 
-        // プレビュー生成
-        UpdatePastePreviewBitmap();
+        UpdatePastePreviewState();
     }
 
     private void PasteSelection(int startX, int startY)
     {
-        if (_page == null || _clipboard == null || _clipboard.Tiles == null)
+        if (_page == null || _clipboard == null)
             return;
 
         var tileMap = _page.TileMap;
-
         var command = new DragPaintCommand(tileMap);
 
         for (var y = 0; y < _clipboard.Height; y++)
@@ -160,7 +155,7 @@ public partial class MainForm
 
     private void UpdatePastePreviewBitmap()
     {
-        if (_clipboard == null || _clipboard.Tiles == null || _tileset == null)
+        if (_clipboard == null || _tileset == null)
         {
             _mapView.SetPastePreviewBitmap(null);
             return;
@@ -173,11 +168,12 @@ public partial class MainForm
 
         var tilesPerRow = _tileset.Width / tileSize;
 
-        for (var y = 0; y < _clipboard.Height; y++)
+        for (int y = 0; y < _clipboard.Height; y++)
         {
-            for (var x = 0; x < _clipboard.Width; x++)
+            for (int x = 0; x < _clipboard.Width; x++)
             {
                 var tileId = _clipboard.Tiles[x, y];
+
                 var sx = (tileId % tilesPerRow) * tileSize;
                 var sy = (tileId / tilesPerRow) * tileSize;
 
@@ -189,5 +185,23 @@ public partial class MainForm
         }
 
         _mapView.SetPastePreviewBitmap(bmp);
+    }
+
+    private void UpdatePastePreviewState()
+    {
+        bool show = _clipboard != null && _isCtrlPressed;
+
+        _mapView.ShowPastePreview = show;
+
+        if (show)
+        {
+            UpdatePastePreviewBitmap();
+        }
+        else
+        {
+            _mapView.SetPastePreviewBitmap(null);
+        }
+
+        _mapView.Invalidate();
     }
 }
