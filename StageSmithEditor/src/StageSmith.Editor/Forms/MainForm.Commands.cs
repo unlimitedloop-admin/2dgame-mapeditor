@@ -22,8 +22,9 @@ public partial class MainForm
     {
         if (_page == null) return;
         if (_selectedTileId < 0) return;
+        if (_selectionTool == null) return;
 
-        var rect = _mapView.SelectionRect;
+        var rect = _selectionTool.SelectionRect;
         if (rect == null) return;
 
         var tileMap = _page.TileMap;
@@ -53,64 +54,76 @@ public partial class MainForm
 
     private void CopySelection()
     {
-        if (_page == null) return;
+        if (_page == null || _selectionTool == null)
+            return;
 
-        var rect = _mapView.SelectionRect;
+        var rect = _selectionTool.SelectionRect;
         if (rect == null) return;
 
         var tileMap = _page.TileMap;
-        var tiles = new byte[rect.Value.Width, rect.Value.Height];
 
-        for (var y = 0; y < rect.Value.Height; y++)
+        var width = rect.Value.Width;
+        var height = rect.Value.Height;
+
+        var tiles = new byte[width, height];
+
+        for (var y = 0; y < height; y++)
         {
-            for (var x = 0; x < rect.Value.Width; x++)
+            for (var x = 0; x < width; x++)
             {
-                tiles[x, y] = tileMap.GetTile(rect.Value.X + x, rect.Value.Y + y);
+                var mapX = rect.Value.X + x;
+                var mapY = rect.Value.Y + y;
+                tiles[x, y] = tileMap.GetTile(mapX, mapY);
             }
         }
 
+        // クリップボードに保存
         _clipboard = new ClipboardData(tiles);
-        _mapView.SetSelectionCopied(true);
-        _mapView.SetPastePreview(BuildPreviewBitmap(_clipboard));
+
+        // SelectionToolへ移動
+        _selectionTool.SetSelectionCopied(true);
+
+        // プレビュー生成
+        UpdatePastePreviewBitmap();
     }
 
-    private void PasteClipboard()
+    private void PasteSelection(int startX, int startY)
     {
-        if (_page == null) return;
-        if (_clipboard == null) return;         // null チェックが1行になる
-
-        var rect = _mapView.SelectionRect;
-        if (rect == null) return;
+        if (_page == null || _clipboard == null || _clipboard.Tiles == null)
+            return;
 
         var tileMap = _page.TileMap;
-        var start = rect.Value.Location;
-        var commands = new List<ICommand>();
+
+        var command = new DragPaintCommand(tileMap);
 
         for (var y = 0; y < _clipboard.Height; y++)
         {
             for (var x = 0; x < _clipboard.Width; x++)
             {
-                var mapX = start.X + x;
-                var mapY = start.Y + y;
+                var mapX = startX + x;
+                var mapY = startY + y;
 
                 if (mapX < 0 || mapX >= tileMap.Width ||
                     mapY < 0 || mapY >= tileMap.Height)
                     continue;
 
-                var newValue = _clipboard.Tiles[x, y];
-                var current = tileMap.GetTile(mapX, mapY);
-
-                if (current == newValue)
-                    continue;
-
-                commands.Add(new SetTileCommand(tileMap, mapX, mapY, newValue));
+                command.Add(mapX, mapY, _clipboard.Tiles[x, y]);
             }
         }
 
-        if (commands.Count > 0)
+        if (command.HasChanges)
         {
-            _commandManager.Execute(new CompositeCommand(commands));
+            _commandManager.Execute(command);
+            _mapView.Invalidate();
         }
+    }
+
+    private void ClearSelection()
+    {
+        _selectionTool?.ClearSelection();
+
+        // プレビューも消す
+        _mapView.SetPastePreviewBitmap(null);
 
         _mapView.Invalidate();
     }
@@ -118,8 +131,9 @@ public partial class MainForm
     private void DeleteSelection()
     {
         if (_page == null) return;
+        if (_selectionTool == null) return;
 
-        var rect = _mapView.SelectionRect;
+        var rect = _selectionTool.SelectionRect;
         if (rect == null) return;
 
         var tileMap = _page.TileMap;
@@ -144,35 +158,36 @@ public partial class MainForm
         _mapView.Invalidate();
     }
 
-    private Bitmap BuildPreviewBitmap(ClipboardData clipboard)
+    private void UpdatePastePreviewBitmap()
     {
+        if (_clipboard == null || _clipboard.Tiles == null || _tileset == null)
+        {
+            _mapView.SetPastePreviewBitmap(null);
+            return;
+        }
+
         var tileSize = MapConstants.TilePixelSize;
-        var bmp = new Bitmap(
-            clipboard.Width * tileSize,
-            clipboard.Height * tileSize
-        );
+        var bmp = new Bitmap(_clipboard.Width * tileSize, _clipboard.Height * tileSize);
 
         using var g = Graphics.FromImage(bmp);
 
-        for (var y = 0; y < clipboard.Height; y++)
-        {
-            for (var x = 0; x < clipboard.Width; x++)
-            {
-                var tileId = clipboard.Tiles[x, y];
-                var tilesPerRow = _tileset!.Width / tileSize;
+        var tilesPerRow = _tileset.Width / tileSize;
 
+        for (var y = 0; y < _clipboard.Height; y++)
+        {
+            for (var x = 0; x < _clipboard.Width; x++)
+            {
+                var tileId = _clipboard.Tiles[x, y];
                 var sx = (tileId % tilesPerRow) * tileSize;
                 var sy = (tileId / tilesPerRow) * tileSize;
 
-                g.DrawImage(
-                    _tileset,
-                    new Rectangle(x * tileSize, y * tileSize, tileSize, tileSize),
-                    new Rectangle(sx, sy, tileSize, tileSize),
-                    GraphicsUnit.Pixel
-                );
+                var src = new Rectangle(sx, sy, tileSize, tileSize);
+                var dst = new Rectangle(x * tileSize, y * tileSize, tileSize, tileSize);
+
+                g.DrawImage(_tileset, dst, src, GraphicsUnit.Pixel);
             }
         }
 
-        return bmp;
+        _mapView.SetPastePreviewBitmap(bmp);
     }
 }

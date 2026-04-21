@@ -30,13 +30,19 @@ public partial class MainForm
         }
         else if (e.Control && e.KeyCode == Keys.V)
         {
-            PasteClipboard();
-            e.SuppressKeyPress = true;
+            var pos = _mapView.GetHoverTile();
+            if (pos.X >= 0 && pos.Y >= 0)
+            {
+                PasteSelection(pos.X, pos.Y);
+                e.SuppressKeyPress = true;
+            }
         }
-        else if (e.KeyCode == Keys.ControlKey)
-        {
-            _mapView.ShowPastePreview = _clipboard != null && _mapView.SelectionRect.HasValue;
-        }
+        // PREVIEW: Show preview while Control is held down, but only if there's something in the clipboard.
+        // The clipboard should be cleared the moment the selection is deselected, but the preview keeps appearing without taking this into account.
+        //else if (e.KeyCode == Keys.ControlKey)
+        //{
+        //    _mapView.ShowPreview = _clipboard != null;
+        //}
         else if (e.KeyCode == Keys.P)
         {
             SetToolMode(EditorToolMode.Pen);
@@ -63,7 +69,7 @@ public partial class MainForm
     {
         if (e.KeyCode == Keys.ControlKey)
         {
-            _mapView.ShowPastePreview = false;
+            _mapView.ShowPreview = false;
         }
     }
 
@@ -107,7 +113,7 @@ public partial class MainForm
         if (keyData == Keys.Escape)
         {
             CancelDrag();
-            _mapView.ClearSelection();
+            ClearSelection();
             return true;
         }
 
