@@ -70,6 +70,7 @@ public partial class MainForm
         }
 
         _clipboard = new ClipboardData(tiles);
+        _mapView.SetSelectionCopied(true);
         _mapView.SetPastePreview(BuildPreviewBitmap(_clipboard));
     }
 

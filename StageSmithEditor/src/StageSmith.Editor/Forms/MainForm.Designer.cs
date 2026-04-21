@@ -35,6 +35,8 @@ namespace StageSmith.Editor
             btnRedo = new Button();
             btnSave = new Button();
             btnTilePreview = new Button();
+            btnPenTool = new Button();
+            btnSelectionTool = new Button();
             SuspendLayout();
             // 
             // btnGrid
@@ -87,11 +89,33 @@ namespace StageSmith.Editor
             btnTilePreview.UseVisualStyleBackColor = true;
             btnTilePreview.Click += btnTilePreview_Click;
             // 
+            // btnPenTool
+            // 
+            btnPenTool.Image = StageSmithEditor.Properties.Resources.icons8_鉛筆_24;
+            btnPenTool.Location = new Point(12, 82);
+            btnPenTool.Name = "btnPenTool";
+            btnPenTool.Size = new Size(30, 30);
+            btnPenTool.TabIndex = 7;
+            btnPenTool.UseVisualStyleBackColor = true;
+            btnPenTool.Click += btnPenTool_Click;
+            // 
+            // btnSelectionTool
+            // 
+            btnSelectionTool.Image = StageSmithEditor.Properties.Resources.icons8_選択_24;
+            btnSelectionTool.Location = new Point(44, 82);
+            btnSelectionTool.Name = "btnSelectionTool";
+            btnSelectionTool.Size = new Size(30, 30);
+            btnSelectionTool.TabIndex = 8;
+            btnSelectionTool.UseVisualStyleBackColor = true;
+            btnSelectionTool.Click += btnSelectionTool_Click;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(799, 450);
+            Controls.Add(btnSelectionTool);
+            Controls.Add(btnPenTool);
             Controls.Add(btnTilePreview);
             Controls.Add(btnSave);
             Controls.Add(btnRedo);
@@ -109,5 +133,7 @@ namespace StageSmith.Editor
         private Button btnRedo;
         private Button btnSave;
         private Button btnTilePreview;
+        private Button btnPenTool;
+        private Button btnSelectionTool;
     }
 }

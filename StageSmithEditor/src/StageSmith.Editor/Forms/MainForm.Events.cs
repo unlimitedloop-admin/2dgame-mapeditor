@@ -80,6 +80,16 @@ public partial class MainForm
         UpdateTilePreviewIcon();
     }
 
+    private void btnPenTool_Click(object sender, EventArgs e)
+    {
+        SetToolMode(EditorToolMode.Pen);
+    }
+
+    private void btnSelectionTool_Click(object sender, EventArgs e)
+    {
+        SetToolMode(EditorToolMode.Selection);
+    }
+
     private void UpdateTilePreviewIcon()
     {
         if (_showPreview)
