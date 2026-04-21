@@ -20,6 +20,7 @@ public class MapViewControl : DoubleBufferedPanel
     private bool _showPreview = false;
     private bool _isMouseDown = false;
     private bool _showPastePreview = false;
+    private bool _isSelectionCopied = false;
     private Bitmap? _pastePreviewBitmap;
 
     private Point _hoverTile = new(-1, -1);
@@ -102,21 +103,26 @@ public class MapViewControl : DoubleBufferedPanel
         Invalidate();
     }
 
-    public void ClearSelection()
-    {
-        SelectionRect = null;
-        _selectionStart = null;
-        _selectionEnd = null;
-        StopMarching();   // アニメーション停止（後述）
-        Invalidate();
-    }
-
     // タイマー制御
     private void StartMarching() => _marchTimer.Start();
     private void StopMarching()
     {
         _marchTimer.Stop();
         _dashOffset = 0f;
+    }
+
+    public void SetSelectionCopied(bool copied)
+    {
+        _isSelectionCopied = copied;
+        if (copied)
+        {
+            StartMarching();
+        }
+        else
+        {
+            StopMarching();
+        }
+        Invalidate();
     }
 
     private void UpdateSelectionRect()
@@ -140,9 +146,26 @@ public class MapViewControl : DoubleBufferedPanel
         SelectionRect = new Rectangle(left, top, right - left + 1, bottom - top + 1);
     }
 
+    public void PreviewSelectionMove(Rectangle previewRect)
+    {
+        SelectionRect = previewRect;
+        Invalidate();
+    }
+
+    public void ClearSelection()
+    {
+        SelectionRect = null;
+        _selectionStart = null;
+        _selectionEnd = null;
+        _isSelectionCopied = false;
+        StopMarching();
+        Invalidate();
+    }
+
     public void BeginSelection(int x, int y)
     {
         StopMarching();
+        _isSelectionCopied = false;
         _selectionStart = new Point(x, y);
         _selectionEnd = null;
         UpdateSelectionRect();
@@ -168,7 +191,6 @@ public class MapViewControl : DoubleBufferedPanel
         _selectionStart = null;
         _selectionEnd = null;
 
-        StartMarching();
         Invalidate();
     }
 
@@ -186,12 +208,21 @@ public class MapViewControl : DoubleBufferedPanel
         using var bgPen = new Pen(Color.Black, 2f);
         g.DrawRectangle(bgPen, pxRect);
 
-        // 点線アニメーション
-        using var pen = new Pen(Color.YellowGreen, 2f);
-        pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Custom;
-        pen.DashPattern = [4f, 4f];
-        pen.DashOffset = _dashOffset;
-        g.DrawRectangle(pen, pxRect);
+        if (_isSelectionCopied)
+        {
+            // コピー済み：点線アニメーション（マーチングアント）
+            using var pen = new Pen(Color.YellowGreen, 2f);
+            pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Custom;
+            pen.DashPattern = [4f, 4f];
+            pen.DashOffset = _dashOffset;
+            g.DrawRectangle(pen, pxRect);
+        }
+        else
+        {
+            // 選択のみ：実線
+            using var pen = new Pen(Color.YellowGreen, 2f);
+            g.DrawRectangle(pen, pxRect);
+        }
     }
 
     private void DrawTiles(Graphics g)
