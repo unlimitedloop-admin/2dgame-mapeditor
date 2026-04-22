@@ -32,6 +32,7 @@ public class MapViewControl : DoubleBufferedPanel
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public int PreviewTileId { get; set; } = -1;
 
+    // ===== Paste Preview =====
     private bool _showPastePreview = true;
 
     [Browsable(false)]
@@ -47,7 +48,6 @@ public class MapViewControl : DoubleBufferedPanel
         }
     }
 
-    // ===== Paste Preview =====
     private Bitmap? _pastePreviewBitmap;
 
     public void SetPastePreviewBitmap(Bitmap? bmp)
@@ -114,6 +114,7 @@ public class MapViewControl : DoubleBufferedPanel
 
         // SelectionToolに描かせる
         SelectionTool?.DrawOverlay(g, MapConstants.TilePixelSize);
+        SelectionTool?.DrawMovingOverlay(g, MapConstants.TilePixelSize, _tileset);
     }
 
     private void DrawTiles(Graphics g)

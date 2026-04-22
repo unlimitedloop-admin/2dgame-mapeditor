@@ -168,9 +168,9 @@ public partial class MainForm
 
         var tilesPerRow = _tileset.Width / tileSize;
 
-        for (int y = 0; y < _clipboard.Height; y++)
+        for (var y = 0; y < _clipboard.Height; y++)
         {
-            for (int x = 0; x < _clipboard.Width; x++)
+            for (var x = 0; x < _clipboard.Width; x++)
             {
                 var tileId = _clipboard.Tiles[x, y];
 
@@ -189,7 +189,7 @@ public partial class MainForm
 
     private void UpdatePastePreviewState()
     {
-        bool show = _clipboard != null && _isCtrlPressed;
+        var show = _clipboard != null && _isCtrlPressed;
 
         _mapView.ShowPastePreview = show;
 
@@ -202,6 +202,61 @@ public partial class MainForm
             _mapView.SetPastePreviewBitmap(null);
         }
 
+        _mapView.Invalidate();
+    }
+
+    private void OnSelectionMoveRequested(Rectangle rect, Point offset, bool copy)
+    {
+        if (_page == null) return;
+
+        var tileMap = _page.TileMap;
+        var command = new DragPaintCommand(tileMap);
+
+        var temp = new Dictionary<(int x, int y), byte>();
+
+        // 元データ保存
+        for (var y = rect.Top; y < rect.Bottom; y++)
+        {
+            for (var x = rect.Left; x < rect.Right; x++)
+            {
+                temp[(x, y)] = tileMap.GetTile(x, y);
+            }
+        }
+
+        // 元位置クリア (コピーの場合は残す)
+        if (!copy)
+        {
+            foreach (var kv in temp)
+                command.Add(kv.Key.x, kv.Key.y, 0);
+        }
+
+        // 新位置へ
+        foreach (var kv in temp)
+        {
+            var nx = kv.Key.x + offset.X;
+            var ny = kv.Key.y + offset.Y;
+
+            if (nx < 0 || nx >= tileMap.Width ||
+                ny < 0 || ny >= tileMap.Height)
+                continue;
+
+            command.Add(nx, ny, kv.Value);
+        }
+
+        if (command.HasChanges)
+        {
+            _commandManager.Execute(command);
+        }
+
+        // 選択枠も移動
+        var newRect = new Rectangle(
+            rect.X + offset.X,
+            rect.Y + offset.Y,
+            rect.Width,
+            rect.Height
+        );
+
+        _selectionTool?.SetSelectionRect(newRect);
         _mapView.Invalidate();
     }
 }

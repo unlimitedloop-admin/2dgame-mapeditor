@@ -45,8 +45,11 @@ public partial class MainForm
             });
 
         // ===== Selection =====
-        _selectionTool = new SelectionTool();
+        _selectionTool = new SelectionTool(
+            (x, y) => (byte)(_page?.TileMap.GetTile(x, y) ?? -1)
+            );
         _selectionTool.SelectionChanged += () => _mapView.Invalidate();
+        _selectionTool.MoveRequested += OnSelectionMoveRequested;
 
         // ===== MapView接続 =====
         _mapView.CurrentTool = _penTool;

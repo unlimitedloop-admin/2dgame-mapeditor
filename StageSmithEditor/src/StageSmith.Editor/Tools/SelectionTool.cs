@@ -11,6 +11,16 @@ public class SelectionTool : ITool, IDisposable
 
     public Rectangle? SelectionRect { get; private set; }
 
+    // ===== 移動状態 =====
+    private bool _isMoving = false;
+    private Point _moveStart;
+    private Point _currentOffset;
+    private byte[,]? _moveBuffer;   // 移動中のタイルデータを一時的に保持するバッファ
+    private bool _isCopyMode = false;
+    public void SetCopyMode(bool enable) => _isCopyMode = enable;
+
+    public event Action<Rectangle, Point, bool>? MoveRequested;
+
     // ===== マーチングアント =====
     private readonly Timer _marchTimer = new() { Interval = 80 };
     private float _dashOffset = 0f;
@@ -24,8 +34,12 @@ public class SelectionTool : ITool, IDisposable
     // ===== 通知 =====
     public event Action? SelectionChanged;
 
-    public SelectionTool()
+    // ===== デリゲート =====
+    private readonly Func<int, int, byte> _getTile;
+
+    public SelectionTool(Func<int, int, byte> getTile)
     {
+        _getTile = getTile;
         _marchTimer.Tick += (_, _) =>
         {
             _dashOffset = (_dashOffset + 1f) % 24f;
@@ -39,6 +53,26 @@ public class SelectionTool : ITool, IDisposable
 
     public void OnMouseDown(int x, int y)
     {
+        if (SelectionRect.HasValue && SelectionRect.Value.Contains(x, y))
+        {
+            _isMoving = true;
+            _moveStart = new Point(x, y);
+            _currentOffset = Point.Empty;
+
+            var rect = SelectionRect.Value;
+            _moveBuffer = new byte[rect.Width, rect.Height];
+
+            for (var yy = 0; yy < rect.Height; yy++)
+            {
+                for (var xx = 0; xx < rect.Width; xx++)
+                {
+                    _moveBuffer[xx, yy] = _getTile(rect.X + xx, rect.Y + yy);
+                }
+            }
+            _isCopyMode = Control.ModifierKeys.HasFlag(Keys.Control);
+            return;
+        }
+
         StopMarching();
 
         _isSelectionCopied = false;
@@ -52,6 +86,13 @@ public class SelectionTool : ITool, IDisposable
 
     public void OnMouseMove(int x, int y)
     {
+        if (_isMoving)
+        {
+            _currentOffset = new Point(x - _moveStart.X, y - _moveStart.Y);
+            SelectionChanged?.Invoke();
+            return;
+        }
+
         if (!_selectionStart.HasValue)
             return;
 
@@ -63,6 +104,15 @@ public class SelectionTool : ITool, IDisposable
 
     public void OnMouseUp(int x, int y)
     {
+        if (_isMoving && SelectionRect.HasValue)
+        {
+            MoveRequested?.Invoke(SelectionRect.Value, _currentOffset, _isCopyMode);
+
+            _isMoving = false;
+            _currentOffset = Point.Empty;
+            return;
+        }
+
         if (!_selectionStart.HasValue)
             return;
 
@@ -105,6 +155,12 @@ public class SelectionTool : ITool, IDisposable
     // =========================
     // 内部処理
     // =========================
+
+    public void SetSelectionRect(Rectangle rect)
+    {
+        SelectionRect = rect;
+        SelectionChanged?.Invoke();
+    }
 
     private void UpdateSelectionRect()
     {
@@ -155,7 +211,7 @@ public class SelectionTool : ITool, IDisposable
         using var bgPen = new Pen(Color.Black, 2f);
         g.DrawRectangle(bgPen, pxRect);
 
-        using var pen = new Pen(Color.YellowGreen, 2f);
+        using var pen = new Pen(Color.LimeGreen, 2f);
 
         if (_isSelectionCopied)
         {
@@ -167,8 +223,41 @@ public class SelectionTool : ITool, IDisposable
         g.DrawRectangle(pen, pxRect);
     }
 
+    public void DrawMovingOverlay(Graphics g, int tileSize, Bitmap? tileset)
+    {
+        if (!_isMoving || SelectionRect == null || _moveBuffer == null || tileset == null)
+            return;
+
+        var rect = SelectionRect.Value;
+        var tilesPerRow = tileset.Width / tileSize;
+
+        using var attr = new System.Drawing.Imaging.ImageAttributes();
+        var matrix = new System.Drawing.Imaging.ColorMatrix { Matrix33 = 0.5f };
+        attr.SetColorMatrix(matrix);
+
+        for (var y = 0; y < rect.Height; y++)
+        {
+            for (var x = 0; x < rect.Width; x++)
+            {
+                var id = _moveBuffer[x, y];
+
+                var sx = (id % tilesPerRow) * tileSize;
+                var sy = (id / tilesPerRow) * tileSize;
+
+                var dst = new Rectangle(
+                    (rect.X + _currentOffset.X + x) * tileSize,
+                    (rect.Y + _currentOffset.Y + y) * tileSize,
+                    tileSize, tileSize);
+
+                g.DrawImage(tileset, dst, sx, sy, tileSize, tileSize,
+                    GraphicsUnit.Pixel, attr);
+            }
+        }
+    }
+
     public void Dispose()
     {
         _marchTimer.Dispose();
+        GC.SuppressFinalize(this);
     }
 }
