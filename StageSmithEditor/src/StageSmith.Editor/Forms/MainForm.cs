@@ -20,9 +20,6 @@ public partial class MainForm : Form
     private Bitmap? _tileset;
 
     private bool _showGrid = true;
-    private bool _showPreview = false;
-
-    private bool _isCtrlPressed = false;
     private ClipboardData? _clipboard;
 
     public MainForm()
@@ -31,7 +28,6 @@ public partial class MainForm : Form
         this.StartPosition = FormStartPosition.CenterScreen;
         this.KeyPreview = true;
         this.KeyDown += MainForm_KeyDown;
-        this.KeyUp += MainForm_KeyUp;
 
         _mapView = new MapViewControl
         {

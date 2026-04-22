@@ -33,27 +33,18 @@ public class MapViewControl : DoubleBufferedPanel
     public int PreviewTileId { get; set; } = -1;
 
     // ===== Paste Preview =====
-    private bool _showPastePreview = true;
-
+    private bool _showPreview = false;
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public bool ShowPastePreview
+    public bool ShowPreview 
     {
-        get => _showPastePreview;
+        get => _showPreview;
         set
         {
-            if (_showPastePreview == value) return;
-            _showPastePreview = value;
+            if (_showPreview == value) return;
+            _showPreview = value;
             Invalidate();
         }
-    }
-
-    private Bitmap? _pastePreviewBitmap;
-
-    public void SetPastePreviewBitmap(Bitmap? bmp)
-    {
-        _pastePreviewBitmap = bmp;
-        Invalidate();
     }
 
     public MapViewControl()
@@ -110,7 +101,6 @@ public class MapViewControl : DoubleBufferedPanel
         }
 
         DrawPreview(g);
-        DrawPastePreview(g);
 
         // SelectionToolに描かせる
         SelectionTool?.DrawOverlay(g, MapConstants.TilePixelSize);
@@ -164,7 +154,7 @@ public class MapViewControl : DoubleBufferedPanel
 
     private void DrawPreview(Graphics g)
     {
-        if (!_showPastePreview) return;
+        if (!_showPreview) return;
         if (_tileset == null || PreviewTileId < 0) return;
         if (_hoverTile.X < 0 || _hoverTile.Y < 0) return;
 
@@ -204,42 +194,6 @@ public class MapViewControl : DoubleBufferedPanel
 
         using var pen = new Pen(Color.Yellow, 2);
         g.DrawRectangle(pen, dstRect);
-    }
-
-    private void DrawPastePreview(Graphics g)
-    {
-        if (!ShowPastePreview) return;
-        if (_pastePreviewBitmap == null) return;
-        if (_hoverTile.X < 0 || _hoverTile.Y < 0) return;
-
-        var tileSize = MapConstants.TilePixelSize;
-
-        var dstRect = new Rectangle(
-            _hoverTile.X * tileSize,
-            _hoverTile.Y * tileSize,
-            _pastePreviewBitmap.Width,
-            _pastePreviewBitmap.Height
-        );
-
-        using var attr = new System.Drawing.Imaging.ImageAttributes();
-
-        var matrix = new System.Drawing.Imaging.ColorMatrix
-        {
-            Matrix33 = 0.6f
-        };
-
-        attr.SetColorMatrix(matrix);
-
-        g.DrawImage(
-            _pastePreviewBitmap,
-            dstRect,
-            0,
-            0,
-            _pastePreviewBitmap.Width,
-            _pastePreviewBitmap.Height,
-            GraphicsUnit.Pixel,
-            attr
-        );
     }
 
     // =========================

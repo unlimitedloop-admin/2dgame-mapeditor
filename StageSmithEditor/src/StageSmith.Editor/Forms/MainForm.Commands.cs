@@ -79,8 +79,6 @@ public partial class MainForm
         _clipboard = new ClipboardData(tiles);
 
         _selectionTool.SetSelectionCopied(true);
-
-        UpdatePastePreviewState();
     }
 
     private void PasteSelection(int startX, int startY)
@@ -116,10 +114,6 @@ public partial class MainForm
     private void ClearSelection()
     {
         _selectionTool?.ClearSelection();
-
-        // プレビューも消す
-        _mapView.SetPastePreviewBitmap(null);
-
         _mapView.Invalidate();
     }
 
@@ -148,58 +142,6 @@ public partial class MainForm
         if (commands.Count > 0)
         {
             _commandManager.Execute(new CompositeCommand(commands));
-        }
-
-        _mapView.Invalidate();
-    }
-
-    private void UpdatePastePreviewBitmap()
-    {
-        if (_clipboard == null || _tileset == null)
-        {
-            _mapView.SetPastePreviewBitmap(null);
-            return;
-        }
-
-        var tileSize = MapConstants.TilePixelSize;
-        var bmp = new Bitmap(_clipboard.Width * tileSize, _clipboard.Height * tileSize);
-
-        using var g = Graphics.FromImage(bmp);
-
-        var tilesPerRow = _tileset.Width / tileSize;
-
-        for (var y = 0; y < _clipboard.Height; y++)
-        {
-            for (var x = 0; x < _clipboard.Width; x++)
-            {
-                var tileId = _clipboard.Tiles[x, y];
-
-                var sx = (tileId % tilesPerRow) * tileSize;
-                var sy = (tileId / tilesPerRow) * tileSize;
-
-                var src = new Rectangle(sx, sy, tileSize, tileSize);
-                var dst = new Rectangle(x * tileSize, y * tileSize, tileSize, tileSize);
-
-                g.DrawImage(_tileset, dst, src, GraphicsUnit.Pixel);
-            }
-        }
-
-        _mapView.SetPastePreviewBitmap(bmp);
-    }
-
-    private void UpdatePastePreviewState()
-    {
-        var show = _clipboard != null && _isCtrlPressed;
-
-        _mapView.ShowPastePreview = show;
-
-        if (show)
-        {
-            UpdatePastePreviewBitmap();
-        }
-        else
-        {
-            _mapView.SetPastePreviewBitmap(null);
         }
 
         _mapView.Invalidate();

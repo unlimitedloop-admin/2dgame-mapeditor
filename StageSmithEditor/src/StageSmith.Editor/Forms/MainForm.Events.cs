@@ -24,13 +24,6 @@ public partial class MainForm
             e.SuppressKeyPress = true;
         }
 
-        if (e.KeyCode == Keys.ControlKey)
-        {
-            _isCtrlPressed = true;
-            UpdatePastePreviewState();
-            return;
-        }
-
         if (e.Control && e.KeyCode == Keys.C)
         {
             CopySelection();
@@ -82,15 +75,6 @@ public partial class MainForm
         }
     }
 
-    private void MainForm_KeyUp(object? sender, KeyEventArgs e)
-    {
-        if (e.KeyCode == Keys.ControlKey)
-        {
-            _isCtrlPressed = false;
-            UpdatePastePreviewState();
-        }
-    }
-
     private void btnGrid_Click(object? sender, EventArgs e)
     {
         _showGrid = !_showGrid;
@@ -99,8 +83,7 @@ public partial class MainForm
 
     private void btnTilePreview_Click(object sender, EventArgs e)
     {
-        _showPreview = !_showPreview;
-        _mapView.ShowPastePreview = _showPreview;
+        _mapView.ShowPreview = !_mapView.ShowPreview;
         UpdateTilePreviewIcon();
     }
 
@@ -116,7 +99,7 @@ public partial class MainForm
 
     private void UpdateTilePreviewIcon()
     {
-        if (_showPreview)
+        if (_mapView.ShowPreview)
         {
             btnTilePreview.Image = StageSmithEditor.Properties.Resources.icons8_目に見える_24;
         }
