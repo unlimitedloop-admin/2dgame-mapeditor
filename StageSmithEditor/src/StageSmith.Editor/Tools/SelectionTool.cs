@@ -17,7 +17,6 @@ public class SelectionTool : ITool, IDisposable
     private Point _currentOffset;
     private byte[,]? _moveBuffer;   // 移動中のタイルデータを一時的に保持するバッファ
     private bool _isCopyMode = false;
-    public void SetCopyMode(bool enable) => _isCopyMode = enable;
 
     public event Action<Rectangle, Point, bool>? MoveRequested;
 
@@ -26,10 +25,6 @@ public class SelectionTool : ITool, IDisposable
     private float _dashOffset = 0f;
 
     public float DashOffset => _dashOffset;
-
-    // ===== コピー状態 =====
-    private bool _isSelectionCopied = false;
-    public bool IsSelectionCopied => _isSelectionCopied;
 
     // ===== 通知 =====
     public event Action? SelectionChanged;
@@ -63,19 +58,14 @@ public class SelectionTool : ITool, IDisposable
             _moveBuffer = new byte[rect.Width, rect.Height];
 
             for (var yy = 0; yy < rect.Height; yy++)
-            {
                 for (var xx = 0; xx < rect.Width; xx++)
-                {
                     _moveBuffer[xx, yy] = _getTile(rect.X + xx, rect.Y + yy);
-                }
-            }
+
             _isCopyMode = Control.ModifierKeys.HasFlag(Keys.Control);
             return;
         }
 
-        StopMarching();
-
-        _isSelectionCopied = false;
+        StopMarching();  // 新規選択開始で停止
 
         _selectionStart = new Point(x, y);
         _selectionEnd = _selectionStart;
@@ -106,6 +96,15 @@ public class SelectionTool : ITool, IDisposable
     {
         if (_isMoving && SelectionRect.HasValue)
         {
+            if (_currentOffset == Point.Empty)
+            {
+                // 選択範囲をクリア
+                _isMoving = false;
+                _moveBuffer = null;
+                ClearSelection();
+                return;
+            }
+
             var src = SelectionRect.Value;
             var dst = new Rectangle(
                 src.X + _currentOffset.X,
@@ -116,14 +115,16 @@ public class SelectionTool : ITool, IDisposable
 
             MoveRequested?.Invoke(src, _currentOffset, _isCopyMode);
 
-            SelectionRect = dst;
+            SelectionRect = dst;       // 自分で移動先に更新
             _isMoving = false;
             _currentOffset = Point.Empty;
+            _moveBuffer = null;
+            _marchTimer.Start();       // 移動確定後も継続
+            SelectionChanged?.Invoke();
             return;
         }
 
-        if (!_selectionStart.HasValue)
-            return;
+        if (!_selectionStart.HasValue) return;
 
         _selectionEnd = new Point(x, y);
         UpdateSelectionRect();
@@ -131,6 +132,7 @@ public class SelectionTool : ITool, IDisposable
         _selectionStart = null;
         _selectionEnd = null;
 
+        _marchTimer.Start();           // 選択確定で常に開始
         SelectionChanged?.Invoke();
     }
 
@@ -143,24 +145,11 @@ public class SelectionTool : ITool, IDisposable
         SelectionRect = null;
         _selectionStart = null;
         _selectionEnd = null;
-        _isSelectionCopied = false;
         _isMoving = false;
         _moveBuffer = null;
         _currentOffset = Point.Empty;
 
         StopMarching();
-        SelectionChanged?.Invoke();
-    }
-
-    public void SetSelectionCopied(bool copied)
-    {
-        _isSelectionCopied = copied;
-
-        if (copied)
-            _marchTimer.Start();
-        else
-            StopMarching();
-
         SelectionChanged?.Invoke();
     }
 
@@ -199,8 +188,7 @@ public class SelectionTool : ITool, IDisposable
 
     public void DrawOverlay(Graphics g, int tileSize)
     {
-        if (SelectionRect is not Rectangle rect)
-            return;
+        if (SelectionRect is not Rectangle rect) return;
 
         var pxRect = new Rectangle(
             rect.X * tileSize,
@@ -213,14 +201,9 @@ public class SelectionTool : ITool, IDisposable
         g.DrawRectangle(bgPen, pxRect);
 
         using var pen = new Pen(Color.LimeGreen, 2f);
-
-        if (_isSelectionCopied)
-        {
-            pen.DashStyle = DashStyle.Custom;
-            pen.DashPattern = [4f, 4f];
-            pen.DashOffset = _dashOffset;
-        }
-
+        pen.DashStyle = DashStyle.Custom;
+        pen.DashPattern = [4f, 4f];
+        pen.DashOffset = _dashOffset;
         g.DrawRectangle(pen, pxRect);
     }
 

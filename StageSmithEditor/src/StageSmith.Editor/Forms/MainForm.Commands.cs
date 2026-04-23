@@ -77,8 +77,6 @@ public partial class MainForm
         }
 
         _clipboard = new ClipboardData(tiles);
-
-        _selectionTool.SetSelectionCopied(true);
     }
 
     private void PasteSelection(int startX, int startY)
