@@ -106,8 +106,17 @@ public class SelectionTool : ITool, IDisposable
     {
         if (_isMoving && SelectionRect.HasValue)
         {
-            MoveRequested?.Invoke(SelectionRect.Value, _currentOffset, _isCopyMode);
+            var src = SelectionRect.Value;
+            var dst = new Rectangle(
+                src.X + _currentOffset.X,
+                src.Y + _currentOffset.Y,
+                src.Width,
+                src.Height
+            );
 
+            MoveRequested?.Invoke(src, _currentOffset, _isCopyMode);
+
+            SelectionRect = dst;
             _isMoving = false;
             _currentOffset = Point.Empty;
             return;
@@ -135,6 +144,9 @@ public class SelectionTool : ITool, IDisposable
         _selectionStart = null;
         _selectionEnd = null;
         _isSelectionCopied = false;
+        _isMoving = false;
+        _moveBuffer = null;
+        _currentOffset = Point.Empty;
 
         StopMarching();
         SelectionChanged?.Invoke();
@@ -156,12 +168,6 @@ public class SelectionTool : ITool, IDisposable
     // 内部処理
     // =========================
 
-    public void SetSelectionRect(Rectangle rect)
-    {
-        SelectionRect = rect;
-        SelectionChanged?.Invoke();
-    }
-
     private void UpdateSelectionRect()
     {
         if (!_selectionStart.HasValue)
@@ -178,12 +184,7 @@ public class SelectionTool : ITool, IDisposable
         var right = Math.Max(start.X, end.X);
         var bottom = Math.Max(start.Y, end.Y);
 
-        SelectionRect = new Rectangle(
-            left,
-            top,
-            right - left + 1,
-            bottom - top + 1
-        );
+        SelectionRect = new Rectangle(left, top, right - left + 1, bottom - top + 1);
     }
 
     private void StopMarching()

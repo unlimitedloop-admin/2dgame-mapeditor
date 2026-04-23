@@ -190,15 +190,6 @@ public partial class MainForm
             _commandManager.Execute(command);
         }
 
-        // 選択枠も移動
-        var newRect = new Rectangle(
-            rect.X + offset.X,
-            rect.Y + offset.Y,
-            rect.Width,
-            rect.Height
-        );
-
-        _selectionTool?.SetSelectionRect(newRect);
         _mapView.Invalidate();
     }
 }

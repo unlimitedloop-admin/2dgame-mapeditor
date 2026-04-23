@@ -6,7 +6,12 @@ public partial class MainForm
 {
     private void MainForm_KeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Control && e.KeyCode == Keys.Z)
+        if (e.Control && e.Shift && e.KeyCode == Keys.S)
+        {
+            btnSave_Click(sender!, e);
+            e.SuppressKeyPress = true;
+        }
+        else if (e.Control && e.KeyCode == Keys.Z)
         {
             _commandManager.Undo();
             _mapView.Invalidate();
@@ -18,60 +23,44 @@ public partial class MainForm
             _mapView.Invalidate();
             e.SuppressKeyPress = true;
         }
-        else if (e.Control && e.Shift && e.KeyCode == Keys.S)
-        {
-            btnSave_Click(sender!, e);
-            e.SuppressKeyPress = true;
-        }
-
-        if (e.Control && e.KeyCode == Keys.C)
+        else if (e.Control && e.KeyCode == Keys.C)
         {
             CopySelection();
-            return;
+            e.SuppressKeyPress = true;
         }
-
-        if (e.Control && e.KeyCode == Keys.V)
+        else if (e.Control && e.KeyCode == Keys.V)
         {
-            if (_clipboard == null)
-                return;
-
+            if (_clipboard == null) return;
             var pos = _mapView.GetHoverTile();
-            if (pos.X < 0 || pos.Y < 0)
-                return;
-
+            if (pos.X < 0 || pos.Y < 0) return;
             PasteSelection(pos.X, pos.Y);
-            return;
+            e.SuppressKeyPress = true;
         }
-
-        if (e.KeyCode == Keys.Escape)
+        else if (e.KeyCode == Keys.Escape)
         {
             _selectionTool?.ClearSelection();
             _mapView.Invalidate();
-            return;
+            e.SuppressKeyPress = true;
         }
-
-        if (e.KeyCode == Keys.P)
+        else if (e.KeyCode == Keys.P)
         {
             SetToolMode(EditorToolMode.Pen);
-            return;
+            e.SuppressKeyPress = true;
         }
-
-        if (e.KeyCode == Keys.S)
+        else if (e.KeyCode == Keys.S)
         {
             SetToolMode(EditorToolMode.Selection);
-            return;
+            e.SuppressKeyPress = true;
         }
-
-        if (e.KeyCode == Keys.Insert)
+        else if (e.KeyCode == Keys.Insert)
         {
             ApplySelectionFill();
-            return;
+            e.SuppressKeyPress = true;
         }
-        
-        if (e.KeyCode == Keys.Delete)
+        else if (e.KeyCode == Keys.Delete)
         {
             DeleteSelection();
-            return;
+            e.SuppressKeyPress = true;
         }
     }
 
