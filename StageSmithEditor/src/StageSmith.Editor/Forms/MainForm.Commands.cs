@@ -145,6 +145,7 @@ public partial class MainForm
         _mapView.Invalidate();
     }
 
+    // 選択範囲の移動（コピー or カット） - この機能は、選択範囲を新しい位置に移動し、必要に応じて元の位置をクリアします。
     private void OnSelectionMoveRequested(Rectangle rect, Point offset, bool copy)
     {
         if (_page == null) return;
@@ -152,41 +153,55 @@ public partial class MainForm
         var tileMap = _page.TileMap;
         var command = new DragPaintCommand(tileMap);
 
-        var temp = new Dictionary<(int x, int y), byte>();
+        var buffer = new byte[rect.Width, rect.Height];
 
-        // 元データ保存
-        for (var y = rect.Top; y < rect.Bottom; y++)
+        for (var y = 0; y < rect.Height; y++)
         {
-            for (var x = rect.Left; x < rect.Right; x++)
+            for (var x = 0; x < rect.Width; x++)
             {
-                temp[(x, y)] = tileMap.GetTile(x, y);
+                buffer[x, y] = tileMap.GetTile(rect.X + x, rect.Y + y);
             }
         }
 
-        // 元位置クリア (コピーの場合は残す)
-        if (!copy)
+        var targetPositions = new HashSet<(int x, int y)>();
+
+        for (var y = 0; y < rect.Height; y++)
         {
-            foreach (var kv in temp)
-                command.Add(kv.Key.x, kv.Key.y, 0);
+            for (var x = 0; x < rect.Width; x++)
+            {
+                var nx = rect.X + x + offset.X;
+                var ny = rect.Y + y + offset.Y;
+
+                if (nx < 0 || nx >= tileMap.Width ||
+                    ny < 0 || ny >= tileMap.Height)
+                    continue;
+
+                targetPositions.Add((nx, ny));
+
+                command.Add(nx, ny, buffer[x, y]);
+            }
         }
 
-        // 新位置へ
-        foreach (var kv in temp)
+        if (!copy)
         {
-            var nx = kv.Key.x + offset.X;
-            var ny = kv.Key.y + offset.Y;
+            for (var y = 0; y < rect.Height; y++)
+            {
+                for (var x = 0; x < rect.Width; x++)
+                {
+                    var ox = rect.X + x;
+                    var oy = rect.Y + y;
 
-            if (nx < 0 || nx >= tileMap.Width ||
-                ny < 0 || ny >= tileMap.Height)
-                continue;
+                    // 🔥 ここが核心
+                    if (targetPositions.Contains((ox, oy)))
+                        continue;
 
-            command.Add(nx, ny, kv.Value);
+                    command.Add(ox, oy, 0);
+                }
+            }
         }
 
         if (command.HasChanges)
-        {
             _commandManager.Execute(command);
-        }
 
         _mapView.Invalidate();
     }
