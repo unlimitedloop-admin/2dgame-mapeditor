@@ -1,3 +1,5 @@
+using StageSmith.Application.Commands;
+using StageSmith.Core.Constants;
 using StageSmith.Infrastructure.Persistence;
 
 namespace StageSmith.Editor;
@@ -18,21 +20,32 @@ public partial class MainForm
         _stage = _project.Stages.FirstOrDefault();
         _page = _stage?.Pages.FirstOrDefault();
 
-        if (!string.IsNullOrEmpty(_stage?.TilesetImagePath))
+        if (_page == null || string.IsNullOrEmpty(_stage?.TilesetImagePath))
+            return;
+
+        _tileset = new Bitmap(_stage.TilesetImagePath);
+
+        // --- TilePalette ---
+        _tilePalette.SetTileset(_tileset);
+
+        _tilePalette.TileSelected += index =>
         {
-            _tileset = new Bitmap(_stage.TilesetImagePath);
+            _selectedTileId = index;
+            _mapView.PreviewTileId = index;
+        };
 
-            var spacing = 2;
-            var tileSize = 16;
-            var tilesPerRow = _tileset.Width / tileSize;
-            var tilesPerColumn = _tileset.Height / tileSize;
-            var width = tilesPerRow * (tileSize + spacing);
-            var height = tilesPerColumn * (tileSize + spacing);
+        // --- MapView ---
+        _mapView.SetTileMap(_page.TileMap);
+        _mapView.SetTileset(_tileset);
 
-            panelPalette.AutoScrollMinSize = new Size(width, height);
-        }
+        // --- Tool 初期化 ---
+        InitializeTools();
 
-        panel1.Invalidate();
-        panelPalette.Invalidate();
+        // --- Tool 設定 ---
+        _mapView.CurrentTool = _penTool;
+        _mapView.PickerTool = _pickerTool;
+
+        _mapView.Invalidate();
+        _tilePalette.Invalidate();
     }
 }

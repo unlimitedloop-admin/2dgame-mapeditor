@@ -30,39 +30,17 @@ namespace StageSmith.Editor
         /// </summary>
         private void InitializeComponent()
         {
-            panel1 = new DoubleBufferedPanel();
-            panelPalette = new DoubleBufferedPanel();
             btnGrid = new Button();
             btnUndo = new Button();
             btnRedo = new Button();
             btnSave = new Button();
+            btnTilePreview = new Button();
+            btnPenTool = new Button();
+            btnSelectionTool = new Button();
             SuspendLayout();
-            // 
-            // panel1
-            // 
-            panel1.AutoScroll = true;
-            panel1.Location = new Point(83, 48);
-            panel1.Name = "panel1";
-            panel1.Size = new Size(256, 240);
-            panel1.TabIndex = 0;
-            panel1.Paint += panel1_Paint;
-            panel1.MouseDown += panel1_MouseDown;
-            panel1.MouseMove += panel1_MouseMove;
-            panel1.MouseUp += panel1_MouseUp;
-            // 
-            // panelPalette
-            // 
-            panelPalette.AutoScroll = true;
-            panelPalette.Location = new Point(12, 294);
-            panelPalette.Name = "panelPalette";
-            panelPalette.Size = new Size(512, 128);
-            panelPalette.TabIndex = 1;
-            panelPalette.Paint += panelPalette_Paint;
-            panelPalette.MouseDown += panelPalette_MouseDown;
             // 
             // btnGrid
             // 
-            btnGrid.BackgroundImageLayout = ImageLayout.Stretch;
             btnGrid.Image = StageSmithEditor.Properties.Resources.icons8_グリッド_24;
             btnGrid.Location = new Point(12, 48);
             btnGrid.Name = "btnGrid";
@@ -101,17 +79,48 @@ namespace StageSmith.Editor
             btnSave.UseVisualStyleBackColor = true;
             btnSave.Click += btnSave_Click;
             // 
+            // btnTilePreview
+            // 
+            btnTilePreview.Image = StageSmithEditor.Properties.Resources.icons8_目に見える_24;
+            btnTilePreview.Location = new Point(44, 48);
+            btnTilePreview.Name = "btnTilePreview";
+            btnTilePreview.Size = new Size(30, 30);
+            btnTilePreview.TabIndex = 6;
+            btnTilePreview.UseVisualStyleBackColor = true;
+            btnTilePreview.Click += btnTilePreview_Click;
+            // 
+            // btnPenTool
+            // 
+            btnPenTool.Image = StageSmithEditor.Properties.Resources.icons8_鉛筆_24;
+            btnPenTool.Location = new Point(12, 82);
+            btnPenTool.Name = "btnPenTool";
+            btnPenTool.Size = new Size(30, 30);
+            btnPenTool.TabIndex = 7;
+            btnPenTool.UseVisualStyleBackColor = true;
+            btnPenTool.Click += btnPenTool_Click;
+            // 
+            // btnSelectionTool
+            // 
+            btnSelectionTool.Image = StageSmithEditor.Properties.Resources.icons8_選択_24;
+            btnSelectionTool.Location = new Point(44, 82);
+            btnSelectionTool.Name = "btnSelectionTool";
+            btnSelectionTool.Size = new Size(30, 30);
+            btnSelectionTool.TabIndex = 8;
+            btnSelectionTool.UseVisualStyleBackColor = true;
+            btnSelectionTool.Click += btnSelectionTool_Click;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(799, 450);
+            Controls.Add(btnSelectionTool);
+            Controls.Add(btnPenTool);
+            Controls.Add(btnTilePreview);
             Controls.Add(btnSave);
             Controls.Add(btnRedo);
             Controls.Add(btnUndo);
             Controls.Add(btnGrid);
-            Controls.Add(panelPalette);
-            Controls.Add(panel1);
             Name = "MainForm";
             Text = "MainForm";
             Load += MainForm_Load;
@@ -119,12 +128,12 @@ namespace StageSmith.Editor
         }
 
         #endregion
-
-        private DoubleBufferedPanel panel1;
-        private DoubleBufferedPanel panelPalette;
         private Button btnGrid;
         private Button btnUndo;
         private Button btnRedo;
         private Button btnSave;
+        private Button btnTilePreview;
+        private Button btnPenTool;
+        private Button btnSelectionTool;
     }
 }

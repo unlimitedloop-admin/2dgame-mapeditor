@@ -133,4 +133,16 @@
   <data name="icons8-名前を付けて保存-30" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resource\material\icon8\icons8-名前を付けて保存-30.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="icons8-目に見えない-24" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resource\material\icon8\icons8-目に見えない-24.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="icons8-目に見える-24" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resource\material\icon8\icons8-目に見える-24.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="icons8-選択-24" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resource\material\icon8\icons8-選択-24.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="icons8-鉛筆-24" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resource\material\icon8\icons8-鉛筆-24.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
 </root>
