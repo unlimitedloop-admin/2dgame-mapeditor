@@ -32,4 +32,9 @@ public class FillTool : ITool
 
     public void OnMouseMove(int x, int y) { }
     public void OnMouseUp(int x, int y) { }
+
+    public Cursor GetCursor(int x, int y)
+    {
+        return Cursors.Cross;
+    }
 }

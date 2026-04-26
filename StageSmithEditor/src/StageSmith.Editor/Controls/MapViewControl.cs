@@ -105,6 +105,12 @@ public class MapViewControl : DoubleBufferedPanel
         // SelectionToolに描かせる
         SelectionTool?.DrawOverlay(g, MapConstants.TilePixelSize);
         SelectionTool?.DrawMovingOverlay(g, MapConstants.TilePixelSize, _tileset);
+
+        // Extended add plus cursor at copy mode
+        if (SelectionTool?.IsCopyModeActive() == true)
+        {
+            DrawPlusCursor(g);
+        }
     }
 
     private void DrawTiles(Graphics g)
@@ -230,6 +236,7 @@ public class MapViewControl : DoubleBufferedPanel
 
         if (!IsInside(x, y))
         {
+            Cursor = Cursors.Default;
             _hoverTile = new Point(-1, -1);
             Invalidate();
             return;
@@ -243,7 +250,10 @@ public class MapViewControl : DoubleBufferedPanel
             Invalidate();
         }
 
+        Cursor = CurrentTool?.GetCursor(x, y) ?? Cursors.Default;
+
         CurrentTool?.OnMouseMove(x, y);
+        Invalidate();
     }
 
     protected override void OnMouseUp(MouseEventArgs e)
@@ -274,5 +284,18 @@ public class MapViewControl : DoubleBufferedPanel
         return _tileMap != null &&
                x >= 0 && x < _tileMap.Width &&
                y >= 0 && y < _tileMap.Height;
+    }
+
+    private void DrawPlusCursor(Graphics g)
+    {
+        var pos = PointToClient(Cursor.Position);
+
+        var size = 5;
+        var offset = 24; // カーソルの位置よりも少し右下に描画するためのオフセット
+
+        using var pen = new Pen(Color.White, 2);
+
+        g.DrawLine(pen, pos.X - size + offset, pos.Y + offset, pos.X + size + offset, pos.Y + offset);
+        g.DrawLine(pen, pos.X + offset, pos.Y - size + offset, pos.X + offset, pos.Y + size + offset);
     }
 }

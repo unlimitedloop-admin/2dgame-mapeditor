@@ -5,4 +5,6 @@ public interface ITool
     void OnMouseDown(int x, int y);
     void OnMouseMove(int x, int y);
     void OnMouseUp(int x, int y);
+
+    Cursor GetCursor(int x, int y);
 }

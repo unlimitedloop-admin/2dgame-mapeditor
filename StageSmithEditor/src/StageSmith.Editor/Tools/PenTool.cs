@@ -12,4 +12,9 @@ public class PenTool : ITool
     public void OnMouseDown(int x, int y) => _paint(x, y);
     public void OnMouseMove(int x, int y) => _paint(x, y);
     public void OnMouseUp(int x, int y) { }
+
+    public Cursor GetCursor(int x, int y)
+    {
+        return Cursors.Arrow;
+    }
 }

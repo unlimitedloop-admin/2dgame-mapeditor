@@ -13,10 +13,10 @@ public class SelectionTool : ITool, IDisposable
 
     // ===== 移動状態 =====
     private bool _isMoving = false;
+    private bool _isCopyMode = false;
     private Point _moveStart;
     private Point _currentOffset;
     private byte[,]? _moveBuffer;   // 移動中のタイルデータを一時的に保持するバッファ
-    private bool _isCopyMode = false;
 
     public event Action<Rectangle, Point, bool>? MoveRequested;
 
@@ -25,6 +25,10 @@ public class SelectionTool : ITool, IDisposable
     private float _dashOffset = 0f;
 
     public float DashOffset => _dashOffset;
+
+    // ===== キー状態チェック =====
+    private readonly Timer _keyCheckTimer = new() { Interval = 50 };
+    private bool _lastCopyMode = false;
 
     // ===== 通知 =====
     public event Action? SelectionChanged;
@@ -40,6 +44,19 @@ public class SelectionTool : ITool, IDisposable
             _dashOffset = (_dashOffset + 1f) % 24f;
             SelectionChanged?.Invoke();
         };
+
+        _keyCheckTimer.Tick += (_, _) =>
+        {
+            if (!_isMoving) return;
+
+            var currentCopyMode = Control.ModifierKeys.HasFlag(Keys.Control);
+            if (currentCopyMode != _lastCopyMode)
+            {
+                _isCopyMode = currentCopyMode;
+                _lastCopyMode = currentCopyMode;
+                SelectionChanged?.Invoke();
+            }
+        };
     }
 
     // =========================
@@ -54,6 +71,11 @@ public class SelectionTool : ITool, IDisposable
             _moveStart = new Point(x, y);
             _currentOffset = Point.Empty;
 
+            // 初期状態を設定してタイマー開始
+            _isCopyMode = Control.ModifierKeys.HasFlag(Keys.Control);
+            _lastCopyMode = _isCopyMode;
+            _keyCheckTimer.Start();
+
             var rect = SelectionRect.Value;
             _moveBuffer = new byte[rect.Width, rect.Height];
 
@@ -61,7 +83,6 @@ public class SelectionTool : ITool, IDisposable
                 for (var xx = 0; xx < rect.Width; xx++)
                     _moveBuffer[xx, yy] = _getTile(rect.X + xx, rect.Y + yy);
 
-            _isCopyMode = Control.ModifierKeys.HasFlag(Keys.Control);
             return;
         }
 
@@ -101,6 +122,7 @@ public class SelectionTool : ITool, IDisposable
                 // 選択範囲をクリア
                 _isMoving = false;
                 _moveBuffer = null;
+                _keyCheckTimer.Stop();
                 ClearSelection();
                 return;
             }
@@ -119,6 +141,7 @@ public class SelectionTool : ITool, IDisposable
             _isMoving = false;
             _currentOffset = Point.Empty;
             _moveBuffer = null;
+            _keyCheckTimer.Stop();     // キーチェック停止
             _marchTimer.Start();       // 移動確定後も継続
             SelectionChanged?.Invoke();
             return;
@@ -136,6 +159,17 @@ public class SelectionTool : ITool, IDisposable
         SelectionChanged?.Invoke();
     }
 
+    public Cursor GetCursor(int x, int y)
+    {
+        if (_isMoving)
+            return Cursors.SizeAll;
+
+        if (SelectionRect.HasValue && SelectionRect.Value.Contains(x, y))
+            return Cursors.SizeAll;
+
+        return Cursors.Default;
+    }
+
     // =========================
     // 外部操作
     // =========================
@@ -149,9 +183,12 @@ public class SelectionTool : ITool, IDisposable
         _moveBuffer = null;
         _currentOffset = Point.Empty;
 
+        _keyCheckTimer.Stop();
         StopMarching();
         SelectionChanged?.Invoke();
     }
+
+    public bool IsCopyModeActive() => _isMoving && _isCopyMode;
 
     // =========================
     // 内部処理
@@ -242,6 +279,7 @@ public class SelectionTool : ITool, IDisposable
     public void Dispose()
     {
         _marchTimer.Dispose();
+        _keyCheckTimer.Dispose();
         GC.SuppressFinalize(this);
     }
 }
