@@ -159,7 +159,7 @@ public partial class MainForm
         {
             for (var x = 0; x < rect.Width; x++)
             {
-                buffer[x, y] = tileMap.GetTile(rect.X + x, rect.Y + y);
+                    buffer[x, y] = tileMap.GetTile(rect.X + x, rect.Y + y);
             }
         }
 

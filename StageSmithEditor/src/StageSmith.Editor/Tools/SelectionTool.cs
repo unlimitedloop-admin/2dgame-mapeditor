@@ -35,10 +35,12 @@ public class SelectionTool : ITool, IDisposable
 
     // ===== デリゲート =====
     private readonly Func<int, int, byte> _getTile;
+    private readonly Func<(int w, int h)> _getMapSize;
 
-    public SelectionTool(Func<int, int, byte> getTile)
+    public SelectionTool(Func<int, int, byte> getTile, Func<(int w, int h)> getMapSize)
     {
         _getTile = getTile;
+        _getMapSize = getMapSize;
         _marchTimer.Tick += (_, _) =>
         {
             _dashOffset = (_dashOffset + 1f) % 24f;
@@ -86,9 +88,13 @@ public class SelectionTool : ITool, IDisposable
             return;
         }
 
-        StopMarching();  // 新規選択開始で停止
+        StopMarching();
 
-        _selectionStart = new Point(x, y);
+        var (mapW, mapH) = _getMapSize();
+        var cx = Math.Clamp(x, 0, mapW - 1);
+        var cy = Math.Clamp(y, 0, mapH - 1);
+
+        _selectionStart = new Point(cx, cy);
         _selectionEnd = _selectionStart;
 
         UpdateSelectionRect();
@@ -107,7 +113,11 @@ public class SelectionTool : ITool, IDisposable
         if (!_selectionStart.HasValue)
             return;
 
-        _selectionEnd = new Point(x, y);
+        var (mapW, mapH) = _getMapSize();
+        var cx = Math.Clamp(x, 0, mapW - 1);
+        var cy = Math.Clamp(y, 0, mapH - 1);
+
+        _selectionEnd = new Point(cx, cy);
         UpdateSelectionRect();
 
         SelectionChanged?.Invoke();
@@ -115,6 +125,8 @@ public class SelectionTool : ITool, IDisposable
 
     public void OnMouseUp(int x, int y)
     {
+        var (mapW, mapH) = _getMapSize();
+
         if (_isMoving && SelectionRect.HasValue)
         {
             if (_currentOffset == Point.Empty)
@@ -135,6 +147,19 @@ public class SelectionTool : ITool, IDisposable
                 src.Height
             );
 
+            // 移動先がマップ外に完全に出ていたらキャンセル
+            var mapRect = new Rectangle(0, 0, mapW, mapH);
+            if (!dst.IntersectsWith(mapRect))
+            {
+                _isMoving = false;
+                _currentOffset = Point.Empty;
+                _moveBuffer = null;
+                _keyCheckTimer.Stop();
+                _marchTimer.Start();
+                SelectionChanged?.Invoke();
+                return;
+            }
+
             MoveRequested?.Invoke(src, _currentOffset, _isCopyMode);
 
             SelectionRect = dst;       // 自分で移動先に更新
@@ -149,7 +174,10 @@ public class SelectionTool : ITool, IDisposable
 
         if (!_selectionStart.HasValue) return;
 
-        _selectionEnd = new Point(x, y);
+        var cx = Math.Clamp(x, 0, mapW - 1);
+        var cy = Math.Clamp(y, 0, mapH - 1);
+
+        _selectionEnd = new Point(cx, cy);
         UpdateSelectionRect();
 
         _selectionStart = null;

@@ -46,8 +46,14 @@ public partial class MainForm
 
         // ===== Selection =====
         _selectionTool = new SelectionTool(
-            (x, y) => (byte)(_page?.TileMap.GetTile(x, y) ?? -1)
-            );
+            (x, y) =>
+            {
+                var map = _page?.TileMap;
+                if (map == null) return 0;
+                return (byte)map.GetTile(x, y);
+            },
+            () => (_page?.TileMap.Width ?? 16, _page?.TileMap.Height ?? 15)
+        );
         _selectionTool.SelectionChanged += () => _mapView.Invalidate();
         _selectionTool.MoveRequested += OnSelectionMoveRequested;
 

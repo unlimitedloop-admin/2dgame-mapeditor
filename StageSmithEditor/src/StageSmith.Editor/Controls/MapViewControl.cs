@@ -264,7 +264,8 @@ public class MapViewControl : DoubleBufferedPanel
 
         var (x, y) = ScreenToTile(e.X, e.Y);
 
-        if (!IsInside(x, y)) return;
+        // 範囲外ドロップを許可するため、ここではチェックしない
+        //if (!IsInside(x, y)) return;
 
         CurrentTool?.OnMouseUp(x, y);
     }

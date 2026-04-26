@@ -25,11 +25,15 @@ public sealed class TileMap
 
     public byte GetTile(int x, int y)
     {
+        if (x < 0 || x >= Width || y < 0 || y >= Height)
+            return 0;
+
         return Tiles[y * Width + x];
     }
 
     public void SetTile(int x, int y, byte tileId)
     {
+        ValidateCoordinates(x, y); // 書き込みは例外で検知
         Tiles[y * Width + x] = tileId;
     }
 
