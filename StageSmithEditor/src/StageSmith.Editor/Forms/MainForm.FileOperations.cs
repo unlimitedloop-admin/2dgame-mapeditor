@@ -1,12 +1,10 @@
-using StageSmith.Application.Commands;
-using StageSmith.Core.Constants;
 using StageSmith.Infrastructure.Persistence;
 
 namespace StageSmith.Editor;
 
 public partial class MainForm
 {
-    private void btnSave_Click(object? sender, EventArgs e)
+    private void SaveProject()
     {
         var repository = new JsonProjectRepository();
         repository.Save(_project!, "test_project.def");

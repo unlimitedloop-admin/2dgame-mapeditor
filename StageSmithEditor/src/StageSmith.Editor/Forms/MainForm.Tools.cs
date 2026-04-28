@@ -1,6 +1,7 @@
 using StageSmith.Application.Commands;
 using StageSmith.Core.Constants;
 using StageSmith.Editor.Tools;
+using StageSmith.Infrastructure.Persistence;
 
 namespace StageSmith.Editor;
 
@@ -90,6 +91,111 @@ public partial class MainForm
         };
     }
 
+    private void InitializeToolStrip()
+    {
+        _editorToolStrip = new ToolStrip
+        {
+            Dock = DockStyle.Top,
+            GripStyle = ToolStripGripStyle.Hidden,
+            ImageScalingSize = new Size(24, 24)
+        };
+
+        _openButton = CreateToolStripButton("Open", "開く", "📂");
+        _saveButton = CreateToolStripButton("Save", "保存", "💾");
+
+        _undoButton = CreateToolStripButton("Undo", "元に戻す", "↶");
+        _redoButton = CreateToolStripButton("Redo", "やり直し", "↷");
+
+        _penButton = CreateToolStripButton("Pen", "ペン", "✎", checkOnClick: true);
+        _selectionButton = CreateToolStripButton("Selection", "選択", "□", checkOnClick: true);
+
+        _openButton.Click += (_, _) =>
+        {
+            // TODO: Open処理
+        };
+
+        _saveButton.Click += (_, _) =>
+        {
+            // HACK: とりあえず固定パスで保存。後でファイルダイアログにする。
+            SaveProject();
+        };
+
+        _undoButton.Click += (_, _) =>
+        {
+            _commandManager.Undo();
+            UpdateToolbarCheckedState();
+            _mapView.Invalidate();
+        };
+
+        _redoButton.Click += (_, _) =>
+        {
+            _commandManager.Redo();
+            UpdateToolbarCheckedState();
+            _mapView.Invalidate();
+        };
+
+        _penButton.Click += (_, _) =>
+        {
+            SetToolMode(EditorToolMode.Pen);
+        };
+
+        _selectionButton.Click += (_, _) =>
+        {
+            SetToolMode(EditorToolMode.Selection);
+        };
+
+        _editorToolStrip.Items.AddRange(new ToolStripItem[]
+        {
+        _openButton,
+        _saveButton,
+        new ToolStripSeparator(),
+        _undoButton,
+        _redoButton,
+        new ToolStripSeparator(),
+        _penButton,
+        _selectionButton
+        });
+
+        Controls.Add(_editorToolStrip);
+
+        UpdateToolbarCheckedState();
+    }
+
+    private ToolStripButton CreateToolStripButton(string name, string tooltip, string glyph, bool checkOnClick = false)
+    {
+        return new ToolStripButton
+        {
+            Name = name,
+            ToolTipText = tooltip,
+            Image = CreateGlyphImage(glyph),
+            DisplayStyle = ToolStripItemDisplayStyle.Image,
+            CheckOnClick = checkOnClick
+        };
+    }
+
+    private static Bitmap CreateGlyphImage(string text)
+    {
+        var bmp = new Bitmap(24, 24);
+
+        using var g = Graphics.FromImage(bmp);
+        g.Clear(Color.Transparent);
+
+        using var font = new Font("Yu Gothic UI", 13, FontStyle.Bold, GraphicsUnit.Pixel);
+        using var brush = new SolidBrush(Color.Black);
+
+        var size = g.MeasureString(text, font);
+
+        g.DrawString(
+            text,
+            font,
+            brush,
+            (24 - size.Width) / 2,
+            (24 - size.Height) / 2
+        );
+
+        return bmp;
+    }
+
     // =========================
     // モード切替
     // =========================
@@ -126,7 +232,18 @@ public partial class MainForm
 
     private void UpdateModeUI()
     {
-        // 必要ならここでステータス表示など
+        UpdateToolbarCheckedState();
+
+        // 必要なら後でステータスバーへ表示
         // lblMode.Text = _currentMode.ToString();
+    }
+
+    private void UpdateToolbarCheckedState()
+    {
+        if (_penButton == null || _selectionButton == null)
+            return;
+
+        _penButton.Checked = _currentMode == EditorToolMode.Pen;
+        _selectionButton.Checked = _currentMode == EditorToolMode.Selection;
     }
 }

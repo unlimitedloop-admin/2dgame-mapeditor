@@ -8,7 +8,7 @@ public partial class MainForm
     {
         if (e.Control && e.Shift && e.KeyCode == Keys.S)
         {
-            btnSave_Click(sender!, e);
+            SaveProject();
             e.SuppressKeyPress = true;
         }
         else if (e.Control && e.KeyCode == Keys.Z)
@@ -76,15 +76,15 @@ public partial class MainForm
         UpdateTilePreviewIcon();
     }
 
-    private void btnPenTool_Click(object sender, EventArgs e)
-    {
-        SetToolMode(EditorToolMode.Pen);
-    }
+    //private void btnPenTool_Click(object sender, EventArgs e)
+    //{
+    //    SetToolMode(EditorToolMode.Pen);
+    //}
 
-    private void btnSelectionTool_Click(object sender, EventArgs e)
-    {
-        SetToolMode(EditorToolMode.Selection);
-    }
+    //private void btnSelectionTool_Click(object sender, EventArgs e)
+    //{
+    //    SetToolMode(EditorToolMode.Selection);
+    //}
 
     private void UpdateTilePreviewIcon()
     {

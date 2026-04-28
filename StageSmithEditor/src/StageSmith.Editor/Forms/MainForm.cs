@@ -23,6 +23,14 @@ public partial class MainForm : Form
     private ClipboardData? _clipboard;
 
     private readonly ToolManager _toolManager = new();
+    private ToolStrip _editorToolStrip = null!;
+
+    private ToolStripButton _openButton = null!;
+    private ToolStripButton _saveButton = null!;
+    private ToolStripButton _undoButton = null!;
+    private ToolStripButton _redoButton = null!;
+    private ToolStripButton _penButton = null!;
+    private ToolStripButton _selectionButton = null!;
 
     public MainForm()
     {
@@ -44,6 +52,9 @@ public partial class MainForm : Form
             Size = ViewerConstants.TilePaletteSize
         };
         Controls.Add(_tilePalette);
+
+        // 追加
+        InitializeToolStrip();
 
         // テスト用のダミーデータをロード
         LoadTest();
