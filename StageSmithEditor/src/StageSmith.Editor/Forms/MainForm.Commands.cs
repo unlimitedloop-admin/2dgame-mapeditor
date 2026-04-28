@@ -191,7 +191,7 @@ public partial class MainForm
                     var ox = rect.X + x;
                     var oy = rect.Y + y;
 
-                    // 🔥 ここが核心
+                    // ?? ここが核心
                     if (targetPositions.Contains((ox, oy)))
                         continue;
 
