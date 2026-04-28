@@ -15,9 +15,27 @@ public class MapViewControl : DoubleBufferedPanel
     private Point _hoverTile = new(-1, -1);
 
     // ===== Tool =====
+    private ToolManager? _toolManager;
+
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public ITool? CurrentTool { get; set; }
+    public ToolManager? ToolManager
+    {
+        get => _toolManager;
+        set
+        {
+            _toolManager?.ToolChanged -= OnToolChanged;
+            _toolManager = value;
+            _toolManager?.ToolChanged += OnToolChanged;
+            Invalidate();
+        }
+    }
+
+    private void OnToolChanged(ITool? tool)
+    {
+        Cursor = Cursors.Default;
+        Invalidate();
+    }
 
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -218,7 +236,7 @@ public class MapViewControl : DoubleBufferedPanel
 
         if (e.Button == MouseButtons.Left)
         {
-            CurrentTool?.OnMouseDown(x, y);
+            _toolManager?.CurrentTool?.OnMouseDown(x, y);
         }
         else if (e.Button == MouseButtons.Right)
         {
@@ -250,9 +268,10 @@ public class MapViewControl : DoubleBufferedPanel
             Invalidate();
         }
 
-        Cursor = CurrentTool?.GetCursor(x, y) ?? Cursors.Default;
+        var currentTool = _toolManager?.CurrentTool;
+        Cursor = currentTool?.GetCursor(x, y) ?? Cursors.Default;
 
-        CurrentTool?.OnMouseMove(x, y);
+        currentTool?.OnMouseMove(x, y);
         Invalidate();
     }
 
@@ -267,7 +286,7 @@ public class MapViewControl : DoubleBufferedPanel
         // 範囲外ドロップを許可するため、ここではチェックしない
         //if (!IsInside(x, y)) return;
 
-        CurrentTool?.OnMouseUp(x, y);
+        _toolManager?.CurrentTool?.OnMouseUp(x, y);
     }
 
     // =========================

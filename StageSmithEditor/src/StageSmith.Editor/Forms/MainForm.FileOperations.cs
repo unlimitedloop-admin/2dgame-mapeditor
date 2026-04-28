@@ -42,7 +42,7 @@ public partial class MainForm
         InitializeTools();
 
         // --- Tool 設定 ---
-        _mapView.CurrentTool = _penTool;
+        _mapView.ToolManager?.SetTool(_penTool!);
         _mapView.PickerTool = _pickerTool;
 
         _mapView.Invalidate();

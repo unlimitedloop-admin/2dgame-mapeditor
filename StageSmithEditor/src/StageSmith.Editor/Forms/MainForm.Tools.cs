@@ -58,7 +58,11 @@ public partial class MainForm
         _selectionTool.MoveRequested += OnSelectionMoveRequested;
 
         // ===== MapView接続 =====
-        _mapView.CurrentTool = _penTool;
+        //_mapView.CurrentTool = _penTool;
+        _mapView.ToolManager = _toolManager;
+
+        _toolManager.SetTool(_penTool);
+
         _mapView.PickerTool = _pickerTool;
         _mapView.SelectionTool = _selectionTool;
 
@@ -100,12 +104,18 @@ public partial class MainForm
         switch (mode)
         {
             case EditorToolMode.Pen:
-                _mapView.CurrentTool = _penTool;
+                if (_penTool != null)
+                {
+                    _toolManager.SetTool(_penTool);
+                }
                 _selectionTool?.ClearSelection();
                 break;
 
             case EditorToolMode.Selection:
-                _mapView.CurrentTool = _selectionTool;
+                if (_selectionTool != null)
+                {
+                    _toolManager.SetTool(_selectionTool);
+                }
                 break;
         }
 

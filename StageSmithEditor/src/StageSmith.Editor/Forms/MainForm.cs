@@ -22,6 +22,8 @@ public partial class MainForm : Form
     private bool _showGrid = true;
     private ClipboardData? _clipboard;
 
+    private readonly ToolManager _toolManager = new();
+
     public MainForm()
     {
         InitializeComponent();
