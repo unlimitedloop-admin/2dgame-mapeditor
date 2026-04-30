@@ -133,26 +133,13 @@ public partial class MainForm : Form
             {
                 if (_page == null || _selectedTileId < 0) return;
 
-                var commands = new List<ICommand>();
+                var command = new FillCommand(
+                    _page.TileMap,
+                    positions,
+                    (byte)_selectedTileId
+                );
 
-                foreach (var (px, py) in positions)
-                {
-                    var current = _page.TileMap.GetTile(px, py);
-
-                    if (current == _selectedTileId)
-                        continue;
-
-                    commands.Add(new SetTileCommand(
-                        _page.TileMap,
-                        px,
-                        py,
-                        (byte)_selectedTileId));
-                }
-
-                if (commands.Count > 0)
-                {
-                    _commandManager.Execute(new CompositeCommand(commands));
-                }
+                _commandManager.Execute(command);
 
                 _mapView.Invalidate();
             },
