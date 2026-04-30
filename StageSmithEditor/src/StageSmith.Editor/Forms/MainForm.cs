@@ -35,6 +35,7 @@ public partial class MainForm : Form
     private PenTool? _penTool;
     private PickerTool? _pickerTool;
     private SelectionTool? _selectionTool;
+    private FillTool? _fillTool;
 
     private DragPaintCommand? _currentDragCommand;
     private EditorToolMode _currentMode = EditorToolMode.Pen;
@@ -125,10 +126,43 @@ public partial class MainForm : Form
         _selectionTool.SelectionChanged += () => _mapView.Invalidate();
         _selectionTool.MoveRequested += OnSelectionMoveRequested;
 
+        // ===== Fill =====
+        _fillTool = new FillTool(
+            () => _page?.TileMap,
+            positions =>
+            {
+                if (_page == null || _selectedTileId < 0) return;
+
+                var commands = new List<ICommand>();
+
+                foreach (var (px, py) in positions)
+                {
+                    var current = _page.TileMap.GetTile(px, py);
+
+                    if (current == _selectedTileId)
+                        continue;
+
+                    commands.Add(new SetTileCommand(
+                        _page.TileMap,
+                        px,
+                        py,
+                        (byte)_selectedTileId));
+                }
+
+                if (commands.Count > 0)
+                {
+                    _commandManager.Execute(new CompositeCommand(commands));
+                }
+
+                _mapView.Invalidate();
+            },
+            _selectedTileId);
+
         // MapView接続
         _mapView.ToolManager = _toolManager;
         _mapView.PickerTool = _pickerTool;
         _mapView.SelectionTool = _selectionTool;
+        _mapView.FillTool = _fillTool;
 
         _toolManager.SetTool(_penTool);
 

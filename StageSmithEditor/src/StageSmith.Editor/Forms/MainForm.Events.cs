@@ -76,16 +76,6 @@ public partial class MainForm
         UpdateTilePreviewIcon();
     }
 
-    //private void btnPenTool_Click(object sender, EventArgs e)
-    //{
-    //    SetToolMode(EditorToolMode.Pen);
-    //}
-
-    //private void btnSelectionTool_Click(object sender, EventArgs e)
-    //{
-    //    SetToolMode(EditorToolMode.Selection);
-    //}
-
     private void UpdateTilePreviewIcon()
     {
         if (_mapView.ShowPreview)
@@ -100,11 +90,22 @@ public partial class MainForm
 
     protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
     {
-        if (keyData == Keys.Escape)
+        switch (keyData)
         {
-            CancelDrag();
-            ClearSelection();
-            return true;
+            case Keys.Control | Keys.D1:
+            case Keys.Control | Keys.NumPad1:
+                SetToolMode(EditorToolMode.Pen);
+                return true;
+
+            case Keys.Control | Keys.D2:
+            case Keys.Control | Keys.NumPad2:
+                SetToolMode(EditorToolMode.Selection);
+                return true;
+
+            case Keys.Escape:
+                CancelDrag();
+                ClearSelection();
+                return true;
         }
 
         return base.ProcessCmdKey(ref msg, keyData);

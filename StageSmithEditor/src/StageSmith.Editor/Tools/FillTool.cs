@@ -6,13 +6,13 @@ public class FillTool : ITool
 {
     private readonly Func<TileMap?> _getTileMap;
     private readonly Action<List<(int x, int y)>> _applyFill;
+    private readonly int _selectedTileId = -1;
 
-    public FillTool(
-        Func<TileMap?> getTileMap,
-        Action<List<(int x, int y)>> applyFill)
+    public FillTool(Func<TileMap?> getTileMap, Action<List<(int x, int y)>> applyFill, int selectedTileId)
     {
         _getTileMap = getTileMap;
         _applyFill = applyFill;
+        _selectedTileId = selectedTileId;
     }
 
     public void OnMouseDown(int x, int y)
@@ -21,6 +21,7 @@ public class FillTool : ITool
         if (tileMap == null) return;
 
         var target = tileMap.GetTile(x, y);
+        if (target == _selectedTileId) return;
 
         var fillPositions = FloodFillHelper.Execute(tileMap, x, y);
 

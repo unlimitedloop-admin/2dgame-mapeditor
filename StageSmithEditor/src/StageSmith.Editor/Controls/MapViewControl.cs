@@ -43,6 +43,10 @@ public class MapViewControl : DoubleBufferedPanel
 
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public ITool? FillTool { get; set; }
+
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public SelectionTool? SelectionTool { get; set; }
 
     // ===== Preview =====
@@ -54,7 +58,7 @@ public class MapViewControl : DoubleBufferedPanel
     private bool _showPreview = false;
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public bool ShowPreview 
+    public bool ShowPreview
     {
         get => _showPreview;
         set
@@ -223,7 +227,6 @@ public class MapViewControl : DoubleBufferedPanel
     // =========================
     // 入力
     // =========================
-
     protected override void OnMouseDown(MouseEventArgs e)
     {
         base.OnMouseDown(e);
@@ -234,14 +237,32 @@ public class MapViewControl : DoubleBufferedPanel
 
         if (!IsInside(x, y)) return;
 
-        if (e.Button == MouseButtons.Left)
-        {
-            _toolManager?.CurrentTool?.OnMouseDown(x, y);
-        }
-        else if (e.Button == MouseButtons.Right)
+        var isAlt = (ModifierKeys & Keys.Alt) != 0;
+        var isShift = (ModifierKeys & Keys.Shift) != 0;
+
+        // ========================
+        // ① スポイト（最優先）
+        // ========================
+        if (e.Button == MouseButtons.Right || isAlt)
         {
             PickerTool?.OnMouseDown(x, y);
+            return;
         }
+
+        // ========================
+        // ② 塗りつぶし
+        // ========================
+        if (isShift)
+        {
+            FillTool?.OnMouseDown(x, y);
+            Invalidate();
+            return;
+        }
+
+        // ========================
+        // ③ 通常ツール
+        // ========================
+        _toolManager?.CurrentTool?.OnMouseDown(x, y);
     }
 
     protected override void OnMouseMove(MouseEventArgs e)
@@ -252,6 +273,8 @@ public class MapViewControl : DoubleBufferedPanel
 
         var (x, y) = ScreenToTile(e.X, e.Y);
 
+        var isAlt = (ModifierKeys & Keys.Alt) != 0;
+
         if (!IsInside(x, y))
         {
             Cursor = Cursors.Default;
@@ -261,17 +284,26 @@ public class MapViewControl : DoubleBufferedPanel
         }
 
         var newHover = new Point(x, y);
-
         if (_hoverTile != newHover)
         {
             _hoverTile = newHover;
             Invalidate();
         }
 
+        // カーソル制御
+        if (e.Button == MouseButtons.Right || isAlt)
+        {
+            Cursor = PickerTool?.GetCursor(x, y) ?? Cursors.Cross;
+            return;
+        }
+
         var currentTool = _toolManager?.CurrentTool;
         Cursor = currentTool?.GetCursor(x, y) ?? Cursors.Default;
 
-        currentTool?.OnMouseMove(x, y);
+        if (e.Button == MouseButtons.Left)
+        {
+            currentTool?.OnMouseMove(x, y);
+        }
         Invalidate();
     }
 
@@ -283,8 +315,16 @@ public class MapViewControl : DoubleBufferedPanel
 
         var (x, y) = ScreenToTile(e.X, e.Y);
 
+        var isAlt = (ModifierKeys & Keys.Alt) != 0;
+
         // 範囲外ドロップを許可するため、ここではチェックしない
         //if (!IsInside(x, y)) return;
+
+        if (e.Button == MouseButtons.Right || isAlt)
+        {
+            PickerTool?.OnMouseUp(x, y);
+            return;
+        }
 
         _toolManager?.CurrentTool?.OnMouseUp(x, y);
     }
@@ -292,7 +332,6 @@ public class MapViewControl : DoubleBufferedPanel
     // =========================
     // 補助
     // =========================
-
     private static (int x, int y) ScreenToTile(int px, int py)
     {
         var tileSize = MapConstants.TilePixelSize;
