@@ -2,17 +2,18 @@ using StageSmith.Core.Models;
 
 namespace StageSmith.Application.Commands;
 
-public class FillCommand : ICommand
+public class TilePaintCommand : ICommand
 {
     private readonly TileMap _map;
-
     private readonly List<(int x, int y, byte oldValue, byte newValue)> _changes;
 
-    public FillCommand(TileMap map, List<(int x, int y)> positions, byte newValue)
+    public TilePaintCommand(
+        TileMap map,
+        IEnumerable<(int x, int y)> positions,
+        byte newValue)
     {
         _map = map;
-
-        _changes = new List<(int, int, byte, byte)>(positions.Count);
+        _changes = [];
 
         foreach (var (x, y) in positions)
         {

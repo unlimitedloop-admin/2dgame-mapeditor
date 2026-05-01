@@ -102,7 +102,6 @@ public class MapViewControl : DoubleBufferedPanel
     // =========================
     // 描画
     // =========================
-
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
@@ -273,8 +272,6 @@ public class MapViewControl : DoubleBufferedPanel
 
         var (x, y) = ScreenToTile(e.X, e.Y);
 
-        var isAlt = (ModifierKeys & Keys.Alt) != 0;
-
         if (!IsInside(x, y))
         {
             Cursor = Cursors.Default;
@@ -290,16 +287,7 @@ public class MapViewControl : DoubleBufferedPanel
             Invalidate();
         }
 
-        // カーソル制御
-        if (e.Button == MouseButtons.Right || isAlt)
-        {
-            Cursor = PickerTool?.GetCursor(x, y) ?? Cursors.Cross;
-            return;
-        }
-
         var currentTool = _toolManager?.CurrentTool;
-        Cursor = currentTool?.GetCursor(x, y) ?? Cursors.Default;
-
         if (e.Button == MouseButtons.Left)
         {
             currentTool?.OnMouseMove(x, y);
@@ -356,5 +344,29 @@ public class MapViewControl : DoubleBufferedPanel
 
         g.DrawLine(pen, pos.X - size + offset, pos.Y + offset, pos.X + size + offset, pos.Y + offset);
         g.DrawLine(pen, pos.X + offset, pos.Y - size + offset, pos.X + offset, pos.Y + size + offset);
+    }
+
+    public void UpdateCursor()
+    {
+        var isShift = (ModifierKeys & Keys.Shift) != 0;
+
+        var (x, y) = _hoverTile.X >= 0 ? (_hoverTile.X, _hoverTile.Y) : (-1, -1);
+
+        if (x < 0 || y < 0)
+        {
+            Cursor = Cursors.Default;
+            return;
+        }
+
+        var currentTool = _toolManager?.CurrentTool;
+
+        // バケツ（Pen限定）
+        if (isShift && currentTool is PenTool)
+        {
+            Cursor = FillTool?.GetCursor(x, y) ?? Cursors.Hand;
+            return;
+        }
+
+        Cursor = currentTool?.GetCursor(x, y) ?? Cursors.Default;
     }
 }

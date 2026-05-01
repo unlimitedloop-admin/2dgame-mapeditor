@@ -111,6 +111,16 @@ namespace StageSmithEditor.Properties {
         }
         
         /// <summary>
+        ///   型 System.Byte[] のローカライズされたリソースを検索します。
+        /// </summary>
+        internal static byte[] icons8_塗りつぶしの色_24 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-塗りつぶしの色-24", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
         internal static System.Drawing.Bitmap icons8_目に見えない_24 {

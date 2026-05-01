@@ -8,6 +8,8 @@ public class FillTool : ITool
     private readonly Action<List<(int x, int y)>> _applyFill;
     private readonly int _selectedTileId = -1;
 
+    private static Cursor? _bucketCursor;
+
     public FillTool(Func<TileMap?> getTileMap, Action<List<(int x, int y)>> applyFill, int selectedTileId)
     {
         _getTileMap = getTileMap;
@@ -36,6 +38,10 @@ public class FillTool : ITool
 
     public Cursor GetCursor(int x, int y)
     {
-        return Cursors.Cross;
+        if (_bucketCursor == null)
+        {
+            _bucketCursor = new Cursor(new MemoryStream(StageSmithEditor.Properties.Resources.icons8_塗りつぶしの色_24));
+        }
+        return _bucketCursor;
     }
 }

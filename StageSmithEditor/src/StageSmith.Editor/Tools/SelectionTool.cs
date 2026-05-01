@@ -1,3 +1,4 @@
+using StageSmith.Application.Commands;
 using System.Drawing.Drawing2D;
 using Timer = System.Windows.Forms.Timer;
 
@@ -64,7 +65,6 @@ public class SelectionTool : ITool, IDisposable
     // =========================
     // ITool 実装
     // =========================
-
     public void OnMouseDown(int x, int y)
     {
         if (SelectionRect.HasValue && SelectionRect.Value.Contains(x, y))
@@ -221,7 +221,6 @@ public class SelectionTool : ITool, IDisposable
     // =========================
     // 内部処理
     // =========================
-
     private void UpdateSelectionRect()
     {
         if (!_selectionStart.HasValue)
@@ -250,6 +249,21 @@ public class SelectionTool : ITool, IDisposable
     // =========================
     // 描画補助（オプション）
     // =========================
+    public IEnumerable<(int x, int y)> GetSelectedPositions()
+    {
+        var rect = SelectionRect;
+
+        if (rect == null)
+            yield break;
+
+        for (var y = rect.Value.Top; y < rect.Value.Bottom; y++)
+        {
+            for (var x = rect.Value.Left; x < rect.Value.Right; x++)
+            {
+                yield return (x, y);
+            }
+        }
+    }
 
     public void DrawOverlay(Graphics g, int tileSize)
     {

@@ -74,6 +74,22 @@ public partial class MainForm : Form
         InitializeToolStrip();
         BindToolManager();
 
+        this.KeyDown += (_, e) =>
+        {
+            if (e.KeyCode == Keys.ShiftKey)
+            {
+                _mapView.UpdateCursor();
+            }
+        };
+
+        this.KeyUp += (_, e) =>
+        {
+            if (e.KeyCode == Keys.ShiftKey)
+            {
+                _mapView.UpdateCursor();
+            }
+        };
+
         // テスト用のダミーデータをロード
         LoadTest();
 
@@ -92,14 +108,12 @@ public partial class MainForm : Form
     private void InitializeTools()
     {
         // Pen
-        _penTool = new PenTool((x, y) =>
-        {
-            if (_page == null || _selectedTileId < 0)
-                return;
-
-            _currentDragCommand?.Add(x, y, (byte)_selectedTileId);
-            _mapView.Invalidate();
-        });
+        _penTool = new PenTool(
+            () => _page?.TileMap,
+            () => _selectedTileId,
+            _commandManager,
+            () => _mapView.Invalidate()
+        );
 
         // Picker
         _pickerTool = new PickerTool(
@@ -111,7 +125,8 @@ public partial class MainForm : Form
                 _selectedTileId = tileId;
                 _tilePalette.SetSelected(tileId);
                 _mapView.PreviewTileId = tileId;
-            });
+            }
+        );
 
         // Selection
         _selectionTool = new SelectionTool(
@@ -126,14 +141,15 @@ public partial class MainForm : Form
         _selectionTool.SelectionChanged += () => _mapView.Invalidate();
         _selectionTool.MoveRequested += OnSelectionMoveRequested;
 
-        // ===== Fill =====
+        // Fill
         _fillTool = new FillTool(
             () => _page?.TileMap,
             positions =>
             {
-                if (_page == null || _selectedTileId < 0) return;
+                if (_page == null || _selectedTileId < 0)
+                    return;
 
-                var command = new FillCommand(
+                var command = new TilePaintCommand(
                     _page.TileMap,
                     positions,
                     (byte)_selectedTileId
@@ -143,7 +159,8 @@ public partial class MainForm : Form
 
                 _mapView.Invalidate();
             },
-            _selectedTileId);
+            _selectedTileId
+        );
 
         // MapView接続
         _mapView.ToolManager = _toolManager;

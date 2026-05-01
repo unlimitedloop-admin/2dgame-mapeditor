@@ -7,34 +7,24 @@ public partial class MainForm
 {
     private void ApplySelectionFill()
     {
-        if (_page == null) return;
-        if (_selectedTileId < 0) return;
-        if (_selectionTool == null) return;
+        if (_page == null || _selectionTool == null || _selectedTileId < 0)
+            return;
 
-        var rect = _selectionTool.SelectionRect;
-        if (rect == null) return;
+        var positions = _selectionTool
+            .GetSelectedPositions()
+            .Where(p => _page.TileMap.GetTile(p.x, p.y) != 0)
+            .ToList();
 
-        var tileMap = _page.TileMap;
+        if (positions.Count == 0)
+            return;
 
-        var commands = new List<ICommand>();
+        var command = new TilePaintCommand(
+            _page.TileMap,
+            positions,
+            (byte)_selectedTileId
+        );
 
-        for (var y = rect.Value.Top; y < rect.Value.Bottom; y++)
-        {
-            for (var x = rect.Value.Left; x < rect.Value.Right; x++)
-            {
-                var current = tileMap.GetTile(x, y);
-
-                if (current == _selectedTileId)
-                    continue;
-
-                commands.Add(new SetTileCommand(tileMap, x, y, (byte)_selectedTileId));
-            }
-        }
-
-        if (commands.Count > 0)
-        {
-            _commandManager.Execute(new CompositeCommand(commands));
-        }
+        _commandManager.Execute(command);
 
         _mapView.Invalidate();
     }
@@ -104,30 +94,24 @@ public partial class MainForm
 
     private void DeleteSelection()
     {
-        if (_page == null) return;
-        if (_selectionTool == null) return;
+        if (_page == null || _selectionTool == null)
+            return;
 
-        var rect = _selectionTool.SelectionRect;
-        if (rect == null) return;
+        var positions = _selectionTool
+            .GetSelectedPositions()
+            .Where(p => _page.TileMap.GetTile(p.x, p.y) != 0)
+            .ToList();
 
-        var tileMap = _page.TileMap;
-        var commands = new List<ICommand>();
+        if (positions.Count == 0)
+            return;
 
-        for (var y = rect.Value.Top; y < rect.Value.Bottom; y++)
-        {
-            for (var x = rect.Value.Left; x < rect.Value.Right; x++)
-            {
-                if (tileMap.GetTile(x, y) == 0)
-                    continue;
+        var command = new TilePaintCommand(
+            _page.TileMap,
+            positions,
+            0 // 空タイル
+        );
 
-                commands.Add(new SetTileCommand(tileMap, x, y, 0));
-            }
-        }
-
-        if (commands.Count > 0)
-        {
-            _commandManager.Execute(new CompositeCommand(commands));
-        }
+        _commandManager.Execute(command);
 
         _mapView.Invalidate();
     }
