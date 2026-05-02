@@ -20,7 +20,7 @@ public sealed class Stage
 
     public string TilesetImagePath { get; set; } = string.Empty;
 
-    public List<Page> Pages { get; init; } = new();
+    public List<Page> Pages { get; set; } = new();
 
     public Page AddPage(string? name = null)
     {

@@ -9,7 +9,7 @@ public sealed class Page
     /// <summary>
     /// 後でノード接続や構造ビューアで使うためのラベル
     /// </summary>
-    public string Label { get; set; } = string.Empty;
+    public string Tag { get; set; } = string.Empty;
 
     /// <summary>
     /// Zレイヤー。現状は整数で十分
@@ -21,5 +21,8 @@ public sealed class Page
     /// </summary>
     public string ScrollType { get; set; } = "None";
 
-    public TileMap TileMap { get; init; } = new();
+    public TileMap TileMap { get; set; } = new();
+
+    public int Width => TileMap.Width;
+    public int Height => TileMap.Height;
 }
