@@ -1,5 +1,3 @@
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
-
 namespace StageSmith.Core.Models;
 
 public sealed class Stage
@@ -47,5 +45,17 @@ public sealed class Stage
     public Page? FindPage(Guid pageId)
     {
         return Pages.FirstOrDefault(x => x.Id == pageId);
+    }
+
+    public byte[] ExportBin()
+    {
+        var bytes = new List<byte>();
+
+        foreach (var page in Pages)
+        {
+            bytes.AddRange(page.ToBinary());
+        }
+
+        return bytes.ToArray();
     }
 }

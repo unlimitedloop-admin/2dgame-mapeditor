@@ -1,132 +1,95 @@
 namespace StageSmith.Core.Constants;
 
+[Flags]
+public enum PageFlags : byte
+{
+    None = 0,
+    IsWater = 1 << 0,
+    HasDamageFloor = 1 << 1,
+    HasBgAnimation = 1 << 2,
+    HasEvent = 1 << 3,
+}
+
 public enum ScrollType : byte
 {
-    None = 0, // 隣接なし
-    Free = 1, // 任意スクロール
-    Page = 2, // ページ単位
-    Locked = 3, // スクロール不可
-    Axis = 4, // 軸補正
-    Auto = 5, // オート
-    Object = 6, // オブジェクト依存
-    Dynamic = 7  // イベント型
+    None = 0,
+    Free = 1,
+    Page = 2,
+    Locked = 3,
+    Axis = 4,
+    Auto = 5,
+    Object = 6,
+    Dynamic = 7,
 }
 
 [Flags]
 public enum ScrollFlags : byte
 {
     None = 0,
-    NoEdge = 1 << 0, // 淵なし
-    Loop = 1 << 1, // ループ
-    // まだ余裕あり
-}
-
-[Flags]
-public enum PageFlags : byte
-{
-    None = 0,
-
-    //========================
-    // 環境系
-    //========================
-    IsWater = 1 << 0, // 水中
-    HasDamageFloor = 1 << 1, // ダメージ床
-
-    //========================
-    // 表示系
-    //========================
-    HasBgAnimation = 1 << 2, // BGアニメあり
-
-    //========================
-    // イベント系
-    //========================
-    HasEvent = 1 << 3, // イベントあり（def参照）
-
-    //========================
-    // 特殊状態
-    //========================
-    DisablePlayerControl = 1 << 4, // 入場時操作不可
-
-    //========================
-    // 予約
-    //========================
-    Reserved1 = 1 << 5,
-    Reserved2 = 1 << 6,
-    Reserved3 = 1 << 7
+    NoEdge = 1 << 0,
+    Loop = 1 << 1,
 }
 
 public static class ScrollEncoding
 {
-    // 上位4bit = Type
-    // 下位4bit = Flags
     public static byte Encode(ScrollType type, ScrollFlags flags)
-    {
-        return (byte)(((byte)type << 4) | ((byte)flags & 0x0F));
-    }
+        => (byte)(((byte)type << 4) | ((byte)flags & 0x0F));
 
     public static ScrollType GetType(byte value)
-    {
-        return (ScrollType)(value >> 4);
-    }
+        => (ScrollType)(value >> 4);
 
     public static ScrollFlags GetFlags(byte value)
-    {
-        return (ScrollFlags)(value & 0x0F);
-    }
+        => (ScrollFlags)(value & 0x0F);
 }
 
 public struct PageHeader
 {
-    //========================
-    // 識別
-    //========================
-    public byte MagicStart; // 0xA5
+    public byte MagicStart { get; set; }
+    public PageFlags Flags { get; set; }
 
-    //========================
-    // フラグ
-    //========================
-    public PageFlags Flags;
+    public byte LeftPage { get; set; }
+    public byte RightPage { get; set; }
+    public byte UpPage { get; set; }
+    public byte DownPage { get; set; }
 
-    //========================
-    // 隣接ページ
-    //========================
-    public byte LeftPage;
-    public byte RightPage;
-    public byte UpPage;
-    public byte DownPage;
+    public byte ScrollLeft { get; set; }
+    public byte ScrollRight { get; set; }
+    public byte ScrollUp { get; set; }
+    public byte ScrollDown { get; set; }
 
-    //========================
-    // スクロール（1byte×4方向）
-    //========================
-    public byte ScrollLeft;
-    public byte ScrollRight;
-    public byte ScrollUp;
-    public byte ScrollDown;
+    public byte Z { get; set; }
 
-    //========================
-    // Z座標
-    //========================
-    public byte Z;
+    public byte Reserved1 { get; set; }
+    public byte Reserved2 { get; set; }
+    public byte Reserved3 { get; set; }
 
-    //========================
-    // 予約領域（将来用）
-    //========================
-    public byte Reserved1;
-    public byte Reserved2;
-    public byte Reserved3;
+    public byte MagicEnd { get; set; }
 
-    //========================
-    // 終端
-    //========================
-    public byte MagicEnd; // 0x5A
+    public static PageHeader CreateDefault()
+    {
+        return new PageHeader
+        {
+            MagicStart = 0xA5,
+            MagicEnd = 0x5A,
 
-    //========================
-    // バイト化
-    //========================
+            LeftPage = 0xFF,
+            RightPage = 0xFF,
+            UpPage = 0xFF,
+            DownPage = 0xFF,
+
+            ScrollLeft = ScrollEncoding.Encode(ScrollType.None, ScrollFlags.None),
+            ScrollRight = ScrollEncoding.Encode(ScrollType.None, ScrollFlags.None),
+            ScrollUp = ScrollEncoding.Encode(ScrollType.None, ScrollFlags.None),
+            ScrollDown = ScrollEncoding.Encode(ScrollType.None, ScrollFlags.None),
+
+            Z = 0
+        };
+    }
+
     public byte[] ToBytes()
     {
-        return new byte[]
-        {
+        return
+        [
             MagicStart,
             (byte)Flags,
 
@@ -147,6 +110,6 @@ public struct PageHeader
             Reserved3,
 
             MagicEnd
-        };
+        ];
     }
 }

@@ -16,6 +16,7 @@ public partial class MainForm : Form
     private Page? _page;
     private int _selectedTileId = -1;
     private Bitmap? _tileset;
+    private readonly EditorContext _context = new();
 
     //========================
     // Managers
@@ -28,6 +29,7 @@ public partial class MainForm : Form
     //========================
     private readonly MapViewControl _mapView;
     private readonly TilePaletteControl _tilePalette;
+    private PropertyWindowControl _propertyWindow = null!;
 
     //========================
     // Tools
@@ -72,6 +74,7 @@ public partial class MainForm : Form
 
         InitializeTools();
         InitializeToolStrip();
+        InitializePropertyWindow();
         BindToolManager();
 
         this.KeyDown += (_, e) =>
@@ -191,6 +194,14 @@ public partial class MainForm : Form
 
             _currentDragCommand = null;
         };
+    }
+
+    private void InitializePropertyWindow()
+    {
+        _propertyWindow = new PropertyWindowControl();
+        _propertyWindow.Bind(_context);
+
+        Controls.Add(_propertyWindow);
     }
 
     //========================

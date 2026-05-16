@@ -28,6 +28,13 @@ public class EditorContext
     //========================
     // 操作
     //========================
+    public event Action? ContextChanged;
+
+    private void NotifyChanged()
+    {
+        ContextChanged?.Invoke();
+    }
+
     public void SetStage(int index)
     {
         if (Project == null) return;
@@ -35,6 +42,8 @@ public class EditorContext
 
         CurrentStageIndex = index;
         CurrentPageIndex = 0; // ページリセット
+
+        NotifyChanged();
     }
 
     public void SetPage(int index)
@@ -44,6 +53,8 @@ public class EditorContext
         if (index < 0 || index >= stage.Pages.Count) return;
 
         CurrentPageIndex = index;
+        
+        NotifyChanged();
     }
 
     //========================
@@ -52,4 +63,5 @@ public class EditorContext
     public bool HasProject => Project != null;
     public bool HasStage => CurrentStage != null;
     public bool HasPage => CurrentPage != null;
+
 }
