@@ -13,6 +13,7 @@ public partial class MainForm
 
     private ToolStripButton _openButton = null!;
     private ToolStripButton _saveButton = null!;
+    private ToolStripButton _exportBinButton = null!;
     private ToolStripButton _undoButton = null!;
     private ToolStripButton _redoButton = null!;
     private ToolStripButton _penButton = null!;
@@ -32,6 +33,8 @@ public partial class MainForm
 
         _openButton = CreateButton("Open", "開く", "📂");
         _saveButton = CreateButton("Save", "保存 (Ctrl+Shift+S)", StageSmithEditor.Properties.Resources.icons8_上書き保存_30);
+
+        _exportBinButton = CreateButton("ExportBin", "バイナリ出力", StageSmithEditor.Properties.Resources.tooltip_icon_bin_export_image);
 
         _undoButton = CreateButton("Undo", "元に戻す (Ctrl+Z)", StageSmithEditor.Properties.Resources.icons8_元に戻す_30);
         _redoButton = CreateButton("Redo", "やり直し (Ctrl+Y)", StageSmithEditor.Properties.Resources.icons8_やり直す_30);
@@ -53,7 +56,13 @@ public partial class MainForm
             SaveProject();
         };
 
-        _undoButton.Click += (_, _) =>
+        _exportBinButton.Click += (_, _) =>
+        {
+            // TODO: ExportBin処理
+            ExportCurrentStageBinTest();
+        };
+
+            _undoButton.Click += (_, _) =>
         {
             _commandManager.Undo();
             _mapView.Invalidate();
@@ -84,6 +93,8 @@ public partial class MainForm
         {
             _openButton,
             _saveButton,
+            new ToolStripSeparator(),
+            _exportBinButton,
             new ToolStripSeparator(),
             _undoButton,
             _redoButton,

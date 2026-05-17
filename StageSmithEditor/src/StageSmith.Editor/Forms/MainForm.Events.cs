@@ -4,64 +4,78 @@ namespace StageSmith.Editor;
 
 public partial class MainForm
 {
-    private void MainForm_KeyDown(object? sender, KeyEventArgs e)
+    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
     {
-        if (e.Control && e.Shift && e.KeyCode == Keys.S)
+        // ── Ctrl 系（TextBox フォーカス中でも有効） ──────────────────
+        switch (keyData)
         {
-            SaveProject();
-            e.SuppressKeyPress = true;
+            case Keys.Control | Keys.Shift | Keys.S:
+                SaveProject();
+                return true;
+ 
+            case Keys.Control | Keys.Z:
+                _commandManager.Undo();
+                _mapView.Invalidate();
+                return true;
+ 
+            case Keys.Control | Keys.Y:
+                _commandManager.Redo();
+                _mapView.Invalidate();
+                return true;
+ 
+            case Keys.Control | Keys.C:
+                CopySelection();
+                return true;
+ 
+            case Keys.Control | Keys.V:
+                if (_clipboard == null) return true;
+                var pos = _mapView.GetHoverTile();
+                if (pos.X < 0 || pos.Y < 0) return true;
+                PasteSelection(pos.X, pos.Y);
+                return true;
         }
-        else if (e.Control && e.KeyCode == Keys.Z)
+ 
+        // ── TextBox フォーカス中はここで終了 ─────────────────────────
+        if (IsFocusedOnTextBox())
+            return base.ProcessCmdKey(ref msg, keyData);
+ 
+        // ── 単体キー（TextBox 以外のとき有効） ───────────────────────
+        switch (keyData)
         {
-            _commandManager.Undo();
-            _mapView.Invalidate();
-            e.SuppressKeyPress = true;
+            case Keys.Escape:
+                CancelDrag();
+                _selectionTool?.ClearSelection();
+                _mapView.Invalidate();
+                return true;
+ 
+            case Keys.P:
+                SetToolMode(EditorToolMode.Pen);
+                return true;
+ 
+            case Keys.S:
+                SetToolMode(EditorToolMode.Selection);
+                return true;
+ 
+            case Keys.Insert:
+                ApplySelectionFill();
+                return true;
+ 
+            case Keys.Delete:
+                DeleteSelection();
+                return true;
+ 
+            case Keys.Control | Keys.D1:
+            case Keys.Control | Keys.NumPad1:
+                SetToolMode(EditorToolMode.Pen);
+                return true;
+ 
+            case Keys.Control | Keys.D2:
+            case Keys.Control | Keys.NumPad2:
+                SetToolMode(EditorToolMode.Selection);
+                return true;
         }
-        else if (e.Control && e.KeyCode == Keys.Y)
-        {
-            _commandManager.Redo();
-            _mapView.Invalidate();
-            e.SuppressKeyPress = true;
-        }
-        else if (e.Control && e.KeyCode == Keys.C)
-        {
-            CopySelection();
-            e.SuppressKeyPress = true;
-        }
-        else if (e.Control && e.KeyCode == Keys.V)
-        {
-            if (_clipboard == null) return;
-            var pos = _mapView.GetHoverTile();
-            if (pos.X < 0 || pos.Y < 0) return;
-            PasteSelection(pos.X, pos.Y);
-            e.SuppressKeyPress = true;
-        }
-        else if (e.KeyCode == Keys.Escape)
-        {
-            _selectionTool?.ClearSelection();
-            _mapView.Invalidate();
-            e.SuppressKeyPress = true;
-        }
-        else if (e.KeyCode == Keys.P)
-        {
-            SetToolMode(EditorToolMode.Pen);
-            e.SuppressKeyPress = true;
-        }
-        else if (e.KeyCode == Keys.S)
-        {
-            SetToolMode(EditorToolMode.Selection);
-            e.SuppressKeyPress = true;
-        }
-        else if (e.KeyCode == Keys.Insert)
-        {
-            ApplySelectionFill();
-            e.SuppressKeyPress = true;
-        }
-        else if (e.KeyCode == Keys.Delete)
-        {
-            DeleteSelection();
-            e.SuppressKeyPress = true;
-        }
+ 
+        return base.ProcessCmdKey(ref msg, keyData);
     }
 
     private void btnGrid_Click(object? sender, EventArgs e)
@@ -88,32 +102,26 @@ public partial class MainForm
         }
     }
 
-    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
-    {
-        switch (keyData)
-        {
-            case Keys.Control | Keys.D1:
-            case Keys.Control | Keys.NumPad1:
-                SetToolMode(EditorToolMode.Pen);
-                return true;
-
-            case Keys.Control | Keys.D2:
-            case Keys.Control | Keys.NumPad2:
-                SetToolMode(EditorToolMode.Selection);
-                return true;
-
-            case Keys.Escape:
-                CancelDrag();
-                ClearSelection();
-                return true;
-        }
-
-        return base.ProcessCmdKey(ref msg, keyData);
-    }
-
     private void CancelDrag()
     {
         _currentDragCommand = null;
         _mapView.Invalidate();
+    }
+
+    private static bool IsFocusedOnTextBox()
+    {
+        var focused = GetFocusedControl(Form.ActiveForm);
+        return focused is TextBox;
+    }
+
+    private static Control? GetFocusedControl(Control? parent)
+    {
+        if (parent == null) return null;
+
+        // ContainerControl（UserControl含む）は ActiveControl を持つ
+        if (parent is ContainerControl container && container.ActiveControl != null)
+            return GetFocusedControl(container.ActiveControl);
+
+        return parent;
     }
 }

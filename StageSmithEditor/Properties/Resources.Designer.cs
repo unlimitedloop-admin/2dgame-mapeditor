@@ -159,5 +159,15 @@ namespace StageSmithEditor.Properties {
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
+        internal static System.Drawing.Bitmap tooltip_icon_bin_export_image {
+            get {
+                object obj = ResourceManager.GetObject("tooltip_icon_bin_export_image", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
     }
 }

@@ -54,22 +54,27 @@ public partial class MainForm : Form
     public MainForm()
     {
         InitializeComponent();
-        this.StartPosition = FormStartPosition.CenterScreen;
-        this.KeyPreview = true;
-        this.KeyDown += MainForm_KeyDown;
+        StartPosition = FormStartPosition.CenterScreen;
+        KeyPreview = true;
 
         _mapView = new MapViewControl
         {
             Location = ViewerConstants.MapViewLocation,
             Size = ViewerConstants.MapViewSize
         };
+        _mapView.Click += (s, e) => _mapView.Focus();
         Controls.Add(_mapView);
+        // TextBoxなどにフォーカスがある時に MainForm クリック時、
+        // マップエディタの性質上、「何もないところをクリック＝マップビューに戻る」という操作が自然なので、
+        // フォーカスの基本位置を _mapView に統一する。
+        Click += (s, e) => _mapView.Focus();
 
         _tilePalette = new TilePaletteControl
         {
             Location = ViewerConstants.TilePaletteLocation,
             Size = ViewerConstants.TilePaletteSize
         };
+        _tilePalette.Click += (s, e) => _tilePalette.Focus();
         Controls.Add(_tilePalette);
 
         InitializeTools();
@@ -77,7 +82,7 @@ public partial class MainForm : Form
         InitializePropertyWindow();
         BindToolManager();
 
-        this.KeyDown += (_, e) =>
+        KeyDown += (_, e) =>
         {
             if (e.KeyCode == Keys.ShiftKey)
             {
@@ -85,7 +90,7 @@ public partial class MainForm : Form
             }
         };
 
-        this.KeyUp += (_, e) =>
+        KeyUp += (_, e) =>
         {
             if (e.KeyCode == Keys.ShiftKey)
             {
@@ -94,6 +99,7 @@ public partial class MainForm : Form
         };
 
         // テスト用のダミーデータをロード
+        // TODO: プロジェクトファイルのロード処理ができたら削除
         LoadTest();
 
         // 初期状態のアイコンを設定

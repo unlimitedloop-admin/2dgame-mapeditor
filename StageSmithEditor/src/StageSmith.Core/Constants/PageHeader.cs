@@ -52,6 +52,9 @@ public struct PageHeader
     public byte UpPage { get; set; }
     public byte DownPage { get; set; }
 
+    public byte FrontPage { get; set; }
+    public byte BackPage { get; set; }
+
     public byte ScrollLeft { get; set; }
     public byte ScrollRight { get; set; }
     public byte ScrollUp { get; set; }
@@ -61,7 +64,6 @@ public struct PageHeader
 
     public byte Reserved1 { get; set; }
     public byte Reserved2 { get; set; }
-    public byte Reserved3 { get; set; }
 
     public byte MagicEnd { get; set; }
 
@@ -76,6 +78,8 @@ public struct PageHeader
             RightPage = 0xFF,
             UpPage = 0xFF,
             DownPage = 0xFF,
+            FrontPage = 0xFF,
+            BackPage = 0xFF,
 
             ScrollLeft = ScrollEncoding.Encode(ScrollType.None, ScrollFlags.None),
             ScrollRight = ScrollEncoding.Encode(ScrollType.None, ScrollFlags.None),
@@ -86,10 +90,7 @@ public struct PageHeader
         };
     }
 
-    public byte[] ToBytes()
-    {
-        return
-        [
+    public readonly byte[] ToBytes() => [
             MagicStart,
             (byte)Flags,
 
@@ -97,6 +98,8 @@ public struct PageHeader
             RightPage,
             UpPage,
             DownPage,
+            FrontPage,
+            BackPage,
 
             ScrollLeft,
             ScrollRight,
@@ -107,9 +110,7 @@ public struct PageHeader
 
             Reserved1,
             Reserved2,
-            Reserved3,
 
             MagicEnd
         ];
-    }
 }

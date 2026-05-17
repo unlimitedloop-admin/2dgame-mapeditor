@@ -29,6 +29,8 @@ public sealed class PropertyWindowControl : UserControl
     private NumericUpDown _rightPageNumeric = null!;
     private NumericUpDown _upPageNumeric = null!;
     private NumericUpDown _downPageNumeric = null!;
+    private NumericUpDown _frontPageNumeric = null!;
+    private NumericUpDown _backPageNumeric = null!;
     private NumericUpDown _zNumeric = null!;
 
     private ComboBox _scrollLeftCombo = null!;
@@ -97,6 +99,8 @@ public sealed class PropertyWindowControl : UserControl
         _rightPageNumeric = AddByteRow("Right Page");
         _upPageNumeric = AddByteRow("Up Page");
         _downPageNumeric = AddByteRow("Down Page");
+        _frontPageNumeric = AddByteRow("Front Page");
+        _backPageNumeric = AddByteRow("Back Page");
 
         _scrollLeftCombo = AddScrollTypeRow("Left Scroll");
         _scrollLeftNoEdgeCheck = AddCheckRow("Left NoEdge");
@@ -166,6 +170,8 @@ public sealed class PropertyWindowControl : UserControl
         _rightPageNumeric.ValueChanged += (_, _) => UpdatePageHeader();
         _upPageNumeric.ValueChanged += (_, _) => UpdatePageHeader();
         _downPageNumeric.ValueChanged += (_, _) => UpdatePageHeader();
+        _frontPageNumeric.ValueChanged += (_, _) => UpdatePageHeader();
+        _backPageNumeric.ValueChanged += (_, _) => UpdatePageHeader();
         _zNumeric.ValueChanged += (_, _) => UpdatePageHeader();
 
         _scrollLeftCombo.SelectedIndexChanged += (_, _) => UpdatePageHeader();
@@ -214,6 +220,8 @@ public sealed class PropertyWindowControl : UserControl
             _rightPageNumeric.Value = header.RightPage;
             _upPageNumeric.Value = header.UpPage;
             _downPageNumeric.Value = header.DownPage;
+            _frontPageNumeric.Value = header.FrontPage;
+            _backPageNumeric.Value = header.BackPage;
             _zNumeric.Value = header.Z;
 
             SetScrollControls(header.ScrollLeft, _scrollLeftCombo, _scrollLeftNoEdgeCheck, _scrollLeftLoopCheck);
@@ -259,6 +267,8 @@ public sealed class PropertyWindowControl : UserControl
             RightPage = (byte)_rightPageNumeric.Value,
             UpPage = (byte)_upPageNumeric.Value,
             DownPage = (byte)_downPageNumeric.Value,
+            FrontPage = (byte)_frontPageNumeric.Value,
+            BackPage = (byte)_backPageNumeric.Value,
 
             ScrollLeft = GetScrollByte(_scrollLeftCombo, _scrollLeftNoEdgeCheck, _scrollLeftLoopCheck),
             ScrollRight = GetScrollByte(_scrollRightCombo, _scrollRightNoEdgeCheck, _scrollRightLoopCheck),
@@ -289,6 +299,16 @@ public sealed class PropertyWindowControl : UserControl
         var textBox = new TextBox
         {
             Dock = DockStyle.Fill
+        };
+
+        // Enterキーでフォーカスアウト
+        textBox.KeyDown += (sender, e) =>
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.SuppressKeyPress = true;
+                SelectNextControl((Control)sender!, true, true, true, true);
+            }
         };
 
         AddRow(CreateLabel(labelText), textBox);
