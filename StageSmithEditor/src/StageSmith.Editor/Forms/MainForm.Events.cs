@@ -34,7 +34,14 @@ public partial class MainForm
                 PasteSelection(pos.X, pos.Y);
                 return true;
         }
- 
+
+        // ── TextBox フォーカス中の Esc でフォーカスアウト ────────────
+        if (keyData == Keys.Escape && IsFocusedOnTextBox())
+        {
+            _mapView.Focus();
+            return true;
+        }
+
         // ── TextBox フォーカス中はここで終了 ─────────────────────────
         if (IsFocusedOnTextBox())
             return base.ProcessCmdKey(ref msg, keyData);
