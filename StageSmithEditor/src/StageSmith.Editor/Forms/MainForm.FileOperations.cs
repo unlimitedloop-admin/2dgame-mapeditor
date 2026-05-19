@@ -1,9 +1,25 @@
+using StageSmith.Application.Services;
 using StageSmith.Infrastructure.Persistence;
 
 namespace StageSmith.Editor;
 
 public partial class MainForm
 {
+    private string? _currentProjectPath;
+
+    private void NewProject()
+    {
+        var project = ProjectFactory.CreateNewProject();
+
+        _currentProjectPath = null;
+
+        _context.Project = project;
+        _context.SetStage(0);
+        _context.SetPage(0);
+
+        ApplyContextToView();
+    }
+
     private void SaveProject()
     {
         var repository = new JsonProjectRepository();
@@ -80,5 +96,18 @@ public partial class MainForm
             "Export BIN",
             MessageBoxButtons.OK,
             MessageBoxIcon.Information);
+    }
+
+    private void ApplyContextToView()
+    {
+        var page = _context.CurrentPage;
+
+        _page = page;
+
+        _mapView.SetTileMap(page?.TileMap);
+
+        _propertyWindow.RefreshProperties();
+
+        _mapView.Invalidate();
     }
 }

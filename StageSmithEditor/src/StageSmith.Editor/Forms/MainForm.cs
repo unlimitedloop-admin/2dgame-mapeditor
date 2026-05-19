@@ -100,7 +100,7 @@ public partial class MainForm : Form
 
         // テスト用のダミーデータをロード
         // TODO: プロジェクトファイルのロード処理ができたら削除
-        LoadTest();
+        NewProject();
 
         // 初期状態のアイコンを設定
         UpdateTilePreviewIcon();

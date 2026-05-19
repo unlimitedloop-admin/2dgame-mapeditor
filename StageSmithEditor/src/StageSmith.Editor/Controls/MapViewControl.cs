@@ -78,8 +78,7 @@ public class MapViewControl : DoubleBufferedPanel
     // =========================
     // セット系
     // =========================
-
-    public void SetTileMap(TileMap map)
+    public void SetTileMap(TileMap? map)
     {
         _tileMap = map;
         Invalidate();

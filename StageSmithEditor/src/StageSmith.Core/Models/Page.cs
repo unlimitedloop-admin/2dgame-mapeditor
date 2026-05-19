@@ -41,6 +41,11 @@ public sealed class Page
         var buffer = new byte[0x100];
 
         var headerBytes = Header.ToBytes();
+        if (headerBytes.Length != 0x10)
+        {
+            throw new InvalidOperationException($"PageHeader must be 16 bytes, but was {headerBytes.Length} bytes.");
+        }
+
         Array.Copy(headerBytes, 0, buffer, 0x00, 0x10);
 
         var index = 0x10;

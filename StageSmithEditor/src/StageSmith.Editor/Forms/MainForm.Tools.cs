@@ -11,6 +11,7 @@ public partial class MainForm
     //========================
     private ToolStrip _editorToolStrip = null!;
 
+    private ToolStripButton _newButton = null!;
     private ToolStripButton _openButton = null!;
     private ToolStripButton _saveButton = null!;
     private ToolStripButton _exportBinButton = null!;
@@ -31,6 +32,7 @@ public partial class MainForm
             ImageScalingSize = new Size(24, 24)
         };
 
+        _newButton = CreateButton("New", "新規プロジェクト (Ctrl+N)", StageSmithEditor.Properties.Resources.icons8_プロジェクト_30);
         _openButton = CreateButton("Open", "開く", "📂");
         _saveButton = CreateButton("Save", "保存 (Ctrl+Shift+S)", StageSmithEditor.Properties.Resources.icons8_上書き保存_30);
 
@@ -45,6 +47,11 @@ public partial class MainForm
         //========================
         // イベント
         //========================
+        _newButton.Click += (_, _) =>
+        {
+            NewProject();
+        };
+
         _openButton.Click += (_, _) =>
         {
             // TODO: Open処理
@@ -91,6 +98,7 @@ public partial class MainForm
         //========================
         _editorToolStrip.Items.AddRange(new ToolStripItem[]
         {
+            _newButton,
             _openButton,
             _saveButton,
             new ToolStripSeparator(),
