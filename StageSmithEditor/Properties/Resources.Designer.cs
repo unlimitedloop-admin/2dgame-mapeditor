@@ -73,6 +73,26 @@ namespace StageSmithEditor.Properties {
         /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
+        internal static System.Drawing.Bitmap icons8_バイナリファイル_30 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-バイナリファイル-30", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
+        internal static System.Drawing.Bitmap icons8_ファイルを開く_30 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-ファイルを開く-30", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
         internal static System.Drawing.Bitmap icons8_プロジェクト_30 {
             get {
                 object obj = ResourceManager.GetObject("icons8-プロジェクト-30", resourceCulture);
@@ -121,16 +141,6 @@ namespace StageSmithEditor.Properties {
         }
         
         /// <summary>
-        ///   型 System.Byte[] のローカライズされたリソースを検索します。
-        /// </summary>
-        internal static byte[] icons8_塗りつぶしの色_24 {
-            get {
-                object obj = ResourceManager.GetObject("icons8-塗りつぶしの色-24", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
         internal static System.Drawing.Bitmap icons8_目に見えない_24 {
@@ -166,16 +176,6 @@ namespace StageSmithEditor.Properties {
         internal static System.Drawing.Bitmap icons8_鉛筆_24 {
             get {
                 object obj = ResourceManager.GetObject("icons8-鉛筆-24", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
-        /// </summary>
-        internal static System.Drawing.Bitmap tooltip_icon_bin_export_image {
-            get {
-                object obj = ResourceManager.GetObject("tooltip_icon_bin_export_image", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

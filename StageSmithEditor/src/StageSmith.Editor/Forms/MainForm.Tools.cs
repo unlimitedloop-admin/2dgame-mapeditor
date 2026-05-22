@@ -33,10 +33,10 @@ public partial class MainForm
         };
 
         _newButton = CreateButton("New", "新規プロジェクト (Ctrl+N)", StageSmithEditor.Properties.Resources.icons8_プロジェクト_30);
-        _openButton = CreateButton("Open", "開く", "📂");
+        _openButton = CreateButton("Open", "プロジェクトを開く (Ctrl+O)", StageSmithEditor.Properties.Resources.icons8_ファイルを開く_30);
         _saveButton = CreateButton("Save", "保存 (Ctrl+Shift+S)", StageSmithEditor.Properties.Resources.icons8_上書き保存_30);
 
-        _exportBinButton = CreateButton("ExportBin", "バイナリ出力", StageSmithEditor.Properties.Resources.tooltip_icon_bin_export_image);
+        _exportBinButton = CreateButton("ExportBin", "バイナリ出力", StageSmithEditor.Properties.Resources.icons8_バイナリファイル_30);
 
         _undoButton = CreateButton("Undo", "元に戻す (Ctrl+Z)", StageSmithEditor.Properties.Resources.icons8_元に戻す_30);
         _redoButton = CreateButton("Redo", "やり直し (Ctrl+Y)", StageSmithEditor.Properties.Resources.icons8_やり直す_30);
@@ -54,19 +54,17 @@ public partial class MainForm
 
         _openButton.Click += (_, _) =>
         {
-            // TODO: Open処理
+            OpenProject();
         };
 
         _saveButton.Click += (_, _) =>
         {
-            // HACK: とりあえず固定パスで保存。後でファイルダイアログにする。
             SaveProject();
         };
 
         _exportBinButton.Click += (_, _) =>
         {
-            // TODO: ExportBin処理
-            ExportCurrentStageBinTest();
+            ExportCurrentStageBin();
         };
 
             _undoButton.Click += (_, _) =>

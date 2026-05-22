@@ -11,8 +11,8 @@ public partial class MainForm : Form
     //========================
     // EditorFile
     //========================
-    private EditorProject? _project;
-    private Stage? _stage;
+    //private EditorProject? _project;
+    //private Stage? _stage;
     private Page? _page;
     private int _selectedTileId = -1;
     private Bitmap? _tileset;

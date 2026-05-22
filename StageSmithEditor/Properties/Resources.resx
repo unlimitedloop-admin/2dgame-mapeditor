@@ -124,6 +124,12 @@
   <data name="icons8-グリッド-24" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resource\material\icon8\icons8-グリッド-24.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="icons8-バイナリファイル-30" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resource\material\icon8\icons8-バイナリファイル-30.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="icons8-ファイルを開く-30" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resource\material\icon8\icons8-ファイルを開く-30.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="icons8-プロジェクト-30" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resource\material\icon8\icons8-プロジェクト-30.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -136,9 +142,6 @@
   <data name="icons8-名前を付けて保存-30" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resource\material\icon8\icons8-名前を付けて保存-30.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="icons8-塗りつぶしの色-24" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\resource\material\icon8\icons8-塗りつぶしの色-24.cur;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
   <data name="icons8-目に見えない-24" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resource\material\icon8\icons8-目に見えない-24.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -150,8 +153,5 @@
   </data>
   <data name="icons8-鉛筆-24" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resource\material\icon8\icons8-鉛筆-24.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="tooltip_icon_bin_export_image" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\resource\material\original\tooltip_icon_bin_export_image.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

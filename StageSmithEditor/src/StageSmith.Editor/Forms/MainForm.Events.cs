@@ -22,7 +22,15 @@ public partial class MainForm
                 _commandManager.Redo();
                 _mapView.Invalidate();
                 return true;
- 
+
+            case Keys.Control | Keys.O:
+                OpenProject();
+                return true;
+
+            case Keys.Control | Keys.N:
+                NewProject();
+                return true;
+
             case Keys.Control | Keys.C:
                 CopySelection();
                 return true;

@@ -1,4 +1,5 @@
 using StageSmith.Core.Models;
+using StageSmith.Editor.Utilities;
 
 namespace StageSmith.Editor.Tools;
 
@@ -38,10 +39,8 @@ public class FillTool : ITool
 
     public Cursor GetCursor(int x, int y)
     {
-        if (_bucketCursor == null)
-        {
-            _bucketCursor = new Cursor(new MemoryStream(StageSmithEditor.Properties.Resources.icons8_塗りつぶしの色_24));
-        }
+        _bucketCursor ??= CursorFactory.FromPng(@"resource/cur/icons8-塗りつぶしの色-24.png", 21, 21);
+
         return _bucketCursor;
     }
 }
