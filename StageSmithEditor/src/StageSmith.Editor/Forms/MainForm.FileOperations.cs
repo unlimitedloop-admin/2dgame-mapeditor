@@ -1,4 +1,5 @@
 using StageSmith.Application.Services;
+using StageSmith.Core.Constants;
 using StageSmith.Infrastructure.Persistence;
 
 namespace StageSmith.Editor;
@@ -25,7 +26,7 @@ public partial class MainForm
         using var dialog = new OpenFileDialog
         {
             Title = "プロジェクトを開く",
-            Filter = "StageSmith Project (*.def)|*.def|All files (*.*)|*.*"
+            Filter = FileExtensions.ProjectFilter
         };
 
         if (dialog.ShowDialog(this) != DialogResult.OK)
@@ -72,8 +73,8 @@ public partial class MainForm
         using var dialog = new SaveFileDialog
         {
             Title = "プロジェクトを保存",
-            Filter = "StageSmith Project (*.def)|*.def|All files (*.*)|*.*",
-            FileName = $"{_context.Project.Name}.def"
+            Filter = FileExtensions.ProjectFilter,
+            FileName = $"{_context.Project.Name}{FileExtensions.Project}"
         };
 
         if (dialog.ShowDialog(this) != DialogResult.OK)
@@ -155,8 +156,8 @@ public partial class MainForm
         using var dialog = new SaveFileDialog
         {
             Title = "BINファイルを出力",
-            Filter = "BIN files (*.bin)|*.bin|All files (*.*)|*.*",
-            FileName = $"{stage.Name}.bin"
+            Filter = FileExtensions.BinaryFilter,
+            FileName = $"{stage.Name}{FileExtensions.StageMapBinary}"
         };
 
         if (dialog.ShowDialog(this) != DialogResult.OK)

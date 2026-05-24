@@ -20,23 +20,23 @@ public sealed class JsonProjectRepository : IProjectRepository
         };
     }
 
-    /// <summary>
-    /// JSONファイルからプロジェクトを読み込む
-    /// </summary>
-    public EditorProject Load(string path)
-    {
-        string json = File.ReadAllText(path);
-        var project = JsonSerializer.Deserialize<EditorProject>(json, _options);
-
-        return project is null ? throw new InvalidOperationException($"Failed to deserialize project from: {path}") : project;
-    }
-
-    /// <summary>
-    /// プロジェクトをJSONファイルに保存する
-    /// </summary>
+    // プロジェクトの保存と読み込みをJSON形式で行う
     public void Save(EditorProject project, string path)
     {
-        string json = JsonSerializer.Serialize(project, _options);
+        var json = JsonSerializer.Serialize(project, new JsonSerializerOptions
+        {
+            WriteIndented = true
+        });
+
         File.WriteAllText(path, json);
+    }
+
+    // 指定されたパスからプロジェクトを読み込む
+    public EditorProject Load(string path)
+    {
+        var json = File.ReadAllText(path);
+
+        return JsonSerializer.Deserialize<EditorProject>(json)
+            ?? throw new InvalidOperationException("プロジェクトファイルの読み込みに失敗しました。");
     }
 }
