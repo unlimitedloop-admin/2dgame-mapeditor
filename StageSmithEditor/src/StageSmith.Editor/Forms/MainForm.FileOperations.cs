@@ -175,16 +175,69 @@ public partial class MainForm
             MessageBoxIcon.Information);
     }
 
+    private void OpenTilesetImage()
+    {
+        var stage = _context.CurrentStage;
+
+        if (stage == null)
+        {
+            MessageBox.Show("タイル画像を設定するステージがありません。");
+            return;
+        }
+
+        using var dialog = new OpenFileDialog
+        {
+            Title = "タイル画像を開く",
+            Filter = FileExtensions.ImageFilter
+        };
+
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+            return;
+
+        stage.TilesetImagePath = dialog.FileName;
+
+        LoadTilesetImage(dialog.FileName);
+
+        _tilePalette.Invalidate();
+        _mapView.Invalidate();
+    }
+
+    private void LoadTilesetImage(string path)
+    {
+        if (!File.Exists(path))
+        {
+            MessageBox.Show(
+                $"タイル画像が見つかりません。\n{path}",
+                "Tileset",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return;
+        }
+
+        _tileset?.Dispose();
+        _tileset = new Bitmap(path);
+
+        _tilePalette.SetTileset(_tileset);
+        _mapView.SetTileset(_tileset);
+    }
+
     private void ApplyContextToView()
     {
+        var stage = _context.CurrentStage;
         var page = _context.CurrentPage;
 
         _page = page;
 
         _mapView.SetTileMap(page?.TileMap);
 
+        if (!string.IsNullOrWhiteSpace(stage?.TilesetImagePath))
+        {
+            LoadTilesetImage(stage.TilesetImagePath);
+        }
+
         _propertyWindow.RefreshProperties();
 
         _mapView.Invalidate();
+        _tilePalette.Invalidate();
     }
 }

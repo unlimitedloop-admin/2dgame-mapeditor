@@ -11,4 +11,7 @@ public static class FileExtensions
 
     public const string BinaryFilter =
         "Stage Map Binary (*.bin)|*.bin|All files (*.*)|*.*";
+
+    public const string ImageFilter =
+        "Image Files (*.png;*.bmp)|*.png;*.bmp|All files (*.*)|*.*";
 }

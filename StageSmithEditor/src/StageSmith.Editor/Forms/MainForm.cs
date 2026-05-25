@@ -82,6 +82,8 @@ public partial class MainForm : Form
         InitializePropertyWindow();
         BindToolManager();
 
+        BindTilePalette();
+
         KeyDown += (_, e) =>
         {
             if (e.KeyCode == Keys.ShiftKey)
@@ -98,8 +100,6 @@ public partial class MainForm : Form
             }
         };
 
-        // テスト用のダミーデータをロード
-        // TODO: プロジェクトファイルのロード処理ができたら削除
         NewProject();
 
         // 初期状態のアイコンを設定
