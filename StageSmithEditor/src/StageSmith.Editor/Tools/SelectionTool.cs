@@ -1,4 +1,3 @@
-using StageSmith.Application.Commands;
 using System.Drawing.Drawing2D;
 using Timer = System.Windows.Forms.Timer;
 
@@ -201,6 +200,24 @@ public class SelectionTool : ITool, IDisposable
     // =========================
     // 外部操作
     // =========================
+
+    /// <summary>
+    /// 選択範囲の確定操作（Enter キーなど）を通知する。
+    /// 選択範囲がある場合に Confirmed イベントを発火し、呼び出し元が処理を行う。
+    /// 選択範囲がなければ何もしない。
+    /// </summary>
+    public void OnConfirm()
+    {
+        if (SelectionRect == null) return;
+        Confirmed?.Invoke();
+        ClearSelection();
+    }
+
+    /// <summary>
+    /// OnConfirm() が呼ばれたとき（選択範囲がある場合のみ）に発火する。
+    /// 塗りつぶしやその他の確定処理はこのイベントを購読して実装する。
+    /// </summary>
+    public event Action? Confirmed;
 
     public void ClearSelection()
     {

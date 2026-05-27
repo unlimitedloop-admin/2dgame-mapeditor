@@ -12,12 +12,12 @@ public partial class MainForm
             case Keys.Control | Keys.Shift | Keys.S:
                 SaveProject();
                 return true;
- 
+
             case Keys.Control | Keys.Z:
                 _commandManager.Undo();
                 _mapView.Invalidate();
                 return true;
- 
+
             case Keys.Control | Keys.Y:
                 _commandManager.Redo();
                 _mapView.Invalidate();
@@ -34,7 +34,7 @@ public partial class MainForm
             case Keys.Control | Keys.C:
                 CopySelection();
                 return true;
- 
+
             case Keys.Control | Keys.V:
                 if (_clipboard == null) return true;
                 var pos = _mapView.GetHoverTile();
@@ -53,7 +53,7 @@ public partial class MainForm
         // ── TextBox フォーカス中はここで終了 ─────────────────────────
         if (IsFocusedOnTextBox())
             return base.ProcessCmdKey(ref msg, keyData);
- 
+
         // ── 単体キー（TextBox 以外のとき有効） ───────────────────────
         switch (keyData)
         {
@@ -62,34 +62,38 @@ public partial class MainForm
                 _selectionTool?.ClearSelection();
                 _mapView.Invalidate();
                 return true;
- 
+
             case Keys.P:
                 SetToolMode(EditorToolMode.Pen);
                 return true;
- 
+
             case Keys.S:
                 SetToolMode(EditorToolMode.Selection);
                 return true;
- 
+
             case Keys.Insert:
                 ApplySelectionFill();
                 return true;
- 
+
+            case Keys.Enter:
+                _selectionTool?.OnConfirm();
+                return true;
+
             case Keys.Delete:
                 DeleteSelection();
                 return true;
- 
+
             case Keys.Control | Keys.D1:
             case Keys.Control | Keys.NumPad1:
                 SetToolMode(EditorToolMode.Pen);
                 return true;
- 
+
             case Keys.Control | Keys.D2:
             case Keys.Control | Keys.NumPad2:
                 SetToolMode(EditorToolMode.Selection);
                 return true;
         }
- 
+
         return base.ProcessCmdKey(ref msg, keyData);
     }
 

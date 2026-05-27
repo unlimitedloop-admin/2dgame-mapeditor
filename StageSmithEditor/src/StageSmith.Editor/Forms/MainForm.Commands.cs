@@ -12,7 +12,7 @@ public partial class MainForm
 
         var positions = _selectionTool
             .GetSelectedPositions()
-            .Where(p => _page.TileMap.GetTile(p.x, p.y) != 0)
+            .Where(p => _page.TileMap.GetTile(p.x, p.y) != _selectedTileId)
             .ToList();
 
         if (positions.Count == 0)

@@ -81,7 +81,6 @@ public partial class MainForm : Form
         InitializeToolStrip();
         InitializePropertyWindow();
         BindToolManager();
-
         BindTilePalette();
 
         KeyDown += (_, e) =>
@@ -149,6 +148,7 @@ public partial class MainForm : Form
 
         _selectionTool.SelectionChanged += () => _mapView.Invalidate();
         _selectionTool.MoveRequested += OnSelectionMoveRequested;
+        _selectionTool.Confirmed += ApplySelectionFill;
 
         // Fill
         _fillTool = new FillTool(
