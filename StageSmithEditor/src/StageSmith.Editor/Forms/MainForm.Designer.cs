@@ -1,3 +1,4 @@
+using StageSmith.Core.Constants;
 using StageSmith.Editor.Controls;
 
 namespace StageSmith.Editor
@@ -58,7 +59,7 @@ namespace StageSmith.Editor
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(799, 450);
+            ClientSize = ViewerConstants.MainFormClientSize;
             Controls.Add(btnTilePreview);
             Controls.Add(btnGrid);
             Name = "MainForm";

@@ -18,6 +18,7 @@ public partial class MainForm
         _context.SetStage(0);
         _context.SetPage(0);
 
+        BindStageExplorer();
         ApplyContextToView();
     }
 
@@ -41,6 +42,7 @@ public partial class MainForm
         _context.SetStage(0);
         _context.SetPage(0);
 
+        BindStageExplorer();
         ApplyContextToView();
     }
 
@@ -237,7 +239,21 @@ public partial class MainForm
 
         _propertyWindow.RefreshProperties();
 
+        SyncExplorerHighlight();
+
         _mapView.Invalidate();
         _tilePalette.Invalidate();
+    }
+
+    /// <summary>
+    /// 現在の EditorContext に合わせて StageExplorer のハイライトを更新する。
+    /// </summary>
+    private void SyncExplorerHighlight()
+    {
+        var stage = _context.CurrentStage;
+        var page = _context.CurrentPage;
+
+        if (stage != null && page != null)
+            _stageExplorer.SetCurrentPage(stage, page);
     }
 }

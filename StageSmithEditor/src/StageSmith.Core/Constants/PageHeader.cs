@@ -113,4 +113,10 @@ public struct PageHeader
 
             MagicEnd
         ];
+
+    /// <summary>
+    /// このヘッダの複製を返す。
+    /// struct の値コピーなので全フィールドがそのままコピーされる。
+    /// </summary>
+    public readonly PageHeader Clone() => this;
 }

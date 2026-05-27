@@ -30,6 +30,7 @@ public partial class MainForm : Form
     private readonly MapViewControl _mapView;
     private readonly TilePaletteControl _tilePalette;
     private PropertyWindowControl _propertyWindow = null!;
+    private StageExplorerControl _stageExplorer = null!;
 
     //========================
     // Tools
@@ -80,6 +81,7 @@ public partial class MainForm : Form
         InitializeTools();
         InitializeToolStrip();
         InitializePropertyWindow();
+        InitializeStageExplorer();
         BindToolManager();
         BindTilePalette();
 
@@ -208,6 +210,50 @@ public partial class MainForm : Form
         _propertyWindow.Bind(_context);
 
         Controls.Add(_propertyWindow);
+    }
+
+    private void InitializeStageExplorer()
+    {
+        _stageExplorer = new StageExplorerControl
+        {
+            Location = ViewerConstants.StageExplorerLocation,
+            Size = ViewerConstants.StageExplorerSize
+        };
+
+        Controls.Add(_stageExplorer);
+    }
+
+    //========================
+    // StageExplorer バインド
+    //========================
+    private void BindStageExplorer()
+    {
+        if (_context.Project == null) return;
+
+        _stageExplorer.Bind(_context.Project);
+
+        // ページ選択 → MapView に反映
+        _stageExplorer.PageSelected += (stage, page) =>
+        {
+            _context.SetStage(_context.Project!.Stages.IndexOf(stage));
+            _context.SetPage(stage.Pages.IndexOf(page));
+            ApplyContextToView();
+        };
+
+        // ステージ一覧変更 → ツリー同期は StageExplorer 内部で完結
+        // 必要に応じて外部へ通知する用途で購読しておく
+        _stageExplorer.StageListChanged += () =>
+        {
+            _propertyWindow.RefreshProperties();
+        };
+
+        _stageExplorer.PageListChanged += _ =>
+        {
+            _propertyWindow.RefreshProperties();
+        };
+
+        // 現在のページをハイライト
+        SyncExplorerHighlight();
     }
 
     //========================

@@ -34,6 +34,28 @@ public sealed class Page
 
     public PageHeader Header { get; set; } = PageHeader.CreateDefault();
 
+    /// <summary>
+    /// このページの複製を生成する。
+    /// Id は新規発行、TileMap はディープコピーされる。
+    /// </summary>
+    public Page Clone()
+    {
+        var clone = new Page
+        {
+            Name = Name,
+            Enable = Enable,
+            ReadOnly = ReadOnly,
+            Remarks = Remarks,
+            Tag = Tag,
+            Z = Z,
+            ScrollType = ScrollType,
+            Header = Header.Clone(),
+            TileMap = TileMap.Clone()
+        };
+
+        return clone;
+    }
+
     public byte[] ToBinary()
     {
         // ヘッダ16バイト + タイルデータ(幅×高さ)

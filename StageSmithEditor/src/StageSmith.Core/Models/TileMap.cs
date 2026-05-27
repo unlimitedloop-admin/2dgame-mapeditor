@@ -42,6 +42,17 @@ public sealed class TileMap
         return (byte[])Tiles.Clone();
     }
 
+    /// <summary>
+    /// この TileMap のディープコピーを返す。
+    /// Tiles 配列は新しい配列としてコピーされる。
+    /// </summary>
+    public TileMap Clone()
+    {
+        var clone = new TileMap();
+        Array.Copy(Tiles, clone.Tiles, Tiles.Length);
+        return clone;
+    }
+
     public void Fill(byte tileId)
     {
         Array.Fill(Tiles, tileId);
