@@ -1,4 +1,5 @@
 using System.Drawing.Drawing2D;
+using StageSmith.Core.Constants;
 using Timer = System.Windows.Forms.Timer;
 
 namespace StageSmith.Editor.Tools;
@@ -309,7 +310,11 @@ public class SelectionTool : ITool, IDisposable
             return;
 
         var rect = SelectionRect.Value;
-        var tilesPerRow = tileset.Width / tileSize;
+
+        // srcSize: タイル画像の論理サイズ（切り出し用 = 16px）
+        // tileSize: 画面上の描画サイズ（表示用 = 32px）
+        var srcSize = MapConstants.DefaultTileSize;
+        var tilesPerRow = tileset.Width / srcSize;
 
         using var attr = new System.Drawing.Imaging.ImageAttributes();
         var matrix = new System.Drawing.Imaging.ColorMatrix { Matrix33 = 0.5f };
@@ -321,15 +326,17 @@ public class SelectionTool : ITool, IDisposable
             {
                 var id = _moveBuffer[x, y];
 
-                var sx = (id % tilesPerRow) * tileSize;
-                var sy = (id / tilesPerRow) * tileSize;
+                // 切り出し位置は srcSize（16px）基準
+                var sx = (id % tilesPerRow) * srcSize;
+                var sy = (id / tilesPerRow) * srcSize;
 
+                // 描画位置は tileSize（32px）基準で拡大表示
                 var dst = new Rectangle(
                     (rect.X + _currentOffset.X + x) * tileSize,
                     (rect.Y + _currentOffset.Y + y) * tileSize,
                     tileSize, tileSize);
 
-                g.DrawImage(tileset, dst, sx, sy, tileSize, tileSize,
+                g.DrawImage(tileset, dst, sx, sy, srcSize, srcSize,
                     GraphicsUnit.Pixel, attr);
             }
         }
