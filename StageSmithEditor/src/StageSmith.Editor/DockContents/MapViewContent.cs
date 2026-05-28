@@ -1,4 +1,5 @@
 using WeifenLuo.WinFormsUI.Docking;
+using StageSmith.Core.Constants;
 using StageSmith.Editor.Controls;
 
 namespace StageSmith.Editor.DockContents;
@@ -23,9 +24,22 @@ public class MapViewContent : DockContent
         {
             Dock = DockStyle.Fill,
             Orientation = Orientation.Horizontal,
-            FixedPanel = FixedPanel.Panel2,    // タイルパレット側を固定高さに
-            SplitterDistance = 240,
-            Panel2MinSize = 128
+            FixedPanel = FixedPanel.Panel1,
+            Panel1MinSize = ViewerConstants.MapViewRenderSize.Height + 20,  // 480px + 境目が見分けられる余裕分
+            Panel2MinSize = ViewerConstants.TileRenderSize * 2              // タイルパレット最小高さ
+        };
+
+        // レイアウト確定後に SplitterDistance を設定する
+        // コンストラクタ時点ではコントロールサイズが未確定のため、
+        // Layout イベントで一度だけ設定し直す
+        splitContainer.Layout += (s, e) =>
+        {
+            var sc = (SplitContainer)s!;
+            var target = ViewerConstants.MapViewRenderSize.Height;
+            if (sc.SplitterDistance != target && sc.Height > target)
+            {
+                sc.SplitterDistance = target;
+            }
         };
 
         MapView = new MapViewControl

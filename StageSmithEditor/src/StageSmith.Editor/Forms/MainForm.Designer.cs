@@ -31,37 +31,13 @@ namespace StageSmith.Editor
         /// </summary>
         private void InitializeComponent()
         {
-            btnGrid = new Button();
-            btnTilePreview = new Button();
             SuspendLayout();
-            // 
-            // btnGrid
-            // 
-            btnGrid.Image = StageSmithEditor.Properties.Resources.icons8_グリッド_24;
-            btnGrid.Location = new Point(12, 48);
-            btnGrid.Name = "btnGrid";
-            btnGrid.Size = new Size(30, 30);
-            btnGrid.TabIndex = 2;
-            btnGrid.UseVisualStyleBackColor = true;
-            btnGrid.Click += btnGrid_Click;
-            // 
-            // btnTilePreview
-            // 
-            btnTilePreview.Image = StageSmithEditor.Properties.Resources.icons8_目に見える_24;
-            btnTilePreview.Location = new Point(44, 48);
-            btnTilePreview.Name = "btnTilePreview";
-            btnTilePreview.Size = new Size(30, 30);
-            btnTilePreview.TabIndex = 6;
-            btnTilePreview.UseVisualStyleBackColor = true;
-            btnTilePreview.Click += btnTilePreview_Click;
             // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = ViewerConstants.MainFormClientSize;
-            Controls.Add(btnTilePreview);
-            Controls.Add(btnGrid);
+            ClientSize = new Size(1200, 900);
             Name = "MainForm";
             Text = "MainForm";
             Load += MainForm_Load;
@@ -69,7 +45,5 @@ namespace StageSmith.Editor
         }
 
         #endregion
-        private Button btnGrid;
-        private Button btnTilePreview;
     }
 }

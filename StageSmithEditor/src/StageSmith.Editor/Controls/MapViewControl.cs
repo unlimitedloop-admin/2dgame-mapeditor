@@ -123,8 +123,8 @@ public class MapViewControl : DoubleBufferedPanel
         DrawPreview(g);
 
         // SelectionToolに描かせる
-        SelectionTool?.DrawOverlay(g, MapConstants.DefaultTileSize);
-        SelectionTool?.DrawMovingOverlay(g, MapConstants.DefaultTileSize, _tileset);
+        SelectionTool?.DrawOverlay(g, ViewerConstants.TileRenderSize);
+        SelectionTool?.DrawMovingOverlay(g, ViewerConstants.TileRenderSize, _tileset);
 
         // Extended add plus cursor at copy mode
         if (SelectionTool?.IsCopyModeActive() == true)
@@ -137,8 +137,9 @@ public class MapViewControl : DoubleBufferedPanel
     {
         if (_tileMap == null || _tileset == null) return;
 
-        var tileSize = MapConstants.DefaultTileSize;
-        var tilesPerRow = _tileset.Width / tileSize;
+        var srcSize = MapConstants.DefaultTileSize;   // 16: 画像の切り出しサイズ
+        var dstSize = ViewerConstants.TileRenderSize; // 32: 画面上の描画サイズ
+        var tilesPerRow = _tileset.Width / srcSize;
 
         for (var y = 0; y < _tileMap.Height; y++)
         {
@@ -146,11 +147,11 @@ public class MapViewControl : DoubleBufferedPanel
             {
                 var tileId = _tileMap.GetTile(x, y);
 
-                var sx = (tileId % tilesPerRow) * tileSize;
-                var sy = (tileId / tilesPerRow) * tileSize;
+                var sx = (tileId % tilesPerRow) * srcSize;
+                var sy = (tileId / tilesPerRow) * srcSize;
 
-                var srcRect = new Rectangle(sx, sy, tileSize, tileSize);
-                var dstRect = new Rectangle(x * tileSize, y * tileSize, tileSize, tileSize);
+                var srcRect = new Rectangle(sx, sy, srcSize, srcSize);
+                var dstRect = new Rectangle(x * dstSize, y * dstSize, dstSize, dstSize);
 
                 g.DrawImage(_tileset, dstRect, srcRect, GraphicsUnit.Pixel);
             }
@@ -161,20 +162,20 @@ public class MapViewControl : DoubleBufferedPanel
     {
         if (_tileMap == null) return;
 
-        var tileSize = MapConstants.DefaultTileSize;
+        var dstSize = ViewerConstants.TileRenderSize;
 
         using var pen = new Pen(Color.FromArgb(80, Color.White));
 
         for (var x = 0; x <= _tileMap.Width; x++)
         {
-            var px = x * tileSize;
-            g.DrawLine(pen, px, 0, px, _tileMap.Height * tileSize);
+            var px = x * dstSize;
+            g.DrawLine(pen, px, 0, px, _tileMap.Height * dstSize);
         }
 
         for (var y = 0; y <= _tileMap.Height; y++)
         {
-            var py = y * tileSize;
-            g.DrawLine(pen, 0, py, _tileMap.Width * tileSize, py);
+            var py = y * dstSize;
+            g.DrawLine(pen, 0, py, _tileMap.Width * dstSize, py);
         }
     }
 
@@ -184,18 +185,19 @@ public class MapViewControl : DoubleBufferedPanel
         if (_tileset == null || PreviewTileId < 0) return;
         if (_hoverTile.X < 0 || _hoverTile.Y < 0) return;
 
-        var tileSize = MapConstants.DefaultTileSize;
-        var tilesPerRow = _tileset.Width / tileSize;
+        var srcSize = MapConstants.DefaultTileSize;   // 16: 画像の切り出しサイズ
+        var dstSize = ViewerConstants.TileRenderSize; // 32: 画面上の描画サイズ
+        var tilesPerRow = _tileset.Width / srcSize;
 
-        var sx = (PreviewTileId % tilesPerRow) * tileSize;
-        var sy = (PreviewTileId / tilesPerRow) * tileSize;
+        var sx = (PreviewTileId % tilesPerRow) * srcSize;
+        var sy = (PreviewTileId / tilesPerRow) * srcSize;
 
-        var srcRect = new Rectangle(sx, sy, tileSize, tileSize);
+        var srcRect = new Rectangle(sx, sy, srcSize, srcSize);
         var dstRect = new Rectangle(
-            _hoverTile.X * tileSize,
-            _hoverTile.Y * tileSize,
-            tileSize,
-            tileSize
+            _hoverTile.X * dstSize,
+            _hoverTile.Y * dstSize,
+            dstSize,
+            dstSize
         );
 
         using var attr = new System.Drawing.Imaging.ImageAttributes();
@@ -321,8 +323,8 @@ public class MapViewControl : DoubleBufferedPanel
     // =========================
     private static (int x, int y) ScreenToTile(int px, int py)
     {
-        var tileSize = MapConstants.DefaultTileSize;
-        return (px / tileSize, py / tileSize);
+        var dstSize = ViewerConstants.TileRenderSize;
+        return (px / dstSize, py / dstSize);
     }
 
     private bool IsInside(int x, int y)

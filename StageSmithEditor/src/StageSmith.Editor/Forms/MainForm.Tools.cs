@@ -20,6 +20,8 @@ public partial class MainForm
     private ToolStripButton _redoButton = null!;
     private ToolStripButton _penButton = null!;
     private ToolStripButton _selectionButton = null!;
+    private ToolStripButton _showGridButton = null!;
+    private ToolStripButton _tilePreviewButton = null!;
 
     //========================
     // 初期化
@@ -45,6 +47,8 @@ public partial class MainForm
 
         _penButton = CreateButton("Pen", "ペン (P)", StageSmithEditor.Properties.Resources.icons8_鉛筆_24, true);
         _selectionButton = CreateButton("Selection", "選択 (S)", StageSmithEditor.Properties.Resources.icons8_選択_24, true);
+        _showGridButton = CreateButton("ShowGrid", "グリッド表示切替 (G)", StageSmithEditor.Properties.Resources.icons8_グリッド_24, true);
+        _tilePreviewButton = CreateButton("TilePreview", "タイルプレビュー切替 (T)", StageSmithEditor.Properties.Resources.icons8_目に見える_24, true);
 
         //========================
         // イベント
@@ -98,6 +102,18 @@ public partial class MainForm
             OpenTilesetImage();
         };
 
+        _showGridButton.Click += (_, _) =>
+        {
+            _showGrid = !_showGrid;
+            _mapView.SetShowGrid(_showGrid);
+        };
+
+        _tilePreviewButton.Click += (_, _) =>
+        {
+            _mapView.ShowPreview = !_mapView.ShowPreview;
+            UpdateTilePreviewIcon();
+        };
+
         //========================
         // UI構築
         //========================
@@ -115,7 +131,9 @@ public partial class MainForm
             _redoButton,
             new ToolStripSeparator(),
             _penButton,
-            _selectionButton
+            _selectionButton,
+            _showGridButton,
+            _tilePreviewButton
         });
 
         Controls.Add(_editorToolStrip);

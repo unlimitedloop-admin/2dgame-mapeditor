@@ -97,27 +97,15 @@ public partial class MainForm
         return base.ProcessCmdKey(ref msg, keyData);
     }
 
-    private void btnGrid_Click(object? sender, EventArgs e)
-    {
-        _showGrid = !_showGrid;
-        _mapView.SetShowGrid(_showGrid);
-    }
-
-    private void btnTilePreview_Click(object sender, EventArgs e)
-    {
-        _mapView.ShowPreview = !_mapView.ShowPreview;
-        UpdateTilePreviewIcon();
-    }
-
     private void UpdateTilePreviewIcon()
     {
         if (_mapView.ShowPreview)
         {
-            btnTilePreview.Image = StageSmithEditor.Properties.Resources.icons8_目に見える_24;
+            _tilePreviewButton.Image = StageSmithEditor.Properties.Resources.icons8_目に見える_24;
         }
         else
         {
-            btnTilePreview.Image = StageSmithEditor.Properties.Resources.icons8_目に見えない_24;
+            _tilePreviewButton.Image = StageSmithEditor.Properties.Resources.icons8_目に見えない_24;
         }
     }
 
