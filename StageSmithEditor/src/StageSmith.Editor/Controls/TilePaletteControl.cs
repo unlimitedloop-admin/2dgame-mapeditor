@@ -25,7 +25,7 @@ public class TilePaletteControl : DoubleBufferedPanel
     {
         _tileset = tileset;
 
-        var tileSize = MapConstants.TilePixelSize;
+        var tileSize = MapConstants.DefaultTileSize;
         var cols = _tileset.Width / tileSize;
         var rows = _tileset.Height / tileSize;
 
@@ -51,7 +51,7 @@ public class TilePaletteControl : DoubleBufferedPanel
         var g = e.Graphics;
         g.Clear(this.BackColor);
 
-        var tileSize = MapConstants.TilePixelSize;
+        var tileSize = MapConstants.DefaultTileSize;
         var tilesPerRow = _tileset.Width / tileSize;
         var tilesPerCol = _tileset.Height / tileSize;
         var totalTiles = tilesPerRow * tilesPerCol;
@@ -102,7 +102,7 @@ public class TilePaletteControl : DoubleBufferedPanel
 
         if (_tileset == null) return;
 
-        var tileSize = MapConstants.TilePixelSize;
+        var tileSize = MapConstants.DefaultTileSize;
         var offset = AutoScrollPosition;
 
         var rawX = e.X - offset.X;

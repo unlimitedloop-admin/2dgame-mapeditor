@@ -2,7 +2,9 @@ using StageSmith.Application.Commands;
 using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
 using StageSmith.Editor.Controls;
+using StageSmith.Editor.DockContents;
 using StageSmith.Editor.Tools;
+using WeifenLuo.WinFormsUI.Docking;
 
 namespace StageSmith.Editor;
 
@@ -11,8 +13,6 @@ public partial class MainForm : Form
     //========================
     // EditorFile
     //========================
-    //private EditorProject? _project;
-    //private Stage? _stage;
     private Page? _page;
     private int _selectedTileId = -1;
     private Bitmap? _tileset;
@@ -25,12 +25,24 @@ public partial class MainForm : Form
     private readonly ToolManager _toolManager = new();
 
     //========================
-    // Controls
+    // DockPanel
     //========================
-    private readonly MapViewControl _mapView;
-    private readonly TilePaletteControl _tilePalette;
-    private PropertyWindowControl _propertyWindow = null!;
-    private StageExplorerControl _stageExplorer = null!;
+    private readonly DockPanel _dockPanel;
+
+    //========================
+    // DockContents
+    //========================
+    private readonly MapViewContent _mapViewContent;
+    private readonly StageExplorerContent _stageExplorerContent;
+    private readonly PropertyWindowContent _propertyWindowContent;
+
+    //========================
+    // Controls（DockContent 経由で参照）
+    //========================
+    private MapViewControl _mapView => _mapViewContent.MapView;
+    private TilePaletteControl _tilePalette => _mapViewContent.TilePalette;
+    private PropertyWindowControl _propertyWindow => _propertyWindowContent.PropertyWindow;
+    private StageExplorerControl _stageExplorer => _stageExplorerContent.StageExplorer;
 
     //========================
     // Tools
@@ -58,58 +70,72 @@ public partial class MainForm : Form
         StartPosition = FormStartPosition.CenterScreen;
         KeyPreview = true;
 
-        _mapView = new MapViewControl
+        // DockPanel をメインコンテナとして設置
+        _dockPanel = new DockPanel
         {
-            Location = ViewerConstants.MapViewLocation,
-            Size = ViewerConstants.MapViewSize
+            Dock = DockStyle.Fill,
+            DocumentStyle = DocumentStyle.DockingWindow,
         };
-        _mapView.Click += (s, e) => _mapView.Focus();
-        Controls.Add(_mapView);
-        // TextBoxなどにフォーカスがある時に MainForm クリック時、
-        // マップエディタの性質上、「何もないところをクリック＝マップビューに戻る」という操作が自然なので、
-        // フォーカスの基本位置を _mapView に統一する。
-        Click += (s, e) => _mapView.Focus();
 
-        _tilePalette = new TilePaletteControl
-        {
-            Location = ViewerConstants.TilePaletteLocation,
-            Size = ViewerConstants.TilePaletteSize
-        };
+        // VS2015 テーマを適用（インストール済みの場合）
+        _dockPanel.Theme = new VS2015BlueTheme();
+
+        Controls.Add(_dockPanel);
+
+        // DockContent を生成
+        _mapViewContent = new MapViewContent();
+        _stageExplorerContent = new StageExplorerContent();
+        _propertyWindowContent = new PropertyWindowContent();
+
+        // クリック時のフォーカス設定
+        _mapView.Click += (s, e) => _mapView.Focus();
         _tilePalette.Click += (s, e) => _tilePalette.Focus();
-        Controls.Add(_tilePalette);
+        Click += (s, e) => _mapView.Focus();
 
         InitializeTools();
         InitializeToolStrip();
-        InitializePropertyWindow();
-        InitializeStageExplorer();
+        InitializeDockLayout();
         BindToolManager();
         BindTilePalette();
+
+        // PropertyWindow のバインド
+        _propertyWindow.Bind(_context);
 
         KeyDown += (_, e) =>
         {
             if (e.KeyCode == Keys.ShiftKey)
-            {
                 _mapView.UpdateCursor();
-            }
         };
 
         KeyUp += (_, e) =>
         {
             if (e.KeyCode == Keys.ShiftKey)
-            {
                 _mapView.UpdateCursor();
-            }
         };
 
         NewProject();
 
-        // 初期状態のアイコンを設定
         UpdateTilePreviewIcon();
     }
 
     // REVIEW: 未使用?
     private void MainForm_Load(object sender, EventArgs e)
     {
+    }
+
+    // =========================
+    // DockLayout 初期化
+    // =========================
+    private void InitializeDockLayout()
+    {
+        // 左: StageExplorer
+        _stageExplorerContent.Show(_dockPanel, DockState.DockLeft);
+
+        // 右: PropertyWindow
+        _propertyWindowContent.Show(_dockPanel, DockState.DockRight);
+
+        // 中央: MapView + TilePalette（Document 領域）
+        _mapViewContent.Show(_dockPanel, DockState.Document);
     }
 
     // =========================
@@ -167,13 +193,12 @@ public partial class MainForm : Form
                 );
 
                 _commandManager.Execute(command);
-
                 _mapView.Invalidate();
             },
             _selectedTileId
         );
 
-        // MapView接続
+        // MapView接続（DockContent 生成後なので直接参照可能）
         _mapView.ToolManager = _toolManager;
         _mapView.PickerTool = _pickerTool;
         _mapView.SelectionTool = _selectionTool;
@@ -204,25 +229,6 @@ public partial class MainForm : Form
         };
     }
 
-    private void InitializePropertyWindow()
-    {
-        _propertyWindow = new PropertyWindowControl();
-        _propertyWindow.Bind(_context);
-
-        Controls.Add(_propertyWindow);
-    }
-
-    private void InitializeStageExplorer()
-    {
-        _stageExplorer = new StageExplorerControl
-        {
-            Location = ViewerConstants.StageExplorerLocation,
-            Size = ViewerConstants.StageExplorerSize
-        };
-
-        Controls.Add(_stageExplorer);
-    }
-
     //========================
     // StageExplorer バインド
     //========================
@@ -240,8 +246,6 @@ public partial class MainForm : Form
             ApplyContextToView();
         };
 
-        // ステージ一覧変更 → ツリー同期は StageExplorer 内部で完結
-        // 必要に応じて外部へ通知する用途で購読しておく
         _stageExplorer.StageListChanged += () =>
         {
             _propertyWindow.RefreshProperties();
@@ -252,12 +256,11 @@ public partial class MainForm : Form
             _propertyWindow.RefreshProperties();
         };
 
-        // 現在のページをハイライト
         SyncExplorerHighlight();
     }
 
     //========================
-    // ToolManager同期
+    // ToolManager 同期
     //========================
     private void BindToolManager()
     {
@@ -274,7 +277,7 @@ public partial class MainForm : Form
     }
 
     //========================
-    // Tool変更（Command経由）
+    // Tool 変更（Command 経由）
     //========================
     private void ChangeTool(ITool? tool)
     {

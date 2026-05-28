@@ -123,8 +123,8 @@ public class MapViewControl : DoubleBufferedPanel
         DrawPreview(g);
 
         // SelectionToolに描かせる
-        SelectionTool?.DrawOverlay(g, MapConstants.TilePixelSize);
-        SelectionTool?.DrawMovingOverlay(g, MapConstants.TilePixelSize, _tileset);
+        SelectionTool?.DrawOverlay(g, MapConstants.DefaultTileSize);
+        SelectionTool?.DrawMovingOverlay(g, MapConstants.DefaultTileSize, _tileset);
 
         // Extended add plus cursor at copy mode
         if (SelectionTool?.IsCopyModeActive() == true)
@@ -137,7 +137,7 @@ public class MapViewControl : DoubleBufferedPanel
     {
         if (_tileMap == null || _tileset == null) return;
 
-        var tileSize = MapConstants.TilePixelSize;
+        var tileSize = MapConstants.DefaultTileSize;
         var tilesPerRow = _tileset.Width / tileSize;
 
         for (var y = 0; y < _tileMap.Height; y++)
@@ -161,7 +161,7 @@ public class MapViewControl : DoubleBufferedPanel
     {
         if (_tileMap == null) return;
 
-        var tileSize = MapConstants.TilePixelSize;
+        var tileSize = MapConstants.DefaultTileSize;
 
         using var pen = new Pen(Color.FromArgb(80, Color.White));
 
@@ -184,7 +184,7 @@ public class MapViewControl : DoubleBufferedPanel
         if (_tileset == null || PreviewTileId < 0) return;
         if (_hoverTile.X < 0 || _hoverTile.Y < 0) return;
 
-        var tileSize = MapConstants.TilePixelSize;
+        var tileSize = MapConstants.DefaultTileSize;
         var tilesPerRow = _tileset.Width / tileSize;
 
         var sx = (PreviewTileId % tilesPerRow) * tileSize;
@@ -321,7 +321,7 @@ public class MapViewControl : DoubleBufferedPanel
     // =========================
     private static (int x, int y) ScreenToTile(int px, int py)
     {
-        var tileSize = MapConstants.TilePixelSize;
+        var tileSize = MapConstants.DefaultTileSize;
         return (px / tileSize, py / tileSize);
     }
 
