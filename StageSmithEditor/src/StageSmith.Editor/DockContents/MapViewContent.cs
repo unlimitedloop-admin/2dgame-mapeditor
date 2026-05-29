@@ -12,6 +12,7 @@ public class MapViewContent : DockContent
 {
     public MapViewControl MapView { get; }
     public TilePaletteControl TilePalette { get; }
+    public PageNavBarControl PageNavBar { get; }
 
     public MapViewContent()
     {
@@ -25,34 +26,38 @@ public class MapViewContent : DockContent
             Dock = DockStyle.Fill,
             Orientation = Orientation.Horizontal,
             FixedPanel = FixedPanel.Panel1,
-            Panel1MinSize = ViewerConstants.MapViewRenderSize.Height + 20,  // 480px + 境目が見分けられる余裕分
-            Panel2MinSize = ViewerConstants.TileRenderSize * 2              // タイルパレット最小高さ
+            Panel1MinSize = ViewerConstants.MapViewRenderSize.Height + 20,
+            Panel2MinSize = ViewerConstants.TileRenderSize * 2
         };
 
         // レイアウト確定後に SplitterDistance を設定する
-        // コンストラクタ時点ではコントロールサイズが未確定のため、
-        // Layout イベントで一度だけ設定し直す
         splitContainer.Layout += (s, e) =>
         {
             var sc = (SplitContainer)s!;
-            var target = ViewerConstants.MapViewRenderSize.Height;
+            var target = ViewerConstants.MapViewRenderSize.Height
+                       + ViewerConstants.NavBarHeight;  // MapView + NavBar の合計
             if (sc.SplitterDistance != target && sc.Height > target)
             {
                 sc.SplitterDistance = target;
             }
         };
 
+        // MapView + PageNavBar を Panel1 に収める
         MapView = new MapViewControl
         {
             Dock = DockStyle.Fill
         };
+
+        PageNavBar = new PageNavBarControl();  // Dock.Bottom なので自動的に下に配置
+
+        splitContainer.Panel1.Controls.Add(MapView);
+        splitContainer.Panel1.Controls.Add(PageNavBar);
 
         TilePalette = new TilePaletteControl
         {
             Dock = DockStyle.Fill
         };
 
-        splitContainer.Panel1.Controls.Add(MapView);
         splitContainer.Panel2.Controls.Add(TilePalette);
 
         Controls.Add(splitContainer);

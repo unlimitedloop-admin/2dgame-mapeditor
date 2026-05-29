@@ -88,48 +88,6 @@ public partial class MainForm
         repository.Save(_context.Project, _currentProjectPath);
     }
 
-    // TODO: まもなく削除されます
-    //private void LoadTest()
-    //{
-    //    var repository = new JsonProjectRepository();
-    //    _project = repository.Load("test_project.def");
-
-    //    _context.Project = _project;
-    //    _context.SetStage(0);
-    //    _context.SetPage(0);
-
-    //    _stage = _context.CurrentStage;
-    //    _page = _context.CurrentPage;
-
-    //    if (_page == null || string.IsNullOrEmpty(_stage?.TilesetImagePath))
-    //        return;
-
-    //    _tileset = new Bitmap(_stage.TilesetImagePath);
-
-    //    // --- TilePalette ---
-    //    _tilePalette.SetTileset(_tileset);
-
-    //    _tilePalette.TileSelected += index =>
-    //    {
-    //        _selectedTileId = index;
-    //        _mapView.PreviewTileId = index;
-    //    };
-
-    //    // --- MapView ---
-    //    _mapView.SetTileMap(_page.TileMap);
-    //    _mapView.SetTileset(_tileset);
-
-    //    // --- Tool 初期化 ---
-    //    InitializeTools();
-
-    //    // --- Tool 設定 ---
-    //    _mapView.ToolManager?.SetTool(_penTool!);
-    //    _mapView.PickerTool = _pickerTool;
-
-    //    _mapView.Invalidate();
-    //    _tilePalette.Invalidate();
-    //}
-
     private void ExportCurrentStageBin()
     {
         var stage = _context.CurrentStage;
@@ -223,6 +181,33 @@ public partial class MainForm
         _mapView.SetTileset(_tileset);
     }
 
+    /// <summary>
+    /// 現在のステージに新規ページを追加し、追加したページへ移動する。
+    /// </summary>
+    private void AddPageToCurrentStage()
+    {
+        var stage = _context.CurrentStage;
+        if (stage == null)
+        {
+            MessageBox.Show(
+                "ページを追加するステージがありません。",
+                "ページ追加",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return;
+        }
+
+        var page = stage.AddPage();
+
+        // 追加したページへ移動
+        var newIndex = stage.Pages.IndexOf(page);
+        _context.SetPage(newIndex);
+
+        // ツリーと表示を更新
+        _stageExplorer.RebuildTree();
+        ApplyContextToView();
+    }
+
     private void ApplyContextToView()
     {
         var stage = _context.CurrentStage;
@@ -240,6 +225,8 @@ public partial class MainForm
         _propertyWindow.RefreshProperties();
 
         SyncExplorerHighlight();
+
+        _pageNavBar.UpdateDisplay(_context);
 
         _mapView.Invalidate();
         _tilePalette.Invalidate();

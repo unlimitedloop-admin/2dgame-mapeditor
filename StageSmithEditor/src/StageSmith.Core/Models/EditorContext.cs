@@ -53,9 +53,34 @@ public class EditorContext
         if (index < 0 || index >= stage.Pages.Count) return;
 
         CurrentPageIndex = index;
-        
+
         NotifyChanged();
     }
+
+    public void MovePrevPage()
+    {
+        if (CurrentPageIndex > 0)
+            SetPage(CurrentPageIndex - 1);
+    }
+
+    public void MoveNextPage()
+    {
+        var stage = CurrentStage;
+        if (stage == null) return;
+        if (CurrentPageIndex < stage.Pages.Count - 1)
+            SetPage(CurrentPageIndex + 1);
+    }
+
+    public void MoveFirstPage() => SetPage(0);
+
+    public void MoveLastPage()
+    {
+        var stage = CurrentStage;
+        if (stage == null) return;
+        SetPage(stage.Pages.Count - 1);
+    }
+
+    public int PageCount => CurrentStage?.Pages.Count ?? 0;
 
     //========================
     // ユーティリティ

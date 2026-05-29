@@ -1,4 +1,5 @@
 using StageSmith.Core.Constants;
+using StageSmith.Editor.Controls;
 
 namespace StageSmith.Editor;
 
@@ -21,6 +22,18 @@ public partial class MainForm
             case Keys.Control | Keys.Y:
                 _commandManager.Redo();
                 _mapView.Invalidate();
+                return true;
+
+            case Keys.Control | Keys.Left:
+                NavigatePage(NavAction.Prev);
+                return true;
+
+            case Keys.Control | Keys.Right:
+                NavigatePage(NavAction.Next);
+                return true;
+
+            case Keys.Control | Keys.T:
+                AddPageToCurrentStage();
                 return true;
 
             case Keys.Control | Keys.O:
@@ -95,6 +108,18 @@ public partial class MainForm
         }
 
         return base.ProcessCmdKey(ref msg, keyData);
+    }
+
+    private void btnGrid_Click(object? sender, EventArgs e)
+    {
+        _showGrid = !_showGrid;
+        _mapView.SetShowGrid(_showGrid);
+    }
+
+    private void btnTilePreview_Click(object sender, EventArgs e)
+    {
+        _mapView.ShowPreview = !_mapView.ShowPreview;
+        UpdateTilePreviewIcon();
     }
 
     private void UpdateTilePreviewIcon()

@@ -43,6 +43,7 @@ public partial class MainForm : Form
     private TilePaletteControl _tilePalette => _mapViewContent.TilePalette;
     private PropertyWindowControl _propertyWindow => _propertyWindowContent.PropertyWindow;
     private StageExplorerControl _stageExplorer => _stageExplorerContent.StageExplorer;
+    private PageNavBarControl _pageNavBar => _mapViewContent.PageNavBar;
 
     //========================
     // Tools
@@ -97,6 +98,7 @@ public partial class MainForm : Form
         InitializeDockLayout();
         BindToolManager();
         BindTilePalette();
+        BindPageNavBar();
 
         // PropertyWindow のバインド
         _propertyWindow.Bind(_context);
@@ -227,6 +229,34 @@ public partial class MainForm : Form
 
             _currentDragCommand = null;
         };
+    }
+
+    //========================
+    // PageNavBar バインド
+    //========================
+    private void BindPageNavBar()
+    {
+        _pageNavBar.NavRequested += NavigatePage;
+        _pageNavBar.UpdateDisplay(_context);
+    }
+
+    /// <summary>
+    /// ページ移動を実行し、ビューを更新する。
+    /// ナビゲーションバーのボタンとキーショートカットの両方から呼ばれる。
+    /// </summary>
+    public void NavigatePage(NavAction action)
+    {
+        switch (action)
+        {
+            case NavAction.First: _context.MoveFirstPage(); break;
+            case NavAction.Prev: _context.MovePrevPage(); break;
+            case NavAction.Next: _context.MoveNextPage(); break;
+            case NavAction.Last: _context.MoveLastPage(); break;
+        }
+
+        ApplyContextToView();
+        _stageExplorer.RebuildTree();
+        _pageNavBar.UpdateDisplay(_context);
     }
 
     //========================

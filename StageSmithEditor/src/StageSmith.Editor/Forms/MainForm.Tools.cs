@@ -22,6 +22,7 @@ public partial class MainForm
     private ToolStripButton _selectionButton = null!;
     private ToolStripButton _showGridButton = null!;
     private ToolStripButton _tilePreviewButton = null!;
+    private ToolStripButton _addPageButton = null!;
 
     //========================
     // 初期化
@@ -49,6 +50,7 @@ public partial class MainForm
         _selectionButton = CreateButton("Selection", "選択 (S)", StageSmithEditor.Properties.Resources.icons8_選択_24, true);
         _showGridButton = CreateButton("ShowGrid", "グリッド表示切替 (G)", StageSmithEditor.Properties.Resources.icons8_グリッド_24, true);
         _tilePreviewButton = CreateButton("TilePreview", "タイルプレビュー切替 (T)", StageSmithEditor.Properties.Resources.icons8_目に見える_24, true);
+        _addPageButton = CreateButton("AddPage", "ページを追加 (Ctrl+T)", StageSmithEditor.Properties.Resources.icons8_ファイル追加_30, true);
 
         //========================
         // イベント
@@ -114,6 +116,11 @@ public partial class MainForm
             UpdateTilePreviewIcon();
         };
 
+        _addPageButton.Click += (_, _) =>
+        {
+            AddPageToCurrentStage();
+        };
+
         //========================
         // UI構築
         //========================
@@ -133,7 +140,9 @@ public partial class MainForm
             _penButton,
             _selectionButton,
             _showGridButton,
-            _tilePreviewButton
+            _tilePreviewButton,
+            new ToolStripSeparator(),
+            _addPageButton
         });
 
         Controls.Add(_editorToolStrip);
