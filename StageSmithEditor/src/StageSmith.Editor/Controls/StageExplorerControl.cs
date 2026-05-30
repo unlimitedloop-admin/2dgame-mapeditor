@@ -99,6 +99,7 @@ public class StageExplorerControl : UserControl
         _treeView.ExpandAll();
         _treeView.EndUpdate();
 
+        AdjustTreeViewWidth(_treeView);
         RefreshHighlight();
     }
 
@@ -374,6 +375,8 @@ public class StageExplorerControl : UserControl
             ShowPlusMinus = true,
             ShowRootLines = true,
             FullRowSelect = true,
+            Scrollable = true,
+            ShowNodeToolTips = true,   // 途切れた文字をツールチップで表示
             ImageList = CreateImageList()
         };
 
@@ -384,7 +387,50 @@ public class StageExplorerControl : UserControl
         // ラベル編集終了後は LabelEdit を false に戻す
         tv.AfterLabelEdit += (_, _) => tv.LabelEdit = false;
 
+        // ノード追加・展開後に横スクロール幅を自動調整する
+        tv.AfterExpand  += (_, _) => AdjustTreeViewWidth(tv);
+        tv.AfterCollapse += (_, _) => AdjustTreeViewWidth(tv);
+
         return tv;
+    }
+
+    /// <summary>
+    /// TreeView の全ノードのテキスト幅を計測し、
+    /// 横スクロールバーが出るよう ScrollBar の幅を調整する。
+    /// </summary>
+    private static void AdjustTreeViewWidth(TreeView tv)
+    {
+        var maxWidth = 0;
+
+        using var g = tv.CreateGraphics();
+
+        foreach (TreeNode node in tv.Nodes)
+        {
+            maxWidth = Math.Max(maxWidth, MeasureNodeWidth(g, tv, node));
+            foreach (TreeNode child in node.Nodes)
+                maxWidth = Math.Max(maxWidth, MeasureNodeWidth(g, tv, child));
+        }
+
+        // TreeView は内部的に horizontal scroll を自動管理するが、
+        // SendMessage で HSCROLL を強制有効にする代わりに
+        // 幅超過時は ScrollableControl として自動的にスクロールバーが出る。
+        // ここでは ItemHeight ベースのパディングを加えた幅でダミーノードを制御するより、
+        // ShowNodeToolTips で補完する方針とし、最低幅だけ保証する。
+        if (maxWidth > tv.ClientSize.Width)
+        {
+            // ノードが収まらない場合はツールチップが表示される（ShowNodeToolTips=true）
+            // 横スクロールバーを出すために ScrollBar を強制設定
+            NativeMethods.SetTreeViewHorizontalScroll(tv.Handle);
+        }
+    }
+
+    private static int MeasureNodeWidth(Graphics g, TreeView tv, TreeNode node)
+    {
+        // インデント幅 + アイコン幅 + テキスト幅 + 余白
+        var indent = tv.Indent * node.Level;
+        var iconWidth = tv.ImageList?.ImageSize.Width + 4 ?? 0;
+        var textWidth = (int)g.MeasureString(node.Text, tv.Font).Width;
+        return indent + iconWidth + textWidth + 16;
     }
 
     private static ImageList CreateImageList()
@@ -424,7 +470,7 @@ public class StageExplorerControl : UserControl
         var menu = new ContextMenuStrip();
         menu.Items.Add("Rename", null, OnStageRename);
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("Clone", null, OnStageClone);
+        menu.Items.Add("Clone",  null, OnStageClone);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Delete", null, OnStageDelete);
         return menu;
@@ -433,11 +479,11 @@ public class StageExplorerControl : UserControl
     private ContextMenuStrip CreatePageContextMenu()
     {
         var menu = new ContextMenuStrip();
-        menu.Items.Add("Rename", null, OnPageRename);
+        menu.Items.Add("Rename",    null, OnPageRename);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Duplicate", null, OnPageDuplicate);
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("Delete", null, OnPageDelete);
+        menu.Items.Add("Delete",    null, OnPageDelete);
         return menu;
     }
 
@@ -447,4 +493,32 @@ public class StageExplorerControl : UserControl
     private enum NodeKind { Stage, Page }
 
     private sealed record NodeTag(NodeKind Kind, Stage Stage, Page? Page);
+
+    /// <summary>
+    /// TreeView の横スクロールバーを強制表示するための Win32 ヘルパー。
+    /// </summary>
+    private static class NativeMethods
+    {
+        private const int GWL_STYLE   = -16;
+        private const int WS_HSCROLL  = 0x00100000;
+        private const int TVS_NOHSCROLL = 0x8000;
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+
+        /// <summary>
+        /// TreeView の TVS_NOHSCROLL スタイルを除去して横スクロールを有効にする。
+        /// </summary>
+        public static void SetTreeViewHorizontalScroll(IntPtr handle)
+        {
+            var style = GetWindowLong(handle, GWL_STYLE);
+            if ((style & TVS_NOHSCROLL) != 0)
+            {
+                SetWindowLong(handle, GWL_STYLE, style & ~TVS_NOHSCROLL);
+            }
+        }
+    }
 }

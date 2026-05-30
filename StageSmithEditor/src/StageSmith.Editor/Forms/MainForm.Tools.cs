@@ -14,6 +14,7 @@ public partial class MainForm
     private ToolStripButton _newButton = null!;
     private ToolStripButton _openButton = null!;
     private ToolStripButton _saveButton = null!;
+    private ToolStripButton _saveAsButton = null!;
     private ToolStripButton _exportBinButton = null!;
     private ToolStripButton _openTileSetButton = null!;
     private ToolStripButton _undoButton = null!;
@@ -39,6 +40,7 @@ public partial class MainForm
         _newButton = CreateButton("New", "新規プロジェクト (Ctrl+N)", StageSmithEditor.Properties.Resources.icons8_プロジェクト_30);
         _openButton = CreateButton("Open", "プロジェクトを開く (Ctrl+O)", StageSmithEditor.Properties.Resources.icons8_ファイルを開く_30);
         _saveButton = CreateButton("Save", "保存 (Ctrl+Shift+S)", StageSmithEditor.Properties.Resources.icons8_上書き保存_30);
+        _saveAsButton = CreateButton("SaveAs", "名前を付けて保存", StageSmithEditor.Properties.Resources.icons8_名前を付けて保存_30);
 
         _exportBinButton = CreateButton("ExportBin", "バイナリ出力", StageSmithEditor.Properties.Resources.icons8_バイナリファイル_30);
         _openTileSetButton = CreateButton("OpenTileSet", "タイル画像を開く", StageSmithEditor.Properties.Resources.icons8_画像を開く_30);
@@ -68,6 +70,11 @@ public partial class MainForm
         _saveButton.Click += (_, _) =>
         {
             SaveProject();
+        };
+
+        _saveAsButton.Click += (_, _) =>
+        {
+            SaveProjectAs();
         };
 
         _exportBinButton.Click += (_, _) =>
@@ -129,6 +136,7 @@ public partial class MainForm
             _newButton,
             _openButton,
             _saveButton,
+            _saveAsButton,
             new ToolStripSeparator(),
             _exportBinButton,
             new ToolStripSeparator(),

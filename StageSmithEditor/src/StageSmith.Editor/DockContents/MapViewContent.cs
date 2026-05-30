@@ -34,8 +34,8 @@ public class MapViewContent : DockContent
         splitContainer.Layout += (s, e) =>
         {
             var sc = (SplitContainer)s!;
-            var target = ViewerConstants.MapViewRenderSize.Height
-                       + ViewerConstants.NavBarHeight;  // MapView + NavBar の合計
+            var target = ViewerConstants.MapViewContentSize.Height
+                       + ViewerConstants.NavBarHeight;
             if (sc.SplitterDistance != target && sc.Height > target)
             {
                 sc.SplitterDistance = target;

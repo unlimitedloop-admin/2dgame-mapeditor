@@ -1,5 +1,5 @@
-using System.Drawing.Drawing2D;
 using StageSmith.Core.Constants;
+using System.Drawing.Drawing2D;
 using Timer = System.Windows.Forms.Timer;
 
 namespace StageSmith.Editor.Tools;
@@ -283,13 +283,13 @@ public class SelectionTool : ITool, IDisposable
         }
     }
 
-    public void DrawOverlay(Graphics g, int tileSize)
+    public void DrawOverlay(Graphics g, int tileSize, int margin = 0)
     {
         if (SelectionRect is not Rectangle rect) return;
 
         var pxRect = new Rectangle(
-            rect.X * tileSize,
-            rect.Y * tileSize,
+            margin + rect.X * tileSize,
+            margin + rect.Y * tileSize,
             rect.Width * tileSize,
             rect.Height * tileSize
         );
@@ -304,7 +304,7 @@ public class SelectionTool : ITool, IDisposable
         g.DrawRectangle(pen, pxRect);
     }
 
-    public void DrawMovingOverlay(Graphics g, int tileSize, Bitmap? tileset)
+    public void DrawMovingOverlay(Graphics g, int tileSize, Bitmap? tileset, int margin = 0)
     {
         if (!_isMoving || SelectionRect == null || _moveBuffer == null || tileset == null)
             return;
@@ -330,10 +330,10 @@ public class SelectionTool : ITool, IDisposable
                 var sx = (id % tilesPerRow) * srcSize;
                 var sy = (id / tilesPerRow) * srcSize;
 
-                // 描画位置は tileSize（32px）基準で拡大表示
+                // 描画位置は tileSize（32px）基準で拡大表示、マージン考慮
                 var dst = new Rectangle(
-                    (rect.X + _currentOffset.X + x) * tileSize,
-                    (rect.Y + _currentOffset.Y + y) * tileSize,
+                    margin + (rect.X + _currentOffset.X + x) * tileSize,
+                    margin + (rect.Y + _currentOffset.Y + y) * tileSize,
                     tileSize, tileSize);
 
                 g.DrawImage(tileset, dst, sx, sy, srcSize, srcSize,
