@@ -20,6 +20,12 @@ public class StageExplorerControl : UserControl
     /// <summary>ページが追加・削除・複製されたとき発火する。</summary>
     public event Action<Stage>? PageListChanged;
 
+    /// <summary>
+    /// 現在表示中のページが削除されたとき発火する。
+    /// 第2引数は削除後に表示すべきページ（なければ null）。
+    /// </summary>
+    public event Action<Stage, Page?>? PageDeleted;
+
     //========================
     // 内部状態
     //========================
@@ -144,6 +150,8 @@ public class StageExplorerControl : UserControl
     //========================
     private void RefreshHighlight()
     {
+        _treeView.BeginUpdate();
+
         foreach (TreeNode stageNode in _treeView.Nodes)
         {
             foreach (TreeNode pageNode in stageNode.Nodes)
@@ -161,8 +169,15 @@ public class StageExplorerControl : UserControl
                 pageNode.ForeColor = isCurrent
                     ? SystemColors.Highlight
                     : _treeView.ForeColor;
+
+                // WinForms の TreeView は太字変更後にテキスト幅を再計算しないため
+                // 末尾スペースを付与して右端の欠けを防ぐ
+                var baseText = pageNode.Text.TrimEnd();
+                pageNode.Text = isCurrent ? baseText + "  " : baseText;
             }
         }
+
+        _treeView.EndUpdate();
     }
 
     //========================
@@ -331,11 +346,26 @@ public class StageExplorerControl : UserControl
 
         if (result != DialogResult.Yes) return;
 
+        // 削除後に表示すべきページを先に決定する
+        // 直前 → 直後 → null の優先順
+        var wasCurrentPage = ReferenceEquals(_currentPage, tag.Page);
+        Page? nextPage = null;
+
+        if (wasCurrentPage)
+        {
+            var pages = tag.Stage.Pages;
+            if (pageIndex > 0)
+                nextPage = pages[pageIndex - 1];
+            else if (pages.Count > 1)
+                nextPage = pages[1]; // 削除後に index 0 になるページ
+        }
+
         tag.Stage.Pages.Remove(tag.Page);
 
-        if (ReferenceEquals(_currentPage, tag.Page))
+        if (wasCurrentPage)
         {
-            _currentPage = null;
+            _currentPage = nextPage;
+            PageDeleted?.Invoke(tag.Stage, nextPage);
         }
 
         RebuildTree();

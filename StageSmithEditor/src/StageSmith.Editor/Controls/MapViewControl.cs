@@ -84,7 +84,7 @@ public class MapViewControl : DoubleBufferedPanel
         Invalidate();
     }
 
-    public void SetTileset(Bitmap tileset)
+    public void SetTileset(Bitmap? tileset)
     {
         _tileset = tileset;
         Invalidate();
@@ -108,6 +108,12 @@ public class MapViewControl : DoubleBufferedPanel
         if (_tileMap == null) return;
 
         var g = e.Graphics;
+
+        // ピクセルアート向けに最近傍補間を使用する。
+        // デフォルトのバイリニア補間だと拡大時に隣接タイルが滲んで混入するため。
+        g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+        g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Half;
+
         g.Clear(BackColor);
 
         if (_tileset != null)

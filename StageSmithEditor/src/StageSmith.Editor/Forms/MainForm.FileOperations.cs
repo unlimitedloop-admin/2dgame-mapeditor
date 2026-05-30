@@ -14,6 +14,9 @@ public partial class MainForm
 
         _currentProjectPath = null;
 
+        // 前のプロジェクトの表示をクリア
+        ResetView();
+
         _context.Project = project;
         _context.SetStage(0);
         _context.SetPage(0);
@@ -37,6 +40,9 @@ public partial class MainForm
         var project = repository.Load(dialog.FileName);
 
         _currentProjectPath = dialog.FileName;
+
+        // 前のプロジェクトの表示をクリア
+        ResetView();
 
         _context.Project = project;
         _context.SetStage(0);
@@ -206,6 +212,30 @@ public partial class MainForm
         // ツリーと表示を更新
         _stageExplorer.RebuildTree();
         ApplyContextToView();
+    }
+
+    /// <summary>
+    /// プロジェクト切り替え前にマップビュー・タイルパレット・
+    /// プロパティウィンドウの表示をすべてクリアする。
+    /// </summary>
+    private void ResetView()
+    {
+        _page = null;
+        _tileset?.Dispose();
+        _tileset = null;
+        _selectedTileId = -1;
+
+        _mapView.SetTileMap(null);
+        _mapView.SetTileset(null);
+        _mapView.PreviewTileId = -1;
+
+        _tilePalette.SetTileset(null);
+
+        _propertyWindow.RefreshProperties();
+        _pageNavBar.UpdateDisplay(_context);
+
+        _mapView.Invalidate();
+        _tilePalette.Invalidate();
     }
 
     private void ApplyContextToView()

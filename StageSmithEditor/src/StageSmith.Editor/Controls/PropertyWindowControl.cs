@@ -9,6 +9,12 @@ public sealed class PropertyWindowControl : UserControl
 
     private bool _isRefreshing;
 
+    /// <summary>
+    /// プロパティ上のデータが変更されたとき発火する。
+    /// ステージエクスプローラーの更新など外部への通知に使用する。
+    /// </summary>
+    public event Action? DataChanged;
+
     private readonly TableLayoutPanel _table = new();
 
     private TextBox _projectNameTextBox = null!;
@@ -129,30 +135,35 @@ public sealed class PropertyWindowControl : UserControl
         {
             if (_context?.Project == null) return;
             _context.Project.Name = _projectNameTextBox.Text;
+            DataChanged?.Invoke();
         };
 
         _stageNameTextBox.TextChanged += (_, _) =>
         {
             if (_context?.CurrentStage == null) return;
             _context.CurrentStage.Name = _stageNameTextBox.Text;
+            DataChanged?.Invoke();
         };
 
         _pageNameTextBox.TextChanged += (_, _) =>
         {
             if (_context?.CurrentPage == null) return;
             _context.CurrentPage.Name = _pageNameTextBox.Text;
+            DataChanged?.Invoke();
         };
 
         _pageEnableCheckBox.CheckedChanged += (_, _) =>
         {
             if (_context?.CurrentPage == null) return;
             _context.CurrentPage.Enable = _pageEnableCheckBox.Checked;
+            DataChanged?.Invoke();
         };
 
         _pageReadOnlyCheckBox.CheckedChanged += (_, _) =>
         {
             if (_context?.CurrentPage == null) return;
             _context.CurrentPage.ReadOnly = _pageReadOnlyCheckBox.Checked;
+            DataChanged?.Invoke();
         };
 
         _pageRemarksTextBox.TextChanged += (_, _) =>

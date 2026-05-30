@@ -103,6 +103,13 @@ public partial class MainForm : Form
         // PropertyWindow のバインド
         _propertyWindow.Bind(_context);
 
+        // プロパティ変更 → エクスプローラー即時更新
+        _propertyWindow.DataChanged += () =>
+        {
+            _stageExplorer.RebuildTree();
+            SyncExplorerHighlight();
+        };
+
         KeyDown += (_, e) =>
         {
             if (e.KeyCode == Keys.ShiftKey)
@@ -284,6 +291,31 @@ public partial class MainForm : Form
         _stageExplorer.PageListChanged += _ =>
         {
             _propertyWindow.RefreshProperties();
+        };
+
+        // 現在表示中のページが削除されたとき → 直前 or 直後 or 空表示
+        _stageExplorer.PageDeleted += (stage, nextPage) =>
+        {
+            var stageIndex = _context.Project!.Stages.IndexOf(stage);
+            _context.SetStage(stageIndex);
+
+            if (nextPage != null)
+            {
+                var pageIndex = stage.Pages.IndexOf(nextPage);
+                _context.SetPage(pageIndex);
+            }
+            else
+            {
+                // ページが0件になった場合は空表示
+                _page = null;
+                _mapView.SetTileMap(null);
+                _propertyWindow.RefreshProperties();
+                _pageNavBar.UpdateDisplay(_context);
+                _mapView.Invalidate();
+                return;
+            }
+
+            ApplyContextToView();
         };
 
         SyncExplorerHighlight();

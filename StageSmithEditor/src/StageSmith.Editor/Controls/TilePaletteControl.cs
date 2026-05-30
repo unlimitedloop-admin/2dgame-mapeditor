@@ -21,9 +21,16 @@ public class TilePaletteControl : DoubleBufferedPanel
         ResizeRedraw = true;
     }
 
-    public void SetTileset(Bitmap tileset)
+    public void SetTileset(Bitmap? tileset)
     {
         _tileset = tileset;
+
+        if (_tileset == null)
+        {
+            AutoScrollMinSize = Size.Empty;
+            Invalidate();
+            return;
+        }
 
         var srcSize = MapConstants.DefaultTileSize;   // 16: タイル枚数の計算用
         var dstSize = ViewerConstants.TileRenderSize; // 32: 実際の表示サイズ
@@ -50,6 +57,11 @@ public class TilePaletteControl : DoubleBufferedPanel
         if (_tileset == null) return;
 
         var g = e.Graphics;
+
+        // ピクセルアート向けに最近傍補間を使用する
+        g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+        g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Half;
+
         g.Clear(this.BackColor);
 
         var srcSize = MapConstants.DefaultTileSize;   // 16: 画像の切り出しサイズ
