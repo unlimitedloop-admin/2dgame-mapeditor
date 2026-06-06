@@ -26,11 +26,12 @@ public sealed class PropertyWindowControl : UserControl
 
     private TextBox _pageRemarksTextBox = null!;
 
+    // Page Header - Flags
     private CheckBox _flagWaterCheckBox = null!;
-    private CheckBox _flagDamageCheckBox = null!;
-    private CheckBox _flagBgAnimationCheckBox = null!;
-    private CheckBox _flagEventCheckBox = null!;
+    private CheckBox _flagWindCheckBox = null!;
 
+    // Page Header - Room
+    private NumericUpDown _roomIdNumeric = null!;
     private NumericUpDown _leftPageNumeric = null!;
     private NumericUpDown _rightPageNumeric = null!;
     private NumericUpDown _upPageNumeric = null!;
@@ -39,6 +40,7 @@ public sealed class PropertyWindowControl : UserControl
     private NumericUpDown _backPageNumeric = null!;
     private NumericUpDown _zNumeric = null!;
 
+    // Page Header - Scroll
     private ComboBox _scrollLeftCombo = null!;
     private ComboBox _scrollRightCombo = null!;
     private ComboBox _scrollUpCombo = null!;
@@ -96,10 +98,10 @@ public sealed class PropertyWindowControl : UserControl
 
         AddHeader("Page Header", Color.FromArgb(255, 220, 120));
 
+        _roomIdNumeric = AddByteRow("Room ID");
+
         _flagWaterCheckBox = AddCheckRow("Water");
-        _flagDamageCheckBox = AddCheckRow("Damage");
-        _flagBgAnimationCheckBox = AddCheckRow("BG Animation");
-        _flagEventCheckBox = AddCheckRow("Event");
+        _flagWindCheckBox = AddCheckRow("Wind");
 
         _leftPageNumeric = AddByteRow("Left Page");
         _rightPageNumeric = AddByteRow("Right Page");
@@ -172,10 +174,10 @@ public sealed class PropertyWindowControl : UserControl
             _context.CurrentPage.Remarks = _pageRemarksTextBox.Text;
         };
 
+        _roomIdNumeric.ValueChanged += (_, _) => UpdatePageHeader();
+
         _flagWaterCheckBox.CheckedChanged += (_, _) => UpdatePageHeader();
-        _flagDamageCheckBox.CheckedChanged += (_, _) => UpdatePageHeader();
-        _flagBgAnimationCheckBox.CheckedChanged += (_, _) => UpdatePageHeader();
-        _flagEventCheckBox.CheckedChanged += (_, _) => UpdatePageHeader();
+        _flagWindCheckBox.CheckedChanged += (_, _) => UpdatePageHeader();
 
         _leftPageNumeric.ValueChanged += (_, _) => UpdatePageHeader();
         _rightPageNumeric.ValueChanged += (_, _) => UpdatePageHeader();
@@ -222,10 +224,10 @@ public sealed class PropertyWindowControl : UserControl
         {
             var header = page.Header;
 
+            _roomIdNumeric.Value = header.RoomId;
+
             _flagWaterCheckBox.Checked = header.Flags.HasFlag(PageFlags.IsWater);
-            _flagDamageCheckBox.Checked = header.Flags.HasFlag(PageFlags.HasDamageFloor);
-            _flagBgAnimationCheckBox.Checked = header.Flags.HasFlag(PageFlags.HasBgAnimation);
-            _flagEventCheckBox.Checked = header.Flags.HasFlag(PageFlags.HasEvent);
+            _flagWindCheckBox.Checked = header.Flags.HasFlag(PageFlags.IsWind);
 
             _leftPageNumeric.Value = header.LeftPage;
             _rightPageNumeric.Value = header.RightPage;
@@ -255,22 +257,15 @@ public sealed class PropertyWindowControl : UserControl
 
         var flags = PageFlags.None;
 
-        if (_flagWaterCheckBox.Checked)
-            flags |= PageFlags.IsWater;
-
-        if (_flagDamageCheckBox.Checked)
-            flags |= PageFlags.HasDamageFloor;
-
-        if (_flagBgAnimationCheckBox.Checked)
-            flags |= PageFlags.HasBgAnimation;
-
-        if (_flagEventCheckBox.Checked)
-            flags |= PageFlags.HasEvent;
+        if (_flagWaterCheckBox.Checked) flags |= PageFlags.IsWater;
+        if (_flagWindCheckBox.Checked) flags |= PageFlags.IsWind;
 
         page.Header = new PageHeader
         {
             MagicStart = 0xA5,
             MagicEnd = 0x5A,
+
+            RoomId = (byte)_roomIdNumeric.Value,
 
             Flags = flags,
 
@@ -286,7 +281,7 @@ public sealed class PropertyWindowControl : UserControl
             ScrollUp = GetScrollByte(_scrollUpCombo, _scrollUpNoEdgeCheck, _scrollUpLoopCheck),
             ScrollDown = GetScrollByte(_scrollDownCombo, _scrollDownNoEdgeCheck, _scrollDownLoopCheck),
 
-            Z = (byte)_zNumeric.Value
+            Z = (byte)_zNumeric.Value,
         };
     }
 
@@ -312,7 +307,6 @@ public sealed class PropertyWindowControl : UserControl
             Dock = DockStyle.Fill
         };
 
-        // Enterキーでフォーカスアウト
         textBox.KeyDown += (sender, e) =>
         {
             if (e.KeyCode == Keys.Enter)
@@ -418,11 +412,8 @@ public sealed class PropertyWindowControl : UserControl
 
         var flags = ScrollFlags.None;
 
-        if (noEdgeCheck.Checked)
-            flags |= ScrollFlags.NoEdge;
-
-        if (loopCheck.Checked)
-            flags |= ScrollFlags.Loop;
+        if (noEdgeCheck.Checked) flags |= ScrollFlags.NoEdge;
+        if (loopCheck.Checked) flags |= ScrollFlags.Loop;
 
         return ScrollEncoding.Encode(type, flags);
     }
