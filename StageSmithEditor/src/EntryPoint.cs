@@ -4,6 +4,7 @@ namespace StageSmith.Editor;
 
 internal static class EntryPoint
 {
+    [STAThread]
     static void Main()
     {
         ApplicationConfiguration.Initialize();

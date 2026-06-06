@@ -13,7 +13,7 @@ public sealed class EditorProject
     /// </summary>
     public string BaseDirectory { get; set; } = string.Empty;
 
-    public List<Stage> Stages { get; init; } = new();
+    public List<Stage> Stages { get; set; } = new();
 
     [JsonIgnore]
     public bool HasStages => Stages.Count > 0;

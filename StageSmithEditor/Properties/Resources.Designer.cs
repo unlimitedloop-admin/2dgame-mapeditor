@@ -73,6 +73,46 @@ namespace StageSmithEditor.Properties {
         /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
+        internal static System.Drawing.Bitmap icons8_バイナリファイル_30 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-バイナリファイル-30", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
+        internal static System.Drawing.Bitmap icons8_ファイルを開く_30 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-ファイルを開く-30", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
+        internal static System.Drawing.Bitmap icons8_ファイル追加_30 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-ファイル追加-30", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
+        internal static System.Drawing.Bitmap icons8_プロジェクト_30 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-プロジェクト-30", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
         internal static System.Drawing.Bitmap icons8_やり直す_30 {
             get {
                 object obj = ResourceManager.GetObject("icons8-やり直す-30", resourceCulture);
@@ -106,6 +146,16 @@ namespace StageSmithEditor.Properties {
         internal static System.Drawing.Bitmap icons8_名前を付けて保存_30 {
             get {
                 object obj = ResourceManager.GetObject("icons8-名前を付けて保存-30", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
+        internal static System.Drawing.Bitmap icons8_画像を開く_30 {
+            get {
+                object obj = ResourceManager.GetObject("icons8_画像を開く_30", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

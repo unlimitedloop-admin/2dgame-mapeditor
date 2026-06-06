@@ -1,5 +1,3 @@
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
-
 namespace StageSmith.Core.Models;
 
 public sealed class Stage
@@ -14,13 +12,19 @@ public sealed class Stage
     public int StageNumber { get; set; }
 
     /// <summary>
+    /// ステージの説明。将来のエディタで表示するためのもの。
+    /// .def 出力には使わない。
+    /// </summary>
+    public string Description { get; set; } = string.Empty;
+    
+    /// <summary>
     /// 将来の .def 出力時に使う表示名・識別子
     /// </summary>
     public string Key { get; set; } = string.Empty;
 
     public string TilesetImagePath { get; set; } = string.Empty;
 
-    public List<Page> Pages { get; init; } = new();
+    public List<Page> Pages { get; set; } = new();
 
     public Page AddPage(string? name = null)
     {
@@ -47,5 +51,39 @@ public sealed class Stage
     public Page? FindPage(Guid pageId)
     {
         return Pages.FirstOrDefault(x => x.Id == pageId);
+    }
+
+    /// <summary>
+    /// このステージの複製を生成する。
+    /// Id は新規発行、Pages は各ページごとにディープコピーされる。
+    /// </summary>
+    public Stage Clone()
+    {
+        var clone = new Stage
+        {
+            Name = Name,
+            StageNumber = StageNumber,
+            Key = Key,
+            TilesetImagePath = TilesetImagePath
+        };
+
+        foreach (var page in Pages)
+        {
+            clone.Pages.Add(page.Clone());
+        }
+
+        return clone;
+    }
+
+    public byte[] ExportBin()
+    {
+        var bytes = new List<byte>();
+
+        foreach (var page in Pages)
+        {
+            bytes.AddRange(page.ToBinary());
+        }
+
+        return bytes.ToArray();
     }
 }

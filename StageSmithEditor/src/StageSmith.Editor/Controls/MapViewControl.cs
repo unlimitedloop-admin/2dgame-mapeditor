@@ -15,13 +15,35 @@ public class MapViewControl : DoubleBufferedPanel
     private Point _hoverTile = new(-1, -1);
 
     // ===== Tool =====
+    private ToolManager? _toolManager;
+
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public ITool? CurrentTool { get; set; }
+    public ToolManager? ToolManager
+    {
+        get => _toolManager;
+        set
+        {
+            _toolManager?.ToolChanged -= OnToolChanged;
+            _toolManager = value;
+            _toolManager?.ToolChanged += OnToolChanged;
+            Invalidate();
+        }
+    }
+
+    private void OnToolChanged(ITool? tool)
+    {
+        Cursor = Cursors.Default;
+        Invalidate();
+    }
 
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public ITool? PickerTool { get; set; }
+
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public ITool? FillTool { get; set; }
 
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -36,7 +58,7 @@ public class MapViewControl : DoubleBufferedPanel
     private bool _showPreview = false;
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public bool ShowPreview 
+    public bool ShowPreview
     {
         get => _showPreview;
         set
@@ -56,14 +78,13 @@ public class MapViewControl : DoubleBufferedPanel
     // =========================
     // セット系
     // =========================
-
-    public void SetTileMap(TileMap map)
+    public void SetTileMap(TileMap? map)
     {
         _tileMap = map;
         Invalidate();
     }
 
-    public void SetTileset(Bitmap tileset)
+    public void SetTileset(Bitmap? tileset)
     {
         _tileset = tileset;
         Invalidate();
@@ -80,7 +101,6 @@ public class MapViewControl : DoubleBufferedPanel
     // =========================
     // 描画
     // =========================
-
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
@@ -88,6 +108,12 @@ public class MapViewControl : DoubleBufferedPanel
         if (_tileMap == null) return;
 
         var g = e.Graphics;
+
+        // ピクセルアート向けに最近傍補間を使用する。
+        // デフォルトのバイリニア補間だと拡大時に隣接タイルが滲んで混入するため。
+        g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+        g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Half;
+
         g.Clear(BackColor);
 
         if (_tileset != null)
@@ -103,8 +129,8 @@ public class MapViewControl : DoubleBufferedPanel
         DrawPreview(g);
 
         // SelectionToolに描かせる
-        SelectionTool?.DrawOverlay(g, MapConstants.TilePixelSize);
-        SelectionTool?.DrawMovingOverlay(g, MapConstants.TilePixelSize, _tileset);
+        SelectionTool?.DrawOverlay(g, ViewerConstants.TileRenderSize, ViewerConstants.MapViewMargin);
+        SelectionTool?.DrawMovingOverlay(g, ViewerConstants.TileRenderSize, _tileset, ViewerConstants.MapViewMargin);
 
         // Extended add plus cursor at copy mode
         if (SelectionTool?.IsCopyModeActive() == true)
@@ -117,8 +143,10 @@ public class MapViewControl : DoubleBufferedPanel
     {
         if (_tileMap == null || _tileset == null) return;
 
-        var tileSize = MapConstants.TilePixelSize;
-        var tilesPerRow = _tileset.Width / tileSize;
+        var srcSize = MapConstants.DefaultTileSize;   // 16: 画像の切り出しサイズ
+        var dstSize = ViewerConstants.TileRenderSize; // 32: 画面上の描画サイズ
+        var margin  = ViewerConstants.MapViewMargin;  // 32: 上下左右マージン
+        var tilesPerRow = _tileset.Width / srcSize;
 
         for (var y = 0; y < _tileMap.Height; y++)
         {
@@ -126,11 +154,15 @@ public class MapViewControl : DoubleBufferedPanel
             {
                 var tileId = _tileMap.GetTile(x, y);
 
-                var sx = (tileId % tilesPerRow) * tileSize;
-                var sy = (tileId / tilesPerRow) * tileSize;
+                var sx = (tileId % tilesPerRow) * srcSize;
+                var sy = (tileId / tilesPerRow) * srcSize;
 
-                var srcRect = new Rectangle(sx, sy, tileSize, tileSize);
-                var dstRect = new Rectangle(x * tileSize, y * tileSize, tileSize, tileSize);
+                var srcRect = new Rectangle(sx, sy, srcSize, srcSize);
+                var dstRect = new Rectangle(
+                    margin + x * dstSize,
+                    margin + y * dstSize,
+                    dstSize,
+                    dstSize);
 
                 g.DrawImage(_tileset, dstRect, srcRect, GraphicsUnit.Pixel);
             }
@@ -141,20 +173,21 @@ public class MapViewControl : DoubleBufferedPanel
     {
         if (_tileMap == null) return;
 
-        var tileSize = MapConstants.TilePixelSize;
+        var dstSize = ViewerConstants.TileRenderSize;
+        var margin  = ViewerConstants.MapViewMargin;
 
         using var pen = new Pen(Color.FromArgb(80, Color.White));
 
         for (var x = 0; x <= _tileMap.Width; x++)
         {
-            var px = x * tileSize;
-            g.DrawLine(pen, px, 0, px, _tileMap.Height * tileSize);
+            var px = margin + x * dstSize;
+            g.DrawLine(pen, px, margin, px, margin + _tileMap.Height * dstSize);
         }
 
         for (var y = 0; y <= _tileMap.Height; y++)
         {
-            var py = y * tileSize;
-            g.DrawLine(pen, 0, py, _tileMap.Width * tileSize, py);
+            var py = margin + y * dstSize;
+            g.DrawLine(pen, margin, py, margin + _tileMap.Width * dstSize, py);
         }
     }
 
@@ -164,18 +197,20 @@ public class MapViewControl : DoubleBufferedPanel
         if (_tileset == null || PreviewTileId < 0) return;
         if (_hoverTile.X < 0 || _hoverTile.Y < 0) return;
 
-        var tileSize = MapConstants.TilePixelSize;
-        var tilesPerRow = _tileset.Width / tileSize;
+        var srcSize = MapConstants.DefaultTileSize;   // 16: 画像の切り出しサイズ
+        var dstSize = ViewerConstants.TileRenderSize; // 32: 画面上の描画サイズ
+        var margin  = ViewerConstants.MapViewMargin;
+        var tilesPerRow = _tileset.Width / srcSize;
 
-        var sx = (PreviewTileId % tilesPerRow) * tileSize;
-        var sy = (PreviewTileId / tilesPerRow) * tileSize;
+        var sx = (PreviewTileId % tilesPerRow) * srcSize;
+        var sy = (PreviewTileId / tilesPerRow) * srcSize;
 
-        var srcRect = new Rectangle(sx, sy, tileSize, tileSize);
+        var srcRect = new Rectangle(sx, sy, srcSize, srcSize);
         var dstRect = new Rectangle(
-            _hoverTile.X * tileSize,
-            _hoverTile.Y * tileSize,
-            tileSize,
-            tileSize
+            margin + _hoverTile.X * dstSize,
+            margin + _hoverTile.Y * dstSize,
+            dstSize,
+            dstSize
         );
 
         using var attr = new System.Drawing.Imaging.ImageAttributes();
@@ -205,7 +240,6 @@ public class MapViewControl : DoubleBufferedPanel
     // =========================
     // 入力
     // =========================
-
     protected override void OnMouseDown(MouseEventArgs e)
     {
         base.OnMouseDown(e);
@@ -216,14 +250,32 @@ public class MapViewControl : DoubleBufferedPanel
 
         if (!IsInside(x, y)) return;
 
-        if (e.Button == MouseButtons.Left)
-        {
-            CurrentTool?.OnMouseDown(x, y);
-        }
-        else if (e.Button == MouseButtons.Right)
+        var isAlt = (ModifierKeys & Keys.Alt) != 0;
+        var isShift = (ModifierKeys & Keys.Shift) != 0;
+
+        // ========================
+        // ① スポイト（最優先）
+        // ========================
+        if (e.Button == MouseButtons.Right || isAlt)
         {
             PickerTool?.OnMouseDown(x, y);
+            return;
         }
+
+        // ========================
+        // ② 塗りつぶし
+        // ========================
+        if (isShift)
+        {
+            FillTool?.OnMouseDown(x, y);
+            Invalidate();
+            return;
+        }
+
+        // ========================
+        // ③ 通常ツール
+        // ========================
+        _toolManager?.CurrentTool?.OnMouseDown(x, y);
     }
 
     protected override void OnMouseMove(MouseEventArgs e)
@@ -243,16 +295,17 @@ public class MapViewControl : DoubleBufferedPanel
         }
 
         var newHover = new Point(x, y);
-
         if (_hoverTile != newHover)
         {
             _hoverTile = newHover;
             Invalidate();
         }
 
-        Cursor = CurrentTool?.GetCursor(x, y) ?? Cursors.Default;
-
-        CurrentTool?.OnMouseMove(x, y);
+        var currentTool = _toolManager?.CurrentTool;
+        if (e.Button == MouseButtons.Left)
+        {
+            currentTool?.OnMouseMove(x, y);
+        }
         Invalidate();
     }
 
@@ -264,20 +317,28 @@ public class MapViewControl : DoubleBufferedPanel
 
         var (x, y) = ScreenToTile(e.X, e.Y);
 
+        var isAlt = (ModifierKeys & Keys.Alt) != 0;
+
         // 範囲外ドロップを許可するため、ここではチェックしない
         //if (!IsInside(x, y)) return;
 
-        CurrentTool?.OnMouseUp(x, y);
+        if (e.Button == MouseButtons.Right || isAlt)
+        {
+            PickerTool?.OnMouseUp(x, y);
+            return;
+        }
+
+        _toolManager?.CurrentTool?.OnMouseUp(x, y);
     }
 
     // =========================
     // 補助
     // =========================
-
     private static (int x, int y) ScreenToTile(int px, int py)
     {
-        var tileSize = MapConstants.TilePixelSize;
-        return (px / tileSize, py / tileSize);
+        var dstSize = ViewerConstants.TileRenderSize;
+        var margin  = ViewerConstants.MapViewMargin;
+        return ((px - margin) / dstSize, (py - margin) / dstSize);
     }
 
     private bool IsInside(int x, int y)
@@ -298,5 +359,29 @@ public class MapViewControl : DoubleBufferedPanel
 
         g.DrawLine(pen, pos.X - size + offset, pos.Y + offset, pos.X + size + offset, pos.Y + offset);
         g.DrawLine(pen, pos.X + offset, pos.Y - size + offset, pos.X + offset, pos.Y + size + offset);
+    }
+
+    public void UpdateCursor()
+    {
+        var isShift = (ModifierKeys & Keys.Shift) != 0;
+
+        var (x, y) = _hoverTile.X >= 0 ? (_hoverTile.X, _hoverTile.Y) : (-1, -1);
+
+        if (x < 0 || y < 0)
+        {
+            Cursor = Cursors.Default;
+            return;
+        }
+
+        var currentTool = _toolManager?.CurrentTool;
+
+        // バケツ（Pen限定）
+        if (isShift && currentTool is PenTool)
+        {
+            Cursor = FillTool?.GetCursor(x, y) ?? Cursors.Hand;
+            return;
+        }
+
+        Cursor = currentTool?.GetCursor(x, y) ?? Cursors.Default;
     }
 }

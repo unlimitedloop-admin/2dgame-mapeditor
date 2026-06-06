@@ -1,3 +1,4 @@
+using StageSmith.Core.Constants;
 using System.Drawing.Drawing2D;
 using Timer = System.Windows.Forms.Timer;
 
@@ -64,7 +65,6 @@ public class SelectionTool : ITool, IDisposable
     // =========================
     // ITool 実装
     // =========================
-
     public void OnMouseDown(int x, int y)
     {
         if (SelectionRect.HasValue && SelectionRect.Value.Contains(x, y))
@@ -202,6 +202,24 @@ public class SelectionTool : ITool, IDisposable
     // 外部操作
     // =========================
 
+    /// <summary>
+    /// 選択範囲の確定操作（Enter キーなど）を通知する。
+    /// 選択範囲がある場合に Confirmed イベントを発火し、呼び出し元が処理を行う。
+    /// 選択範囲がなければ何もしない。
+    /// </summary>
+    public void OnConfirm()
+    {
+        if (SelectionRect == null) return;
+        Confirmed?.Invoke();
+        ClearSelection();
+    }
+
+    /// <summary>
+    /// OnConfirm() が呼ばれたとき（選択範囲がある場合のみ）に発火する。
+    /// 塗りつぶしやその他の確定処理はこのイベントを購読して実装する。
+    /// </summary>
+    public event Action? Confirmed;
+
     public void ClearSelection()
     {
         SelectionRect = null;
@@ -221,7 +239,6 @@ public class SelectionTool : ITool, IDisposable
     // =========================
     // 内部処理
     // =========================
-
     private void UpdateSelectionRect()
     {
         if (!_selectionStart.HasValue)
@@ -250,14 +267,29 @@ public class SelectionTool : ITool, IDisposable
     // =========================
     // 描画補助（オプション）
     // =========================
+    public IEnumerable<(int x, int y)> GetSelectedPositions()
+    {
+        var rect = SelectionRect;
 
-    public void DrawOverlay(Graphics g, int tileSize)
+        if (rect == null)
+            yield break;
+
+        for (var y = rect.Value.Top; y < rect.Value.Bottom; y++)
+        {
+            for (var x = rect.Value.Left; x < rect.Value.Right; x++)
+            {
+                yield return (x, y);
+            }
+        }
+    }
+
+    public void DrawOverlay(Graphics g, int tileSize, int margin = 0)
     {
         if (SelectionRect is not Rectangle rect) return;
 
         var pxRect = new Rectangle(
-            rect.X * tileSize,
-            rect.Y * tileSize,
+            margin + rect.X * tileSize,
+            margin + rect.Y * tileSize,
             rect.Width * tileSize,
             rect.Height * tileSize
         );
@@ -272,13 +304,17 @@ public class SelectionTool : ITool, IDisposable
         g.DrawRectangle(pen, pxRect);
     }
 
-    public void DrawMovingOverlay(Graphics g, int tileSize, Bitmap? tileset)
+    public void DrawMovingOverlay(Graphics g, int tileSize, Bitmap? tileset, int margin = 0)
     {
         if (!_isMoving || SelectionRect == null || _moveBuffer == null || tileset == null)
             return;
 
         var rect = SelectionRect.Value;
-        var tilesPerRow = tileset.Width / tileSize;
+
+        // srcSize: タイル画像の論理サイズ（切り出し用 = 16px）
+        // tileSize: 画面上の描画サイズ（表示用 = 32px）
+        var srcSize = MapConstants.DefaultTileSize;
+        var tilesPerRow = tileset.Width / srcSize;
 
         using var attr = new System.Drawing.Imaging.ImageAttributes();
         var matrix = new System.Drawing.Imaging.ColorMatrix { Matrix33 = 0.5f };
@@ -290,15 +326,17 @@ public class SelectionTool : ITool, IDisposable
             {
                 var id = _moveBuffer[x, y];
 
-                var sx = (id % tilesPerRow) * tileSize;
-                var sy = (id / tilesPerRow) * tileSize;
+                // 切り出し位置は srcSize（16px）基準
+                var sx = (id % tilesPerRow) * srcSize;
+                var sy = (id / tilesPerRow) * srcSize;
 
+                // 描画位置は tileSize（32px）基準で拡大表示、マージン考慮
                 var dst = new Rectangle(
-                    (rect.X + _currentOffset.X + x) * tileSize,
-                    (rect.Y + _currentOffset.Y + y) * tileSize,
+                    margin + (rect.X + _currentOffset.X + x) * tileSize,
+                    margin + (rect.Y + _currentOffset.Y + y) * tileSize,
                     tileSize, tileSize);
 
-                g.DrawImage(tileset, dst, sx, sy, tileSize, tileSize,
+                g.DrawImage(tileset, dst, sx, sy, srcSize, srcSize,
                     GraphicsUnit.Pixel, attr);
             }
         }

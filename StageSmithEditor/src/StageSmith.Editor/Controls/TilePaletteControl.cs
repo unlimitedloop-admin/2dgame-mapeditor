@@ -21,17 +21,25 @@ public class TilePaletteControl : DoubleBufferedPanel
         ResizeRedraw = true;
     }
 
-    public void SetTileset(Bitmap tileset)
+    public void SetTileset(Bitmap? tileset)
     {
         _tileset = tileset;
 
-        var tileSize = MapConstants.TilePixelSize;
-        var cols = _tileset.Width / tileSize;
-        var rows = _tileset.Height / tileSize;
+        if (_tileset == null)
+        {
+            AutoScrollMinSize = Size.Empty;
+            Invalidate();
+            return;
+        }
+
+        var srcSize = MapConstants.DefaultTileSize;   // 16: タイル枚数の計算用
+        var dstSize = ViewerConstants.TileRenderSize; // 32: 実際の表示サイズ
+        var cols = _tileset.Width / srcSize;
+        var rows = _tileset.Height / srcSize;
 
         AutoScrollMinSize = new Size(
-            cols * (tileSize + _tileSpacing),
-            rows * (tileSize + _tileSpacing));
+            cols * (dstSize + _tileSpacing),
+            rows * (dstSize + _tileSpacing));
 
         Invalidate();
     }
@@ -49,35 +57,39 @@ public class TilePaletteControl : DoubleBufferedPanel
         if (_tileset == null) return;
 
         var g = e.Graphics;
+
+        // ピクセルアート向けに最近傍補間を使用する
+        g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+        g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Half;
+
         g.Clear(this.BackColor);
 
-        var tileSize = MapConstants.TilePixelSize;
-        var tilesPerRow = _tileset.Width / tileSize;
-        var tilesPerCol = _tileset.Height / tileSize;
+        var srcSize = MapConstants.DefaultTileSize;   // 16: 画像の切り出しサイズ
+        var dstSize = ViewerConstants.TileRenderSize; // 32: 画面上の描画サイズ
+        var tilesPerRow = _tileset.Width / srcSize;
+        var tilesPerCol = _tileset.Height / srcSize;
         var totalTiles = tilesPerRow * tilesPerCol;
 
         var offset = AutoScrollPosition;
 
         for (var i = 0; i < totalTiles; i++)
         {
-            // --- 元画像の切り出し ---
-            var sx = (i % tilesPerRow) * tileSize;
-            var sy = (i / tilesPerRow) * tileSize;
+            // --- 元画像の切り出し（16×16）---
+            var sx = (i % tilesPerRow) * srcSize;
+            var sy = (i / tilesPerRow) * srcSize;
+            var srcRect = new Rectangle(sx, sy, srcSize, srcSize);
 
-            var srcRect = new Rectangle(sx, sy, tileSize, tileSize);
-
-            // --- 描画位置 ---
-            var dx = (i % tilesPerRow) * (tileSize + _tileSpacing);
-            var dy = (i / tilesPerRow) * (tileSize + _tileSpacing);
-
+            // --- 描画位置（32×32 に拡大）---
+            var dx = (i % tilesPerRow) * (dstSize + _tileSpacing);
+            var dy = (i / tilesPerRow) * (dstSize + _tileSpacing);
             var dstRect = new Rectangle(
                 dx + offset.X,
                 dy + offset.Y,
-                tileSize,
-                tileSize
+                dstSize,
+                dstSize
             );
 
-            // --- 描画 ---
+            // --- 拡大描画 ---
             g.DrawImage(_tileset, dstRect, srcRect, GraphicsUnit.Pixel);
 
             // --- 選択枠 ---
@@ -102,7 +114,8 @@ public class TilePaletteControl : DoubleBufferedPanel
 
         if (_tileset == null) return;
 
-        var tileSize = MapConstants.TilePixelSize;
+        var srcSize = MapConstants.DefaultTileSize;   // 16: タイル枚数の計算用
+        var dstSize = ViewerConstants.TileRenderSize; // 32: クリック位置の計算用
         var offset = AutoScrollPosition;
 
         var rawX = e.X - offset.X;
@@ -110,13 +123,13 @@ public class TilePaletteControl : DoubleBufferedPanel
 
         if (rawX < 0 || rawY < 0) return;
 
-        var cellSize = tileSize + _tileSpacing;
+        var cellSize = dstSize + _tileSpacing;
 
         var col = rawX / cellSize;
         var row = rawY / cellSize;
 
-        var tilesPerRow = _tileset.Width / tileSize;
-        var tilesPerCol = _tileset.Height / tileSize;
+        var tilesPerRow = _tileset.Width / srcSize;
+        var tilesPerCol = _tileset.Height / srcSize;
 
         if (col < 0 || col >= tilesPerRow ||
             row < 0 || row >= tilesPerCol)
@@ -126,7 +139,7 @@ public class TilePaletteControl : DoubleBufferedPanel
         var offsetX = rawX % cellSize;
         var offsetY = rawY % cellSize;
 
-        if (offsetX >= tileSize || offsetY >= tileSize)
+        if (offsetX >= dstSize || offsetY >= dstSize)
             return;
 
         var index = row * tilesPerRow + col;
