@@ -27,15 +27,15 @@ public class PageNavBarControl : UserControl
     //========================
     // 定数
     //========================
-    private const int _buttonWidth = 32;
-    private const int _barHeight = 28;
+    private const int ButtonWidth = 32;
+    private const int BarHeight = 28;
 
     //========================
     // 初期化
     //========================
     public PageNavBarControl()
     {
-        Height = _barHeight;
+        Height = BarHeight;
         Dock = DockStyle.Bottom;
         BackColor = SystemColors.ControlDark;
 
@@ -108,8 +108,8 @@ public class PageNavBarControl : UserControl
         return new Button
         {
             Text = text,
-            Width = _buttonWidth,
-            Height = _barHeight - 4,
+            Width = ButtonWidth,
+            Height = BarHeight - 4,
             FlatStyle = FlatStyle.Flat,
             ForeColor = Color.White,
             BackColor = Color.FromArgb(80, 80, 90),

@@ -18,9 +18,14 @@ public sealed class Page
     public string Tag { get; set; } = string.Empty;
 
     /// <summary>
-    /// Zレイヤー。現状は整数で十分
+    /// ノードエディタ上のX配置座標。エディタ専用（bin/def出力対象外）。
     /// </summary>
-    public int Z { get; set; } = 0;
+    public int NodeX { get; set; } = 0;
+
+    /// <summary>
+    /// ノードエディタ上のY配置座標。エディタ専用（bin/def出力対象外）。
+    /// </summary>
+    public int NodeY { get; set; } = 0;
 
     /// <summary>
     /// スクロール属性などは後で拡張
@@ -47,7 +52,8 @@ public sealed class Page
             ReadOnly = ReadOnly,
             Remarks = Remarks,
             Tag = Tag,
-            Z = Z,
+            NodeX = NodeX,
+            NodeY = NodeY,
             ScrollType = ScrollType,
             Header = Header.Clone(),
             TileMap = TileMap.Clone()

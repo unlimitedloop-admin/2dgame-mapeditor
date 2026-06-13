@@ -1,4 +1,5 @@
 using StageSmith.Core.Models;
+using System.ComponentModel;
 
 namespace StageSmith.Editor;
 
@@ -35,16 +36,16 @@ public class NodeEditView : Panel
 
     /// <summary>ズーム倍率。</summary>
     private float _zoom = 1.0f;
-    private const float _zoomMin = 0.25f;
-    private const float _zoomMax = 4.0f;
-    private const float _zoomStep = 0.25f;
+    private const float ZoomMin  = 0.25f;
+    private const float ZoomMax  = 4.0f;
+    private const float ZoomStep = 0.25f;
 
     //========================
     // ノードサイズ（基準 1.0x）
     //========================
-    private const int _nodeW = 32;
-    private const int _nodeH = 30;
-    private const int _nodeGap = 4; // ノード間の隙間
+    private const int NodeW   = 32;
+    private const int NodeH   = 30;
+    private const int NodeGap = 4;
 
     //========================
     // 選択・ホバー状態
@@ -56,13 +57,19 @@ public class NodeEditView : Panel
     // ドラッグ判定
     //========================
     private Point _mouseDownPos;
-    private bool _isDragging;
-    private const int _dragThreshold = 4;
+    private bool  _isDragging;
+    private const int DragThreshold = 4;
 
     //========================
     // 右クリック時のヒットテスト結果保持
     //========================
     private int _contextMenuTargetPageIndex = -1;
+
+    //========================
+    // Z座標フィルタ（PageNodeEditorFormから設定される）
+    //========================
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public int FilterZ { get; set; } = 0;
 
     //========================
     // 初期化
@@ -72,12 +79,12 @@ public class NodeEditView : Panel
         _context = context;
 
         DoubleBuffered = true;
-        BackColor = Color.FromArgb(40, 40, 45);
+        BackColor      = Color.FromArgb(40, 40, 45);
 
-        MouseDown += OnMouseDown;
-        MouseMove += OnMouseMove;
-        MouseUp += OnMouseUp;
-        MouseWheel += OnMouseWheel;
+        MouseDown   += OnMouseDown;
+        MouseMove   += OnMouseMove;
+        MouseUp     += OnMouseUp;
+        MouseWheel  += OnMouseWheel;
         DoubleClick += OnDoubleClick;
     }
 
@@ -117,43 +124,93 @@ public class NodeEditView : Panel
         var stage = _context.CurrentStage;
         if (stage == null) return;
 
-        // TODO: Z座標フィルタを PageNodeEditorForm.SelectedZ から取得する
-        // 現時点では全ページを描画する（Z対応は後続タスク）
-
-        foreach (var page in stage.Pages)
+        // 選択中のZ階層に属するページのみ描画
+        for (var i = 0; i < stage.Pages.Count; i++)
         {
-            DrawNode(g, page, stage.Pages.IndexOf(page));
+            var page = stage.Pages[i];
+            if (page.Header.Z != FilterZ) continue;
+            DrawNode(g, page, i);
         }
+
+        // 仮ページ（候補位置）を描画
+        DrawCandidateNodes(g, stage);
     }
 
     private void DrawNode(Graphics g, Page page, int pageIndex)
     {
-        var gridPos = GetGridPosition(page);
-        var rect = GridToRect(gridPos);
-
-        // ノード色を決定
+        var rect  = PageToRect(page);
         var color = GetNodeColor(pageIndex, page);
 
         using var brush = new SolidBrush(color);
         g.FillRectangle(brush, rect);
 
-        using var pen = new Pen(Color.FromArgb(80, 80, 90), 1);
-        g.DrawRectangle(pen, rect);
+        using var borderPen = new Pen(Color.FromArgb(80, 80, 90), 1);
+        g.DrawRectangle(borderPen, rect);
 
-        // ページ番号テキスト（1.5x未満のとき）
+        // 1.5x未満 → 色 + ページ番号テキスト
         if (_zoom < 1.5f)
         {
-            using var font = new Font("Yu Gothic UI", 7f * _zoom);
-            using var textBrush = new SolidBrush(Color.White);
-            var text = pageIndex.ToString();
-            var textSize = g.MeasureString(text, font);
-            var textPos = new PointF(
-                rect.X + (rect.Width - textSize.Width) / 2,
-                rect.Y + (rect.Height - textSize.Height) / 2
-            );
-            g.DrawString(text, font, textBrush, textPos);
+            DrawNodeText(g, rect, pageIndex.ToString());
         }
-        // TODO: 1.5x以上のときタイルプレビューを描画する（後続タスク）
+        // TODO: 1.5x以上 → タイルプレビュー（後続タスク）
+    }
+
+    /// <summary>
+    /// 設定済みページの隣に仮ページ（候補位置）を描画する。
+    /// </summary>
+    private void DrawCandidateNodes(Graphics g, Stage stage)
+    {
+        // 設定済みページのグリッド座標セットを収集
+        var occupied = new HashSet<Point>();
+        foreach (var page in stage.Pages)
+        {
+            if (page.Header.Z == FilterZ)
+                occupied.Add(new Point(page.NodeX, page.NodeY));
+        }
+
+        // 各設定済みページの上下左右に空きがあれば候補位置を描画
+        var candidates = new HashSet<Point>();
+        foreach (var pos in occupied)
+        {
+            foreach (var neighbor in GetNeighborPositions(pos))
+            {
+                if (!occupied.Contains(neighbor))
+                    candidates.Add(neighbor);
+            }
+        }
+
+        using var brush = new SolidBrush(Color.FromArgb(30, 255, 255, 255));
+        using var pen   = new Pen(Color.FromArgb(80, 255, 255, 255), 1);
+
+        foreach (var candidate in candidates)
+        {
+            var rect = GridToRect(candidate);
+            g.FillRectangle(brush, rect);
+            g.DrawRectangle(pen, rect);
+        }
+    }
+
+    private static IEnumerable<Point> GetNeighborPositions(Point pos)
+    {
+        yield return new Point(pos.X - 1, pos.Y);
+        yield return new Point(pos.X + 1, pos.Y);
+        yield return new Point(pos.X,     pos.Y - 1);
+        yield return new Point(pos.X,     pos.Y + 1);
+    }
+
+    private void DrawNodeText(Graphics g, RectangleF rect, string text)
+    {
+        var fontSize = Math.Max(6f, 7f * _zoom);
+        using var font      = new Font("Yu Gothic UI", fontSize);
+        using var textBrush = new SolidBrush(Color.White);
+
+        var textSize = g.MeasureString(text, font);
+        var textPos  = new PointF(
+            rect.X + (rect.Width  - textSize.Width)  / 2,
+            rect.Y + (rect.Height - textSize.Height) / 2
+        );
+
+        g.DrawString(text, font, textBrush, textPos);
     }
 
     private Color GetNodeColor(int pageIndex, Page page)
@@ -164,47 +221,41 @@ public class NodeEditView : Panel
         if (!page.Enable)
             return Color.Gray;
 
-        // 隣接接続がすべて未設定（0xFF）かチェック
         var h = page.Header;
         var hasAnyConnection =
-            h.LeftPage != 0xFF ||
+            h.LeftPage  != 0xFF ||
             h.RightPage != 0xFF ||
-            h.UpPage != 0xFF ||
-            h.DownPage != 0xFF;
+            h.UpPage    != 0xFF ||
+            h.DownPage  != 0xFF;
 
         return hasAnyConnection
             ? Color.FromArgb(100, 180, 100)  // 設定済み（緑）
-            : Color.FromArgb(180, 80, 80);  // 隣接未接続（赤）
+            : Color.FromArgb(180, 80,  80);  // 隣接未接続（赤）
     }
 
     //========================
     // 座標変換
     //========================
 
-    /// <summary>ページのグリッド座標を取得する（暫定：ページインデックスを仮配置）。</summary>
-    private static Point GetGridPosition(Page page)
-    {
-        // TODO: ノードエディタのXY配置情報をPageまたはNodeデータに持たせる
-        // 暫定として仮の配置を返す
-        return new Point(0, 0);
-    }
+    /// <summary>PageのNodeX/NodeYからスクリーン上の描画矩形を返す。</summary>
+    private RectangleF PageToRect(Page page)
+        => GridToRect(new Point(page.NodeX, page.NodeY));
 
     /// <summary>グリッド座標をスクリーン上の描画矩形に変換する。</summary>
     private RectangleF GridToRect(Point gridPos)
     {
-        var step = (_nodeW + _nodeGap) * _zoom;
-        var x = _viewOffset.X + gridPos.X * step;
-        var y = _viewOffset.Y + gridPos.Y * step;
-
-        return new RectangleF(x, y, _nodeW * _zoom, _nodeH * _zoom);
+        var step = (NodeW + NodeGap) * _zoom;
+        var x    = _viewOffset.X + gridPos.X * step;
+        var y    = _viewOffset.Y + gridPos.Y * step;
+        return new RectangleF(x, y, NodeW * _zoom, NodeH * _zoom);
     }
 
     /// <summary>スクリーン座標をグリッド座標に変換する。</summary>
     private Point ScreenToGrid(Point screenPos)
     {
-        var step = (_nodeW + _nodeGap) * _zoom;
-        var gx = (int)Math.Floor((screenPos.X - _viewOffset.X) / step);
-        var gy = (int)Math.Floor((screenPos.Y - _viewOffset.Y) / step);
+        var step = (NodeW + NodeGap) * _zoom;
+        var gx   = (int)Math.Floor((screenPos.X - _viewOffset.X) / step);
+        var gy   = (int)Math.Floor((screenPos.Y - _viewOffset.Y) / step);
         return new Point(gx, gy);
     }
 
@@ -216,12 +267,40 @@ public class NodeEditView : Panel
 
         for (var i = 0; i < stage.Pages.Count; i++)
         {
-            var rect = GridToRect(GetGridPosition(stage.Pages[i]));
+            var page = stage.Pages[i];
+            if (page.Header.Z != FilterZ) continue;
+
+            var rect = PageToRect(page);
             if (rect.Contains(screenPos))
                 return i;
         }
 
         return -1;
+    }
+
+    /// <summary>スクリーン座標が候補位置に当たるかチェックしグリッド座標を返す。なければnull。</summary>
+    private Point? HitTestCandidate(Point screenPos)
+    {
+        var stage = _context.CurrentStage;
+        if (stage == null) return null;
+
+        var occupied = new HashSet<Point>(
+            stage.Pages
+                .Where(p => p.Header.Z == FilterZ)
+                .Select(p => new Point(p.NodeX, p.NodeY))
+        );
+
+        foreach (var pos in occupied)
+        {
+            foreach (var neighbor in GetNeighborPositions(pos))
+            {
+                if (occupied.Contains(neighbor)) continue;
+                if (GridToRect(neighbor).Contains(screenPos))
+                    return neighbor;
+            }
+        }
+
+        return null;
     }
 
     //========================
@@ -230,11 +309,10 @@ public class NodeEditView : Panel
     private void OnMouseDown(object? sender, MouseEventArgs e)
     {
         _mouseDownPos = e.Location;
-        _isDragging = false;
+        _isDragging   = false;
 
         if (e.Button == MouseButtons.Right)
         {
-            // 右クリック時はヒットテスト結果を保持しておく
             _contextMenuTargetPageIndex = HitTestPageIndex(e.Location);
         }
     }
@@ -254,14 +332,14 @@ public class NodeEditView : Panel
             var dx = e.X - _mouseDownPos.X;
             var dy = e.Y - _mouseDownPos.Y;
 
-            if (!_isDragging && Math.Abs(dx) + Math.Abs(dy) >= _dragThreshold)
+            if (!_isDragging && Math.Abs(dx) + Math.Abs(dy) >= DragThreshold)
                 _isDragging = true;
 
             if (_isDragging)
             {
                 _viewOffset.X += dx;
                 _viewOffset.Y += dy;
-                _mouseDownPos = e.Location;
+                _mouseDownPos  = e.Location;
                 Invalidate();
             }
         }
@@ -271,7 +349,6 @@ public class NodeEditView : Panel
     {
         if (e.Button == MouseButtons.Left && !_isDragging)
         {
-            // クリック確定 → ページ選択
             var pageIndex = HitTestPageIndex(e.Location);
             if (pageIndex >= 0)
             {
@@ -286,7 +363,7 @@ public class NodeEditView : Panel
 
     private void OnDoubleClick(object? sender, EventArgs e)
     {
-        var pos = PointToClient(Cursor.Position);
+        var pos       = PointToClient(Cursor.Position);
         var pageIndex = HitTestPageIndex(pos);
 
         if (pageIndex >= 0)
@@ -297,14 +374,12 @@ public class NodeEditView : Panel
     {
         if (ModifierKeys.HasFlag(Keys.Control))
         {
-            // Ctrl + ホイール → ズーム
-            var delta = e.Delta > 0 ? _zoomStep : -_zoomStep;
-            _zoom = Math.Clamp(_zoom + delta, _zoomMin, _zoomMax);
+            var delta = e.Delta > 0 ? ZoomStep : -ZoomStep;
+            _zoom = Math.Clamp(_zoom + delta, ZoomMin, ZoomMax);
             Invalidate();
         }
         else
         {
-            // 通常ホイール → スクロール
             _viewOffset.Y += e.Delta > 0 ? 40 : -40;
             Invalidate();
         }

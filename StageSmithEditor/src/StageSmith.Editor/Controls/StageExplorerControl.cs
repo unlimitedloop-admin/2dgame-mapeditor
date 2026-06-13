@@ -43,8 +43,8 @@ public class StageExplorerControl : UserControl
     //========================
     // アイコンインデックス（ImageList）
     //========================
-    private const int _iconStage = 0;
-    private const int _iconPage = 1;
+    private const int IconStage = 0;
+    private const int IconPage = 1;
 
     //========================
     // 初期化
@@ -116,8 +116,8 @@ public class StageExplorerControl : UserControl
     {
         var node = new TreeNode(stage.Name)
         {
-            ImageIndex = _iconStage,
-            SelectedImageIndex = _iconStage,
+            ImageIndex = IconStage,
+            SelectedImageIndex = IconStage,
             Tag = new NodeTag(NodeKind.Stage, stage, null)
         };
 
@@ -139,8 +139,8 @@ public class StageExplorerControl : UserControl
 
         return new TreeNode(label)
         {
-            ImageIndex = _iconPage,
-            SelectedImageIndex = _iconPage,
+            ImageIndex = IconPage,
+            SelectedImageIndex = IconPage,
             Tag = new NodeTag(NodeKind.Page, stage, page)
         };
     }

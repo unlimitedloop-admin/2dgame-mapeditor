@@ -166,6 +166,7 @@ public partial class PageNodeEditorForm : Form
     /// </summary>
     public void SyncPageSelection(int pageIndex)
     {
+        RefreshZComboBox();
         _nodeEditView.SetSelectedPage(pageIndex);
         UpdateInfoDisplay(pageIndex);
     }
@@ -240,11 +241,15 @@ public partial class PageNodeEditorForm : Form
             _zComboBox.Items.Add(z);
 
         if (_zComboBox.Items.Count > 0)
+        {
             _zComboBox.SelectedIndex = 0;
+            _nodeEditView.FilterZ = SelectedZ;
+        }
     }
 
     private void OnZComboBoxChanged(object? sender, EventArgs e)
     {
+        _nodeEditView.FilterZ = SelectedZ;
         _nodeEditView.Invalidate();
     }
 

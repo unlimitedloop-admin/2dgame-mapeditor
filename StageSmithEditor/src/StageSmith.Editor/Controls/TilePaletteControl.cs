@@ -12,7 +12,7 @@ public class TilePaletteControl : DoubleBufferedPanel
 
     public event Action<int>? TileSelected;
 
-    private const int _tileSpacing = 2;
+    private const int TileSpacing = 2;
 
     public TilePaletteControl()
     {
@@ -38,8 +38,8 @@ public class TilePaletteControl : DoubleBufferedPanel
         var rows = _tileset.Height / srcSize;
 
         AutoScrollMinSize = new Size(
-            cols * (dstSize + _tileSpacing),
-            rows * (dstSize + _tileSpacing));
+            cols * (dstSize + TileSpacing),
+            rows * (dstSize + TileSpacing));
 
         Invalidate();
     }
@@ -80,8 +80,8 @@ public class TilePaletteControl : DoubleBufferedPanel
             var srcRect = new Rectangle(sx, sy, srcSize, srcSize);
 
             // --- 描画位置（32×32 に拡大）---
-            var dx = (i % tilesPerRow) * (dstSize + _tileSpacing);
-            var dy = (i / tilesPerRow) * (dstSize + _tileSpacing);
+            var dx = (i % tilesPerRow) * (dstSize + TileSpacing);
+            var dy = (i / tilesPerRow) * (dstSize + TileSpacing);
             var dstRect = new Rectangle(
                 dx + offset.X,
                 dy + offset.Y,
@@ -123,7 +123,7 @@ public class TilePaletteControl : DoubleBufferedPanel
 
         if (rawX < 0 || rawY < 0) return;
 
-        var cellSize = dstSize + _tileSpacing;
+        var cellSize = dstSize + TileSpacing;
 
         var col = rawX / cellSize;
         var row = rawY / cellSize;
