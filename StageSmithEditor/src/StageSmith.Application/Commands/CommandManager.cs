@@ -29,4 +29,7 @@ public class CommandManager
         cmd.Execute();
         _undoStack.Push(cmd);
     }
+
+    public bool CanUndo => _undoStack.Count > 0;
+    public bool CanRedo => _redoStack.Count > 0;
 }

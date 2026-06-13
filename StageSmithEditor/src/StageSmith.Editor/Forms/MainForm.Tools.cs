@@ -113,8 +113,7 @@ public partial class MainForm
 
         _showGridButton.Click += (_, _) =>
         {
-            _showGrid = !_showGrid;
-            _mapView.SetShowGrid(_showGrid);
+            ShowMapViewGrid();
         };
 
         _tilePreviewButton.Click += (_, _) =>

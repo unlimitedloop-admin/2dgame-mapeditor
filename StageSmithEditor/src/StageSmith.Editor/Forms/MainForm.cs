@@ -35,6 +35,7 @@ public partial class MainForm : Form
     private readonly MapViewContent _mapViewContent;
     private readonly StageExplorerContent _stageExplorerContent;
     private readonly PropertyWindowContent _propertyWindowContent;
+    private PageNodeEditorForm? _nodeEditorForm;
 
     //========================
     // Controls（DockContent 経由で参照）
@@ -81,7 +82,9 @@ public partial class MainForm : Form
         // VS2015 テーマを適用（インストール済みの場合）
         _dockPanel.Theme = new VS2015BlueTheme();
 
-        Controls.Add(_dockPanel);
+        Controls.Add(_dockPanel);   // DockPanel をその下に配置
+        InitializeToolStrip();
+        Controls.Add(_menuStrip);   // メニューバーを最前面に
 
         // DockContent を生成
         _mapViewContent = new MapViewContent();
@@ -93,8 +96,9 @@ public partial class MainForm : Form
         _tilePalette.Click += (s, e) => _tilePalette.Focus();
         Click += (s, e) => _mapView.Focus();
 
+        InitializeMenuHandlers();
+
         InitializeTools();
-        InitializeToolStrip();
         InitializeDockLayout();
         BindToolManager();
         BindTilePalette();
@@ -264,6 +268,9 @@ public partial class MainForm : Form
         ApplyContextToView();
         _stageExplorer.RebuildTree();
         _pageNavBar.UpdateDisplay(_context);
+
+        // ノードエディタが開いていれば選択も同期
+        _nodeEditorForm?.SyncPageSelection(_context.CurrentPageIndex);
     }
 
     //========================
@@ -372,5 +379,30 @@ public partial class MainForm : Form
 
         if (mode == EditorToolMode.Pen)
             _selectionTool?.ClearSelection();
+    }
+
+    /// <summary>
+    /// ノードエディタを開く。既に開いていれば前面に出す。
+    /// </summary>
+    private void OpenNodeEditor()
+    {
+        if (_nodeEditorForm == null || _nodeEditorForm.IsDisposed)
+        {
+            _nodeEditorForm = new PageNodeEditorForm(_context);
+
+            // ノードエディタでページ選択 → MainFormのマップビューを更新
+            _nodeEditorForm.PageSelected += pageIndex =>
+            {
+                _context.SetPage(pageIndex);
+                ApplyContextToView();
+                _pageNavBar.UpdateDisplay(_context);
+            };
+
+            _nodeEditorForm.Show(this); // オーナー指定でMainFormと連動
+        }
+        else
+        {
+            _nodeEditorForm.BringToFront();
+        }
     }
 }

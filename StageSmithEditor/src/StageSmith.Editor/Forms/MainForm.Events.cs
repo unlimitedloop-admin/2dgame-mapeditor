@@ -76,12 +76,39 @@ public partial class MainForm
                 _mapView.Invalidate();
                 return true;
 
-            case Keys.P:
+            case Keys.PageDown:
+                NavigatePage(NavAction.Next);
+                return true;
+
+            case Keys.PageUp:
+                NavigatePage(NavAction.Prev);
+                return true;
+
+           case Keys.P:
                 SetToolMode(EditorToolMode.Pen);
                 return true;
 
             case Keys.S:
                 SetToolMode(EditorToolMode.Selection);
+                return true;
+
+            case Keys.G:
+                ShowMapViewGrid();
+                _menuViewGridLines.Checked = _showGrid;
+                return true;
+
+            case Keys.F:
+                FillSelection();
+                return true;
+
+            case Keys.M:
+                _menuViewMarkerOverlay.Checked = !_menuViewMarkerOverlay.Checked;
+                ToggleMarkerOverlay(_menuViewMarkerOverlay.Checked);
+                return true;
+
+            case Keys.L:
+                _menuViewShowTileNumbers.Checked = !_menuViewShowTileNumbers.Checked;
+                ToggleShowTileNumbers(_menuViewShowTileNumbers.Checked);
                 return true;
 
             case Keys.Insert:

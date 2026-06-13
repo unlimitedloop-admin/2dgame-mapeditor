@@ -176,4 +176,10 @@ public partial class MainForm
 
         _mapView.Invalidate();
     }
+
+    private void ShowMapViewGrid()
+    {
+        _showGrid = !_showGrid;
+        _mapView.SetShowGrid(_showGrid);
+    }
 }
