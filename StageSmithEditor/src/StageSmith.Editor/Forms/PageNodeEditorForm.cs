@@ -39,6 +39,12 @@ public partial class PageNodeEditorForm : Form
     /// <summary>中央：ノード編集ビュー（カスタム描画）</summary>
     private readonly NodeEditView _nodeEditView;
 
+    /// <summary>ノードビュー右側の垂直スクロールバー</summary>
+    private readonly VScrollBar _vScrollBar;
+
+    /// <summary>ノードビュー下側の水平スクロールバー</summary>
+    private readonly HScrollBar _hScrollBar;
+
     /// <summary>下部：ホバー座標表示ステータスバー</summary>
     private readonly StatusStrip _statusStrip;
     private readonly ToolStripStatusLabel _coordLabel;
@@ -123,15 +129,67 @@ public partial class PageNodeEditorForm : Form
             _connectionBackLabel, _connectionFrontLabel,
         ]);
 
-        // --- ノード編集ビュー ---
+        // --- ノード編集ビュー + スクロールバー ---
+        // NodeEditViewとスクロールバーをPanelで組み合わせる
+        //
+        //  ┌──────────────┬───┐
+        //  │ NodeEditView  │ V │
+        //  ├──────────────┼───┤
+        //  │ HScrollBar   │   │
+        //  └──────────────┴───┘
+
         _nodeEditView = new NodeEditView(_context)
         {
             Dock = DockStyle.Fill,
         };
 
-        _nodeEditView.PageSelected += OnNodeViewPageSelected;
-        _nodeEditView.CoordChanged += OnNodeViewCoordChanged;
+        _vScrollBar = new VScrollBar
+        {
+            Dock    = DockStyle.Right,
+            Minimum = -5000,
+            Maximum = 5000,
+            Value   = 0,
+        };
+
+        _hScrollBar = new HScrollBar
+        {
+            Dock    = DockStyle.Bottom,
+            Minimum = -5000,
+            Maximum = 5000,
+            Value   = 0,
+        };
+
+        // スクロールバー操作 → ViewOffsetを更新
+        _vScrollBar.Scroll += (_, _) =>
+        {
+            var offset = _nodeEditView.ViewOffset;
+            offset.Y = -_vScrollBar.Value;
+            _nodeEditView.ViewOffset = offset;
+        };
+
+        _hScrollBar.Scroll += (_, _) =>
+        {
+            var offset = _nodeEditView.ViewOffset;
+            offset.X = -_hScrollBar.Value;
+            _nodeEditView.ViewOffset = offset;
+        };
+
+        // ドラッグ・ホイール操作 → スクロールバーを同期
+        _nodeEditView.ViewOffsetChanged += offset =>
+        {
+            _hScrollBar.Value = Math.Clamp((int)-offset.X, _hScrollBar.Minimum, _hScrollBar.Maximum);
+            _vScrollBar.Value = Math.Clamp((int)-offset.Y, _vScrollBar.Minimum, _vScrollBar.Maximum);
+        };
+
+        _nodeEditView.PageSelected    += OnNodeViewPageSelected;
+        _nodeEditView.CoordChanged    += OnNodeViewCoordChanged;
         _nodeEditView.PageDoubleClick += OnNodeViewPageDoubleClick;
+
+        // ノードビューエリア（NodeEditView + スクロールバー）
+        var nodeViewArea = new Panel { Dock = DockStyle.Fill };
+        nodeViewArea.Controls.Add(_nodeEditView);
+        nodeViewArea.Controls.Add(_vScrollBar);
+        nodeViewArea.Controls.Add(_hScrollBar);
 
         // --- ステータスバー ---
         _statusStrip = new StatusStrip { SizingGrip = false };
@@ -142,9 +200,9 @@ public partial class PageNodeEditorForm : Form
         _statusStrip.Items.Add(_coordLabel);
 
         // レイアウトに追加
-        mainLayout.Controls.Add(_infoPanel, 0, 0);
-        mainLayout.Controls.Add(_nodeEditView, 0, 1);
-        mainLayout.Controls.Add(_statusStrip, 0, 2);
+        mainLayout.Controls.Add(_infoPanel,    0, 0);
+        mainLayout.Controls.Add(nodeViewArea,  0, 1);
+        mainLayout.Controls.Add(_statusStrip,  0, 2);
 
         Controls.Add(mainLayout);
 
@@ -154,6 +212,9 @@ public partial class PageNodeEditorForm : Form
         // 初期表示
         RefreshZComboBox();
         ClearInfoDisplay();
+
+        // ウィンドウ表示後にノードを中央配置
+        Shown += (_, _) => _nodeEditView.CenterView();
     }
 
     //========================
@@ -166,7 +227,6 @@ public partial class PageNodeEditorForm : Form
     /// </summary>
     public void SyncPageSelection(int pageIndex)
     {
-        RefreshZComboBox();
         _nodeEditView.SetSelectedPage(pageIndex);
         UpdateInfoDisplay(pageIndex);
     }
@@ -241,15 +301,11 @@ public partial class PageNodeEditorForm : Form
             _zComboBox.Items.Add(z);
 
         if (_zComboBox.Items.Count > 0)
-        {
             _zComboBox.SelectedIndex = 0;
-            _nodeEditView.FilterZ = SelectedZ;
-        }
     }
 
     private void OnZComboBoxChanged(object? sender, EventArgs e)
     {
-        _nodeEditView.FilterZ = SelectedZ;
         _nodeEditView.Invalidate();
     }
 

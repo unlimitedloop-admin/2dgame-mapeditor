@@ -27,6 +27,12 @@ public class NodeEditView : Panel
     /// <summary>ノードがダブルクリックされたとき発火する（編集ダイアログ用）。</summary>
     public event Action<int>? PageDoubleClick;
 
+    /// <summary>
+    /// ビューオフセットが変化したとき発火する。
+    /// PageNodeEditorFormがスクロールバーの位置同期に使用する。
+    /// </summary>
+    public event Action<PointF>? ViewOffsetChanged;
+
     //========================
     // ビュー状態
     //========================
@@ -91,6 +97,34 @@ public class NodeEditView : Panel
     //========================
     // 公開メソッド
     //========================
+
+    /// <summary>
+    /// ビューオフセットを外部から設定する（スクロールバー操作時に使用）。
+    /// </summary>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public PointF ViewOffset
+    {
+        get => _viewOffset;
+        set
+        {
+            _viewOffset = value;
+            Invalidate();
+        }
+    }
+
+    /// <summary>
+    /// ノードをパネル中央基準で表示する初期配置を行う。
+    /// ウィンドウ表示後に呼び出すこと。
+    /// </summary>
+    public void CenterView()
+    {
+        _viewOffset = new PointF(
+            Width  / 2f - NodeW * _zoom / 2f,
+            Height / 2f - NodeH * _zoom / 2f
+        );
+        ViewOffsetChanged?.Invoke(_viewOffset);
+        Invalidate();
+    }
 
     /// <summary>
     /// MainFormからページ切り替えが通知されたとき、選択状態を同期する。
@@ -340,6 +374,7 @@ public class NodeEditView : Panel
                 _viewOffset.X += dx;
                 _viewOffset.Y += dy;
                 _mouseDownPos  = e.Location;
+                ViewOffsetChanged?.Invoke(_viewOffset);
                 Invalidate();
             }
         }
@@ -374,13 +409,23 @@ public class NodeEditView : Panel
     {
         if (ModifierKeys.HasFlag(Keys.Control))
         {
+            // Ctrl + ホイール → ズーム
             var delta = e.Delta > 0 ? ZoomStep : -ZoomStep;
             _zoom = Math.Clamp(_zoom + delta, ZoomMin, ZoomMax);
             Invalidate();
         }
+        else if (ModifierKeys.HasFlag(Keys.Shift))
+        {
+            // Shift + ホイール → 左右スクロール
+            _viewOffset.X += e.Delta > 0 ? 40 : -40;
+            ViewOffsetChanged?.Invoke(_viewOffset);
+            Invalidate();
+        }
         else
         {
+            // 通常ホイール → 上下スクロール
             _viewOffset.Y += e.Delta > 0 ? 40 : -40;
+            ViewOffsetChanged?.Invoke(_viewOffset);
             Invalidate();
         }
     }
