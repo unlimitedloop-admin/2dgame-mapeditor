@@ -33,6 +33,12 @@ public class NodeEditView : Panel
     /// </summary>
     public event Action<PointF>? ViewOffsetChanged;
 
+    /// <summary>
+    /// ズーム倍率が変化したとき発火する。
+    /// PageNodeEditorFormがステータスバーの倍率表示更新に使用する。
+    /// </summary>
+    public event Action<float>? ZoomChanged;
+
     //========================
     // ビュー状態
     //========================
@@ -181,13 +187,22 @@ public class NodeEditView : Panel
         using var borderPen = new Pen(Color.FromArgb(80, 80, 90), 1);
         g.DrawRectangle(borderPen, rect);
 
-        // 1.5x未満 → 色 + ページ番号テキスト
+        // 1.5x未満 → 色 + Room IDテキスト
+        // 背景が明るい色（黄色など）のときは黒文字、それ以外は白文字
         if (_zoom < 1.5f)
         {
-            DrawNodeText(g, rect, pageIndex.ToString());
+            var textColor = IsLightColor(color) ? Color.Black : Color.White;
+            DrawNodeText(g, rect, $"{page.Header.RoomId}", textColor);
         }
         // TODO: 1.5x以上 → タイルプレビュー（後続タスク）
     }
+
+    /// <summary>
+    /// 明るい色かどうかを輝度で判定する。
+    /// 輝度が高い（明るい）場合はtrueを返す。
+    /// </summary>
+    private static bool IsLightColor(Color color)
+        => (color.R * 0.299 + color.G * 0.587 + color.B * 0.114) > 128;
 
     /// <summary>
     /// 設定済みページの隣に仮ページ（候補位置）を描画する。
@@ -232,11 +247,11 @@ public class NodeEditView : Panel
         yield return new Point(pos.X,     pos.Y + 1);
     }
 
-    private void DrawNodeText(Graphics g, RectangleF rect, string text)
+    private void DrawNodeText(Graphics g, RectangleF rect, string text, Color textColor)
     {
         var fontSize = Math.Max(6f, 7f * _zoom);
         using var font      = new Font("Yu Gothic UI", fontSize);
-        using var textBrush = new SolidBrush(Color.White);
+        using var textBrush = new SolidBrush(textColor);
 
         var textSize = g.MeasureString(text, font);
         var textPos  = new PointF(
@@ -412,6 +427,7 @@ public class NodeEditView : Panel
             // Ctrl + ホイール → ズーム
             var delta = e.Delta > 0 ? ZoomStep : -ZoomStep;
             _zoom = Math.Clamp(_zoom + delta, ZoomMin, ZoomMax);
+            ZoomChanged?.Invoke(_zoom);
             Invalidate();
         }
         else if (ModifierKeys.HasFlag(Keys.Shift))

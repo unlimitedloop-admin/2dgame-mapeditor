@@ -1,3 +1,4 @@
+using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
 
 namespace StageSmith.Editor;
@@ -48,6 +49,7 @@ public partial class PageNodeEditorForm : Form
     /// <summary>下部：ホバー座標表示ステータスバー</summary>
     private readonly StatusStrip _statusStrip;
     private readonly ToolStripStatusLabel _coordLabel;
+    private readonly ToolStripStatusLabel _zoomLabel;
 
     //========================
     // 情報表示領域のコントロール
@@ -184,6 +186,7 @@ public partial class PageNodeEditorForm : Form
         _nodeEditView.PageSelected    += OnNodeViewPageSelected;
         _nodeEditView.CoordChanged    += OnNodeViewCoordChanged;
         _nodeEditView.PageDoubleClick += OnNodeViewPageDoubleClick;
+        _nodeEditView.ZoomChanged     += zoom => _zoomLabel!.Text = $"x{zoom:0.00}";
 
         // ノードビューエリア（NodeEditView + スクロールバー）
         var nodeViewArea = new Panel { Dock = DockStyle.Fill };
@@ -196,8 +199,14 @@ public partial class PageNodeEditorForm : Form
         _coordLabel = new ToolStripStatusLabel("x: -, y: -")
         {
             TextAlign = ContentAlignment.MiddleLeft,
+            Spring    = true,  // 残りスペースを占有
+        };
+        _zoomLabel = new ToolStripStatusLabel("x1.00")
+        {
+            TextAlign = ContentAlignment.MiddleRight,
         };
         _statusStrip.Items.Add(_coordLabel);
+        _statusStrip.Items.Add(_zoomLabel);
 
         // レイアウトに追加
         mainLayout.Controls.Add(_infoPanel,    0, 0);
@@ -243,41 +252,64 @@ public partial class PageNodeEditorForm : Form
             return;
         }
 
-        var header = page.Header;
+        var h = page.Header;
 
-        _pageIndexLabel.Text = $"Page: {pageIndex}";
-        _roomIdLabel.Text = $"Room ID: 0x{header.RoomId:X2}";
-        _tagsLabel.Text = $"Tags: {(string.IsNullOrEmpty(page.Tag) ? "-" : page.Tag)}";
-        _bookmarkLabel.Text = $"Bookmark: {(string.IsNullOrEmpty(page.Remarks) ? "-" : page.Remarks)}";
+        _pageIndexLabel.Text  = $"Page: {pageIndex}";
+        _roomIdLabel.Text     = $"Room ID: 0x{h.RoomId:X2}";
+        _tagsLabel.Text       = $"Tags: {(string.IsNullOrEmpty(page.Tag) ? "-" : page.Tag)}";
+        _bookmarkLabel.Text   = $"Bookmark: {(string.IsNullOrEmpty(page.Remarks) ? "-" : page.Remarks)}";
 
-        _connectionUpLabel.Text = FormatConnection("Up", header.UpPage);
-        _connectionDownLabel.Text = FormatConnection("Down", header.DownPage);
-        _connectionLeftLabel.Text = FormatConnection("Left", header.LeftPage);
-        _connectionRightLabel.Text = FormatConnection("Right", header.RightPage);
-        _connectionBackLabel.Text = FormatConnection("Back", header.BackPage);
-        _connectionFrontLabel.Text = FormatConnection("Front", header.FrontPage);
+        _connectionUpLabel.Text    = FormatConnectionWithScroll("Up",    h.UpPage,    h.ScrollUp);
+        _connectionDownLabel.Text  = FormatConnectionWithScroll("Down",  h.DownPage,  h.ScrollDown);
+        _connectionLeftLabel.Text  = FormatConnectionWithScroll("Left",  h.LeftPage,  h.ScrollLeft);
+        _connectionRightLabel.Text = FormatConnectionWithScroll("Right", h.RightPage, h.ScrollRight);
+        _connectionBackLabel.Text  = FormatConnection("Back",  h.BackPage);
+        _connectionFrontLabel.Text = FormatConnection("Front", h.FrontPage);
     }
 
     private void ClearInfoDisplay()
     {
-        _pageIndexLabel.Text = "Page: -";
-        _roomIdLabel.Text = "Room ID: -";
-        _tagsLabel.Text = "Tags: -";
-        _bookmarkLabel.Text = "Bookmark: -";
+        _pageIndexLabel.Text  = "Page: -";
+        _roomIdLabel.Text     = "Room ID: -";
+        _tagsLabel.Text       = "Tags: -";
+        _bookmarkLabel.Text   = "Bookmark: -";
 
-        _connectionUpLabel.Text = "Up:    ----";
-        _connectionDownLabel.Text = "Down:  ----";
-        _connectionLeftLabel.Text = "Left:  ----";
+        _connectionUpLabel.Text    = "Up:    ----";
+        _connectionDownLabel.Text  = "Down:  ----";
+        _connectionLeftLabel.Text  = "Left:  ----";
         _connectionRightLabel.Text = "Right: ----";
-        _connectionBackLabel.Text = "Back:  ----";
+        _connectionBackLabel.Text  = "Back:  ----";
         _connectionFrontLabel.Text = "Front: ----";
     }
 
+    /// <summary>Back/Front用：スクロール種類なし。</summary>
     private static string FormatConnection(string direction, byte roomId)
     {
         return roomId == 0xFF
             ? $"{direction,-6} ----"
             : $"{direction,-6} #{roomId}";
+    }
+
+    /// <summary>上下左右用：スクロール種類を併記する。</summary>
+    private static string FormatConnectionWithScroll(string direction, byte roomId, byte scrollByte)
+    {
+        if (roomId == 0xFF)
+            return $"{direction,-6} ----";
+
+        var scrollType = ScrollEncoding.GetType(scrollByte);
+        var scrollName = scrollType switch
+        {
+            ScrollType.Free    => "free",
+            ScrollType.Page    => "page",
+            ScrollType.Locked  => "locked",
+            ScrollType.Axis    => "axis",
+            ScrollType.Auto    => "auto",
+            ScrollType.Object  => "object",
+            ScrollType.Dynamic => "dynamic",
+            _                  => "none",
+        };
+
+        return $"{direction,-6} #{roomId} / {scrollName}";
     }
 
     //========================
@@ -397,7 +429,7 @@ public partial class PageNodeEditorForm : Form
         // Enable Page 用の項目
         menu.Items[0].Visible = isEnablePage;  // ページビューで表示
         menu.Items[1].Visible = isEnablePage;  // Separator
-        menu.Items[2].Visible = isEnablePage;  // 割り当て削除
+        menu.Items[2].Visible = isEnablePage;  // 割り当て削除   
         menu.Items[3].Visible = isEnablePage;  // 有効無効
         menu.Items[4].Visible = isEnablePage;  // Separator
         menu.Items[5].Visible = isEnablePage;  // 上に追加

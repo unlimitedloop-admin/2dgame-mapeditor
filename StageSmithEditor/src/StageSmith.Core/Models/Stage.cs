@@ -28,9 +28,17 @@ public sealed class Stage
 
     public Page AddPage(string? name = null)
     {
+        // 既存ページの最大NodeXの右隣に配置する。
+        // ページが0件のときは原点(0, 0)に配置する。
+        var nextX = Pages.Count > 0
+            ? Pages.Max(p => p.NodeX) + 1
+            : 0;
+
         var page = new Page
         {
-            Name = name ?? $"Page {Pages.Count:D3}"
+            Name  = name ?? $"Page {Pages.Count:D3}",
+            NodeX = nextX,
+            NodeY = 0,
         };
 
         Pages.Add(page);
