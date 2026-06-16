@@ -456,9 +456,9 @@ public partial class PageNodeEditorForm : Form
     // ① ページビューで表示
     private void OnContextShowInView()
     {
-        var pageIndex = _nodeEditView.SelectedPageIndex;
-        if (pageIndex < 0) return;
-        PageSelected?.Invoke(pageIndex);
+        var pageIndex = _nodeEditView.HitTestPage();
+        if (pageIndex == null) return;
+        PageSelected?.Invoke(pageIndex.Value);
     }
 
     // ② 部屋の割り当て削除（接続クリア or ページ削除を選択）
