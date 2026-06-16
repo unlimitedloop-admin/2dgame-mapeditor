@@ -423,33 +423,37 @@ public partial class PageNodeEditorForm : Form
 
     private void RefreshContextMenuState(ContextMenuStrip menu)
     {
-        var hitPage = _nodeEditView.HitTestPage();
-        var isEnablePage = hitPage != null;
+        var hitPage      = _nodeEditView.HitTestPage();
+        var hitCandidate = _nodeEditView.HitTestCandidateResult();
+
+        var isEnablePage  = hitPage != null;
+        var isCandidate   = !isEnablePage && hitCandidate != null;
 
         // Enable Page 用の項目
-        menu.Items[0].Visible = isEnablePage;  // ページビューで表示
-        menu.Items[1].Visible = isEnablePage;  // Separator
-        menu.Items[2].Visible = isEnablePage;  // 割り当て削除   
-        menu.Items[3].Visible = isEnablePage;  // 有効無効
-        menu.Items[4].Visible = isEnablePage;  // Separator
-        menu.Items[5].Visible = isEnablePage;  // 上に追加
-        menu.Items[6].Visible = isEnablePage;  // 下に追加
-        menu.Items[7].Visible = isEnablePage;  // 左に追加
-        menu.Items[8].Visible = isEnablePage;  // 右に追加
-        menu.Items[9].Visible = isEnablePage;  // Separator
+        menu.Items[0].Visible  = isEnablePage;  // ページビューで表示
+        menu.Items[1].Visible  = isEnablePage;  // Separator
+        menu.Items[2].Visible  = isEnablePage;  // 割り当て削除
+        menu.Items[3].Visible  = isEnablePage;  // 有効無効
+        menu.Items[4].Visible  = isEnablePage;  // Separator
+        menu.Items[5].Visible  = isEnablePage;  // 上に追加
+        menu.Items[6].Visible  = isEnablePage;  // 下に追加
+        menu.Items[7].Visible  = isEnablePage;  // 左に追加
+        menu.Items[8].Visible  = isEnablePage;  // 右に追加
+        menu.Items[9].Visible  = isEnablePage;  // Separator
         menu.Items[10].Visible = isEnablePage;  // 接続クリア
         menu.Items[11].Visible = isEnablePage;  // 複製
         menu.Items[12].Visible = isEnablePage;  // テンプレート
         menu.Items[13].Visible = isEnablePage;  // Separator
 
-        // Disable Page 用の項目（候補位置）
-        menu.Items[14].Visible = !isEnablePage; // 部屋の割り当て
+        // Disable Page 用の項目（候補位置のみ表示）
+        menu.Items[14].Visible = isCandidate;
     }
 
     //========================
-    // コンテキストメニュー操作（スタブ）
-    // ※ 各操作の実装は後続タスクで追加する
+    // コンテキストメニュー操作
     //========================
+
+    // ① ページビューで表示
     private void OnContextShowInView()
     {
         var pageIndex = _nodeEditView.SelectedPageIndex;
@@ -457,24 +461,151 @@ public partial class PageNodeEditorForm : Form
         PageSelected?.Invoke(pageIndex);
     }
 
+    // ② 部屋の割り当て削除（接続クリア or ページ削除を選択）
     private void OnContextRemoveAssign()
     {
-        // TODO: 部屋割り当て削除の実装
+        var pageIndex = _nodeEditView.HitTestPage();
+        if (pageIndex == null) return;
+
+        var result = MessageBox.Show(
+            "接続情報のみクリアしますか？\n「いいえ」を選ぶとページ自体を削除します。",
+            "部屋の割り当て削除",
+            MessageBoxButtons.YesNoCancel,
+            MessageBoxIcon.Question
+        );
+
+        if (result == DialogResult.Yes)
+        {
+            ClearPageConnections(pageIndex.Value);
+        }
+        else if (result == DialogResult.No)
+        {
+            var stage = _context.CurrentStage;
+            if (stage == null) return;
+            var page = stage.Pages.ElementAtOrDefault(pageIndex.Value);
+            if (page == null) return;
+            stage.RemovePage(page.Id);
+        }
+        else return;
+
+        _nodeEditView.Invalidate();
     }
 
+    // ③ ページの有効化／無効化
     private void OnContextToggleEnable()
     {
-        // TODO: 有効無効切り替えの実装
+        var pageIndex = _nodeEditView.HitTestPage();
+        if (pageIndex == null) return;
+
+        var page = _context.CurrentStage?.Pages.ElementAtOrDefault(pageIndex.Value);
+        if (page == null) return;
+
+        page.Enable = !page.Enable;
+        _nodeEditView.Invalidate();
+        UpdateInfoDisplay(pageIndex.Value);
     }
 
+    // ④ 上下左右に新規ページを作成して接続
     private void OnContextAddPage(Direction direction)
     {
-        // TODO: 新規ページ作成＋接続の実装
+        var pageIndex = _nodeEditView.HitTestPage();
+        if (pageIndex == null) return;
+
+        var stage = _context.CurrentStage;
+        if (stage == null) return;
+
+        var sourcePage = stage.Pages.ElementAtOrDefault(pageIndex.Value);
+        if (sourcePage == null) return;
+
+        // 移動先グリッド座標を計算
+        var (dx, dy) = direction switch
+        {
+            Direction.Up    => (0, -1),
+            Direction.Down  => (0,  1),
+            Direction.Left  => (-1, 0),
+            Direction.Right => (1,  0),
+            _               => (0,  0),
+        };
+
+        var newX = sourcePage.NodeX + dx;
+        var newY = sourcePage.NodeY + dy;
+
+        // 既に同じ座標にページが存在する場合はキャンセル
+        var alreadyExists = stage.Pages.Any(p =>
+            p.NodeX == newX && p.NodeY == newY && p.Header.Z == FilterZ);
+
+        if (alreadyExists)
+        {
+            MessageBox.Show("その方向には既にページがあります。", "新規ページ作成",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        // 確認ダイアログ
+        var dirName = direction switch
+        {
+            Direction.Up    => "上",
+            Direction.Down  => "下",
+            Direction.Left  => "左",
+            Direction.Right => "右",
+            _               => "",
+        };
+
+        var confirm = MessageBox.Show(
+            $"ページ {pageIndex.Value} の{dirName}側に新規ページを増設します。よろしいですか？",
+            "新規ページ作成",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question
+        );
+
+        if (confirm != DialogResult.Yes) return;
+
+        // 新規ページ生成（空きRoomIdを自動採番）
+        var newRoomId = GetNextAvailableRoomId(stage);
+        var newPage = new Page
+        {
+            Name  = $"Page {stage.Pages.Count:D3}",
+            NodeX = newX,
+            NodeY = newY,
+        };
+
+        var newHeader = PageHeader.CreateDefault();
+        newHeader.RoomId = newRoomId;
+        newHeader.Z      = (byte)FilterZ;
+        newPage.Header   = newHeader;
+
+        stage.Pages.Add(newPage);
+
+        // 双方向接続を設定
+        ConnectPages(sourcePage, newPage, direction);
+
+        // 新規ページを選択してマップビューに通知
+        var newIndex = stage.Pages.IndexOf(newPage);
+        _nodeEditView.SetSelectedPage(newIndex);
+        UpdateInfoDisplay(newIndex);
+        PageSelected?.Invoke(newIndex);
+
+        _nodeEditView.Invalidate();
     }
 
+    // ⑤ 接続をクリア
     private void OnContextClearConnection()
     {
-        // TODO: 接続クリアの実装
+        var pageIndex = _nodeEditView.HitTestPage();
+        if (pageIndex == null) return;
+
+        var confirm = MessageBox.Show(
+            "このページの接続情報をすべてクリアします。よろしいですか？",
+            "接続をクリア",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question
+        );
+
+        if (confirm != DialogResult.Yes) return;
+
+        ClearPageConnections(pageIndex.Value);
+        _nodeEditView.Invalidate();
+        UpdateInfoDisplay(pageIndex.Value);
     }
 
     private void OnContextDuplicate()
@@ -486,6 +617,81 @@ public partial class PageNodeEditorForm : Form
     {
         // TODO: 部屋割り当ての実装
     }
+
+    //========================
+    // 接続操作ヘルパー
+    //========================
+
+    /// <summary>
+    /// 指定ページの接続情報をすべて0xFFにリセットする。
+    /// </summary>
+    private void ClearPageConnections(int pageIndex)
+    {
+        var page = _context.CurrentStage?.Pages.ElementAtOrDefault(pageIndex);
+        if (page == null) return;
+
+        var h = page.Header;
+        h.LeftPage  = 0xFF;
+        h.RightPage = 0xFF;
+        h.UpPage    = 0xFF;
+        h.DownPage  = 0xFF;
+        h.FrontPage = 0xFF;
+        h.BackPage  = 0xFF;
+        page.Header = h;
+    }
+
+    /// <summary>
+    /// source → new の方向に双方向接続を設定する。
+    /// </summary>
+    private static void ConnectPages(Page source, Page target, Direction direction)
+    {
+        var sh = source.Header;
+        var th = target.Header;
+
+        switch (direction)
+        {
+            case Direction.Right:
+                sh.RightPage = th.RoomId;
+                th.LeftPage  = sh.RoomId;
+                break;
+            case Direction.Left:
+                sh.LeftPage  = th.RoomId;
+                th.RightPage = sh.RoomId;
+                break;
+            case Direction.Down:
+                sh.DownPage = th.RoomId;
+                th.UpPage   = sh.RoomId;
+                break;
+            case Direction.Up:
+                sh.UpPage   = th.RoomId;
+                th.DownPage = sh.RoomId;
+                break;
+        }
+
+        source.Header = sh;
+        target.Header = th;
+    }
+
+    /// <summary>
+    /// ステージ内で未使用の最小RoomIdを返す。
+    /// </summary>
+    private static byte GetNextAvailableRoomId(Stage stage)
+    {
+        var usedIds = stage.Pages
+            .Select(p => p.Header.RoomId)
+            .Where(id => id != 0xFF)
+            .ToHashSet();
+
+        for (byte id = 0; id < 0xFF; id++)
+        {
+            if (!usedIds.Contains(id))
+                return id;
+        }
+
+        return 0xFF; // 満杯（254ページ上限）
+    }
+
+    private int FilterZ => _nodeEditView.FilterZ;
 
     //========================
     // ヘルパー

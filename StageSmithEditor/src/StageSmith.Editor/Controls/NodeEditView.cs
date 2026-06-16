@@ -75,7 +75,8 @@ public class NodeEditView : Panel
     //========================
     // 右クリック時のヒットテスト結果保持
     //========================
-    private int _contextMenuTargetPageIndex = -1;
+    private int    _contextMenuTargetPageIndex = -1;
+    private Point? _contextMenuTargetCandidate = null;
 
     //========================
     // Z座標フィルタ（PageNodeEditorFormから設定される）
@@ -142,7 +143,8 @@ public class NodeEditView : Panel
     }
 
     /// <summary>
-    /// 右クリック時のヒットテスト。コンテキストメニューの状態切り替えに使用する。
+    /// 右クリック時のヒットテスト。設定済みページに当たればインデックスを返す。
+    /// コンテキストメニューの状態切り替えに使用する。
     /// </summary>
     public int? HitTestPage()
     {
@@ -150,6 +152,12 @@ public class NodeEditView : Panel
             ? _contextMenuTargetPageIndex
             : null;
     }
+
+    /// <summary>
+    /// 右クリック時のヒットテスト。候補位置に当たればグリッド座標を返す。
+    /// コンテキストメニューの「部屋の割り当て」表示制御に使用する。
+    /// </summary>
+    public Point? HitTestCandidateResult() => _contextMenuTargetCandidate;
 
     //========================
     // 描画
@@ -363,6 +371,10 @@ public class NodeEditView : Panel
         if (e.Button == MouseButtons.Right)
         {
             _contextMenuTargetPageIndex = HitTestPageIndex(e.Location);
+            // ページに当たらなかった場合のみ候補位置を判定する
+            _contextMenuTargetCandidate = _contextMenuTargetPageIndex < 0
+                ? HitTestCandidate(e.Location)
+                : null;
         }
     }
 
