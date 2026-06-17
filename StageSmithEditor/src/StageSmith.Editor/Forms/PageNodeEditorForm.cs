@@ -80,6 +80,7 @@ public partial class PageNodeEditorForm : Form
         Size = new Size(800, 600);
         MinimumSize = new Size(500, 400);
         StartPosition = FormStartPosition.Manual;
+        KeyPreview    = true; // ProcessCmdKeyで矢印キーを拾うために必要
 
         // メインレイアウト（上：情報表示、中：ノードビュー、下：ステータスバー）
         var mainLayout = new TableLayoutPanel
@@ -338,7 +339,13 @@ public partial class PageNodeEditorForm : Form
 
     private void OnZComboBoxChanged(object? sender, EventArgs e)
     {
+        // FilterZを更新してノードビューを再描画
+        _nodeEditView.FilterZ = SelectedZ;
         _nodeEditView.Invalidate();
+
+        // Z階層が変わったので選択状態と情報表示をリセット
+        _nodeEditView.SetSelectedPage(-1);
+        ClearInfoDisplay();
     }
 
     public int SelectedZ =>
@@ -692,6 +699,97 @@ public partial class PageNodeEditorForm : Form
     }
 
     private int FilterZ => _nodeEditView.FilterZ;
+
+    //========================
+    // キーボード操作
+    //========================
+
+    /// <summary>
+    /// 矢印キーで隣接ページへ選択移動、PageUp/DownでZ階層を移動する。
+    /// </summary>
+    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+    {
+        switch (keyData)
+        {
+            case Keys.Left:     MoveSelection(Direction.Left);  return true;
+            case Keys.Right:    MoveSelection(Direction.Right); return true;
+            case Keys.Up:       MoveSelection(Direction.Up);    return true;
+            case Keys.Down:     MoveSelection(Direction.Down);  return true;
+            case Keys.PageUp:   MoveSelectionZ(+1);             return true;
+            case Keys.PageDown: MoveSelectionZ(-1);             return true;
+        }
+
+        return base.ProcessCmdKey(ref msg, keyData);
+    }
+
+    /// <summary>
+    /// 指定方向に隣接するページが存在すれば選択を移動する。
+    /// 存在しない場合は何もしない。
+    /// </summary>
+    private void MoveSelection(Direction direction)
+    {
+        var stage = _context.CurrentStage;
+        if (stage == null) return;
+
+        var currentIndex = _nodeEditView.SelectedPageIndex;
+        if (currentIndex < 0) return;
+
+        var current = stage.Pages.ElementAtOrDefault(currentIndex);
+        if (current == null) return;
+
+        var (dx, dy) = direction switch
+        {
+            Direction.Left  => (-1,  0),
+            Direction.Right => ( 1,  0),
+            Direction.Up    => ( 0, -1),
+            Direction.Down  => ( 0,  1),
+            _               => ( 0,  0),
+        };
+
+        var targetIndex = stage.Pages.FindIndex(p =>
+            p.NodeX    == current.NodeX + dx &&
+            p.NodeY    == current.NodeY + dy &&
+            p.Header.Z == FilterZ);
+
+        if (targetIndex < 0) return;
+
+        _nodeEditView.SetSelectedPage(targetIndex);
+        UpdateInfoDisplay(targetIndex);
+        PageSelected?.Invoke(targetIndex);
+    }
+
+    /// <summary>
+    /// 現在選択中ページの同じ[x,y]でZ±1のページが存在すれば選択を移動する。
+    /// 存在しない場合は何もしない。
+    /// </summary>
+    private void MoveSelectionZ(int dz)
+    {
+        var stage = _context.CurrentStage;
+        if (stage == null) return;
+
+        var currentIndex = _nodeEditView.SelectedPageIndex;
+        if (currentIndex < 0) return;
+
+        var current = stage.Pages.ElementAtOrDefault(currentIndex);
+        if (current == null) return;
+
+        var targetZ = current.Header.Z + dz;
+
+        var targetIndex = stage.Pages.FindIndex(p =>
+            p.NodeX    == current.NodeX &&
+            p.NodeY    == current.NodeY &&
+            p.Header.Z == targetZ);
+
+        if (targetIndex < 0) return;
+
+        // Z変更に合わせてコンボボックスとFilterZも更新
+        _nodeEditView.FilterZ = targetZ;
+        RefreshZComboBox();
+
+        _nodeEditView.SetSelectedPage(targetIndex);
+        UpdateInfoDisplay(targetIndex);
+        PageSelected?.Invoke(targetIndex);
+    }
 
     //========================
     // ヘルパー
