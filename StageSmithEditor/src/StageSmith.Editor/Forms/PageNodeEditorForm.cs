@@ -382,31 +382,56 @@ public partial class PageNodeEditorForm : Form
         var menu = new ContextMenuStrip();
 
         // Enable Page 用メニュー項目
-        var itemShowInView = new ToolStripMenuItem("ページビューで表示（選択中にする）");
-        var itemRemoveAssign = new ToolStripMenuItem("部屋の割り当て削除");
-        var itemToggleEnable = new ToolStripMenuItem("ページの有効化／無効化");
-        var itemAddUp = new ToolStripMenuItem("上に新規ページを作成して接続");
-        var itemAddDown = new ToolStripMenuItem("下に新規ページを作成して接続");
-        var itemAddLeft = new ToolStripMenuItem("左に新規ページを作成して接続");
-        var itemAddRight = new ToolStripMenuItem("右に新規ページを作成して接続");
+        var itemShowInView      = new ToolStripMenuItem("ページビューで表示（選択中にする）");
+        var itemRemoveAssign    = new ToolStripMenuItem("部屋の割り当て削除");
+        var itemToggleEnable    = new ToolStripMenuItem("ページの有効化／無効化");
+        var itemAddUp           = new ToolStripMenuItem("上に新規ページを作成して接続");
+        var itemAddDown         = new ToolStripMenuItem("下に新規ページを作成して接続");
+        var itemAddLeft         = new ToolStripMenuItem("左に新規ページを作成して接続");
+        var itemAddRight        = new ToolStripMenuItem("右に新規ページを作成して接続");
+        var itemAddBack         = new ToolStripMenuItem("奥に新規ページを作成して接続");
+        var itemAddFront        = new ToolStripMenuItem("手前に新規ページを作成して接続");
         var itemClearConnection = new ToolStripMenuItem("接続をクリア");
-        var itemDuplicate = new ToolStripMenuItem("このページを複製");
-        var itemTemplate = new ToolStripMenuItem("テンプレートから生成（将来拡張）") { Enabled = false };
+        var itemDuplicate       = new ToolStripMenuItem("このページを複製");
+        var itemTemplate        = new ToolStripMenuItem("テンプレートから生成（将来拡張）") { Enabled = false };
+        var itemConnectExisting = new ToolStripMenuItem("既存ページを隣接部屋として接続");
 
         // Disable Page 用メニュー項目
         var itemAssign = new ToolStripMenuItem("部屋の割り当て");
 
-        itemShowInView.Click += (_, _) => OnContextShowInView();
-        itemRemoveAssign.Click += (_, _) => OnContextRemoveAssign();
-        itemToggleEnable.Click += (_, _) => OnContextToggleEnable();
-        itemAddUp.Click += (_, _) => OnContextAddPage(Direction.Up);
-        itemAddDown.Click += (_, _) => OnContextAddPage(Direction.Down);
-        itemAddLeft.Click += (_, _) => OnContextAddPage(Direction.Left);
-        itemAddRight.Click += (_, _) => OnContextAddPage(Direction.Right);
+        itemShowInView.Click      += (_, _) => OnContextShowInView();
+        itemRemoveAssign.Click    += (_, _) => OnContextRemoveAssign();
+        itemToggleEnable.Click    += (_, _) => OnContextToggleEnable();
+        itemAddUp.Click           += (_, _) => OnContextAddPage(Direction.Up);
+        itemAddDown.Click         += (_, _) => OnContextAddPage(Direction.Down);
+        itemAddLeft.Click         += (_, _) => OnContextAddPage(Direction.Left);
+        itemAddRight.Click        += (_, _) => OnContextAddPage(Direction.Right);
+        itemAddBack.Click         += (_, _) => OnContextAddPageZ(+1);
+        itemAddFront.Click        += (_, _) => OnContextAddPageZ(-1);
         itemClearConnection.Click += (_, _) => OnContextClearConnection();
-        itemDuplicate.Click += (_, _) => OnContextDuplicate();
-        itemAssign.Click += (_, _) => OnContextAssign();
+        itemDuplicate.Click       += (_, _) => OnContextDuplicate();
+        itemConnectExisting.Click += (_, _) => OnContextConnectExisting();
+        itemAssign.Click          += (_, _) => OnContextAssign();
 
+        // インデックス:
+        //  0: ページビューで表示
+        //  1: Separator
+        //  2: 割り当て削除
+        //  3: 有効無効
+        //  4: Separator
+        //  5: 上に追加
+        //  6: 下に追加
+        //  7: 左に追加
+        //  8: 右に追加
+        //  9: 奥に追加
+        // 10: 手前に追加
+        // 11: Separator
+        // 12: 接続クリア
+        // 13: 複製
+        // 14: 既存ページを隣接接続
+        // 15: テンプレート
+        // 16: Separator
+        // 17: 部屋の割り当て
         menu.Items.AddRange([
             itemShowInView,
             new ToolStripSeparator(),
@@ -414,9 +439,11 @@ public partial class PageNodeEditorForm : Form
             itemToggleEnable,
             new ToolStripSeparator(),
             itemAddUp, itemAddDown, itemAddLeft, itemAddRight,
+            itemAddBack, itemAddFront,
             new ToolStripSeparator(),
             itemClearConnection,
             itemDuplicate,
+            itemConnectExisting,
             itemTemplate,
             new ToolStripSeparator(),
             itemAssign,
@@ -433,8 +460,8 @@ public partial class PageNodeEditorForm : Form
         var hitPage      = _nodeEditView.HitTestPage();
         var hitCandidate = _nodeEditView.HitTestCandidateResult();
 
-        var isEnablePage  = hitPage != null;
-        var isCandidate   = !isEnablePage && hitCandidate != null;
+        var isEnablePage = hitPage != null;
+        var isCandidate  = !isEnablePage && hitCandidate != null;
 
         // Enable Page 用の項目
         menu.Items[0].Visible  = isEnablePage;  // ページビューで表示
@@ -446,14 +473,17 @@ public partial class PageNodeEditorForm : Form
         menu.Items[6].Visible  = isEnablePage;  // 下に追加
         menu.Items[7].Visible  = isEnablePage;  // 左に追加
         menu.Items[8].Visible  = isEnablePage;  // 右に追加
-        menu.Items[9].Visible  = isEnablePage;  // Separator
-        menu.Items[10].Visible = isEnablePage;  // 接続クリア
-        menu.Items[11].Visible = isEnablePage;  // 複製
-        menu.Items[12].Visible = isEnablePage;  // テンプレート
-        menu.Items[13].Visible = isEnablePage;  // Separator
+        menu.Items[9].Visible  = isEnablePage;  // 奥に追加
+        menu.Items[10].Visible = isEnablePage;  // 手前に追加
+        menu.Items[11].Visible = isEnablePage;  // Separator
+        menu.Items[12].Visible = isEnablePage;  // 接続クリア
+        menu.Items[13].Visible = isEnablePage;  // 複製
+        menu.Items[14].Visible = isEnablePage;  // 既存ページを隣接接続
+        menu.Items[15].Visible = isEnablePage;  // テンプレート
+        menu.Items[16].Visible = isEnablePage;  // Separator
 
         // Disable Page 用の項目（候補位置のみ表示）
-        menu.Items[14].Visible = isCandidate;
+        menu.Items[17].Visible = isCandidate;   // 部屋の割り当て
     }
 
     //========================
@@ -595,7 +625,100 @@ public partial class PageNodeEditorForm : Form
         _nodeEditView.Invalidate();
     }
 
-    // ⑤ 接続をクリア
+    /// <summary>
+    /// 奥（dz=+1）または手前（dz=-1）に新規ページを作成して接続する。
+    /// 新規ページは元ページと同じ[x,y]・Z±1に配置する。
+    /// </summary>
+    private void OnContextAddPageZ(int dz)
+    {
+        var pageIndex = _nodeEditView.HitTestPage();
+        if (pageIndex == null) return;
+
+        var stage = _context.CurrentStage;
+        if (stage == null) return;
+
+        var sourcePage = stage.Pages.ElementAtOrDefault(pageIndex.Value);
+        if (sourcePage == null) return;
+
+        var newZ = sourcePage.Header.Z + dz;
+
+        // Z値の範囲チェック（0〜255）
+        if (newZ < 0 || newZ > 255)
+        {
+            MessageBox.Show("Z座標が範囲外です。", "新規ページ作成",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        // 既に同じ[x,y,z]にページが存在する場合はキャンセル
+        var alreadyExists = stage.Pages.Any(p =>
+            p.NodeX    == sourcePage.NodeX &&
+            p.NodeY    == sourcePage.NodeY &&
+            p.Header.Z == newZ);
+
+        if (alreadyExists)
+        {
+            MessageBox.Show("その方向には既にページがあります。", "新規ページ作成",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        var dirName = dz > 0 ? "奥" : "手前";
+
+        var confirm = MessageBox.Show(
+            $"ページ {pageIndex.Value} の{dirName}側に新規ページを増設します。よろしいですか？",
+            "新規ページ作成",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question
+        );
+
+        if (confirm != DialogResult.Yes) return;
+
+        // 新規ページ生成（元ページと同じ[x,y]・Z±1）
+        var newRoomId = GetNextAvailableRoomId(stage);
+        var newPage = new Page
+        {
+            Name  = $"Page {stage.Pages.Count:D3}",
+            NodeX = sourcePage.NodeX,
+            NodeY = sourcePage.NodeY,
+        };
+
+        var newHeader = PageHeader.CreateDefault();
+        newHeader.RoomId = newRoomId;
+        newHeader.Z      = (byte)newZ;
+        newPage.Header   = newHeader;
+
+        stage.Pages.Add(newPage);
+
+        // 双方向接続を設定（Back/Front）
+        var sh = sourcePage.Header;
+        var th = newPage.Header;
+
+        if (dz > 0)
+        {
+            sh.BackPage  = th.RoomId;
+            th.FrontPage = sh.RoomId;
+        }
+        else
+        {
+            sh.FrontPage = th.RoomId;
+            th.BackPage  = sh.RoomId;
+        }
+
+        sourcePage.Header = sh;
+        newPage.Header    = th;
+
+        // FilterZを新しいZ階層に切り替えて新規ページを選択
+        _nodeEditView.FilterZ = newZ;
+        RefreshZComboBox();
+
+        var newIndex = stage.Pages.IndexOf(newPage);
+        _nodeEditView.SetSelectedPage(newIndex);
+        UpdateInfoDisplay(newIndex);
+        PageSelected?.Invoke(newIndex);
+
+        _nodeEditView.Invalidate();
+    }
     private void OnContextClearConnection()
     {
         var pageIndex = _nodeEditView.HitTestPage();
@@ -618,6 +741,51 @@ public partial class PageNodeEditorForm : Form
     private void OnContextDuplicate()
     {
         // TODO: ページ複製の実装
+    }
+
+    private void OnContextConnectExisting()
+    {
+        var pageIndex = _nodeEditView.HitTestPage();
+        if (pageIndex == null) return;
+
+        var stage = _context.CurrentStage;
+        if (stage == null) return;
+
+        var sourcePage = stage.Pages.ElementAtOrDefault(pageIndex.Value);
+        if (sourcePage == null) return;
+
+        using var dialog = new ConnectExistingPageDialog(stage, sourcePage, pageIndex.Value);
+
+        if (dialog.ShowDialog(this) != DialogResult.OK) return;
+
+        var targetPage = stage.Pages.ElementAtOrDefault(dialog.SelectedTargetIndex);
+        if (targetPage == null) return;
+
+        // ConnectDirectionをConnectPagesに渡すためPageNodeEditorForm内のConnectPagesを呼ぶ
+        var sh = sourcePage.Header;
+        var th = targetPage.Header;
+
+        switch (dialog.SelectedDirection)
+        {
+            case ConnectDirection.Right:
+                sh.RightPage = th.RoomId; th.LeftPage  = sh.RoomId; break;
+            case ConnectDirection.Left:
+                sh.LeftPage  = th.RoomId; th.RightPage = sh.RoomId; break;
+            case ConnectDirection.Down:
+                sh.DownPage  = th.RoomId; th.UpPage    = sh.RoomId; break;
+            case ConnectDirection.Up:
+                sh.UpPage    = th.RoomId; th.DownPage  = sh.RoomId; break;
+            case ConnectDirection.Back:
+                sh.BackPage  = th.RoomId; th.FrontPage = sh.RoomId; break;
+            case ConnectDirection.Front:
+                sh.FrontPage = th.RoomId; th.BackPage  = sh.RoomId; break;
+        }
+
+        sourcePage.Header = sh;
+        targetPage.Header = th;
+
+        _nodeEditView.Invalidate();
+        UpdateInfoDisplay(pageIndex.Value);
     }
 
     private void OnContextAssign()
