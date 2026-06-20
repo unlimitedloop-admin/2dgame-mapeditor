@@ -107,10 +107,10 @@ public class PageHeaderEditDialog : Form
             RowCount    = 3,
             Padding     = new Padding(8, 4, 8, 4),
         };
-        connTable.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 50));
-        connTable.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 60));
-        connTable.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 50));
-        connTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        connTable.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 50));   // ラベル列（左）
+        connTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));    // TextBox列（左）
+        connTable.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 50));   // ラベル列（右）
+        connTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));    // TextBox列（右）
         connTable.RowStyles.Add(new RowStyle(SizeType.Percent, 33));
         connTable.RowStyles.Add(new RowStyle(SizeType.Percent, 33));
         connTable.RowStyles.Add(new RowStyle(SizeType.Percent, 34));
@@ -296,11 +296,9 @@ public class PageHeaderEditDialog : Form
     {
         return new TextBox
         {
-            Text  = value.ToString(),
-            Anchor = AnchorStyles.Left,
-            Dock  = DockStyle.None,
-            Font  = new Font("Yu Gothic UI", 9f),
-            Width = 50,
+            Text   = value.ToString(),
+            Anchor = AnchorStyles.Left | AnchorStyles.Right,
+            Font   = new Font("Yu Gothic UI", 9f),
         };
     }
 
@@ -308,8 +306,7 @@ public class PageHeaderEditDialog : Form
     {
         var combo = new ComboBox
         {
-            Anchor        = AnchorStyles.Left,
-            Dock          = DockStyle.None,
+            Anchor        = AnchorStyles.Left | AnchorStyles.Right,
             DropDownStyle = ComboBoxStyle.DropDownList,
             Font          = new Font("Yu Gothic UI", 9f),
         };
@@ -326,13 +323,19 @@ public class PageHeaderEditDialog : Form
     private static void AddLabelAndControl(
         TableLayoutPanel table, string labelText, Control control, int row, int col)
     {
-        table.Controls.Add(new Label
+        var label = new Label
         {
             Text      = labelText,
             Dock      = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleLeft,
             Font      = new Font("Yu Gothic UI", 9f),
-        }, col, row);
+        };
+        table.Controls.Add(label, col, row);
         table.Controls.Add(control, col + 1, row);
+
+        // コントロールをセル内で垂直中央に配置する
+        table.SetCellPosition(control, new TableLayoutPanelCellPosition(col + 1, row));
+        table.SetRowSpan(control, 1);
+        control.Anchor = AnchorStyles.Left | AnchorStyles.Right;
     }
 }
