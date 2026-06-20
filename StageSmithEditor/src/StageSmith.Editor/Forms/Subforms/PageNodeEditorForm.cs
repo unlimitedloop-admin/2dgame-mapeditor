@@ -369,9 +369,18 @@ public partial class PageNodeEditorForm : Form
 
     private void OnNodeViewPageDoubleClick(int pageIndex)
     {
-        // ページヘッダー編集ダイアログを開く（後続タスク）
-        // TODO: PageHeaderEditDialog を実装後に接続する
-        MessageBox.Show($"ページ {pageIndex} の編集ダイアログ（未実装）", "Page Header Edit");
+        var stage = _context.CurrentStage;
+        if (stage == null) return;
+
+        var page = stage.Pages.ElementAtOrDefault(pageIndex);
+        if (page == null) return;
+
+        using var dialog = new PageHeaderEditDialog(page);
+        if (dialog.ShowDialog(this) != DialogResult.OK) return;
+
+        // ダイアログ内でPageに直接反映済みなのでビュー更新だけ
+        _nodeEditView.Invalidate();
+        UpdateInfoDisplay(pageIndex);
     }
 
     //========================
@@ -495,6 +504,9 @@ public partial class PageNodeEditorForm : Form
     {
         var pageIndex = _nodeEditView.HitTestPage();
         if (pageIndex == null) return;
+
+        _nodeEditView.SetSelectedPage(pageIndex.Value);
+        UpdateInfoDisplay(pageIndex.Value);
         PageSelected?.Invoke(pageIndex.Value);
     }
 
