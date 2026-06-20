@@ -1,5 +1,6 @@
 using StageSmith.Application.Services;
 using StageSmith.Core.Constants;
+using StageSmith.Infrastructure;
 using StageSmith.Infrastructure.Persistence;
 
 namespace StageSmith.Editor;
@@ -94,6 +95,48 @@ public partial class MainForm
         repository.Save(_context.Project, _currentProjectPath);
     }
 
+    private void ExportStageDef(string filename)
+    {
+        var stage = _context.CurrentStage;
+        if (stage == null) return;
+
+        var path = filename;
+        DefExporter.Export(stage, path);
+    }
+
+    private void ExportCurrentStageDefAs()
+    {
+        var stage = _context.CurrentStage;
+
+        if (stage == null)
+        {
+            MessageBox.Show(
+                "出力対象のステージがありません。",
+                "Export DEF",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return;
+        }
+
+        using var dialog = new SaveFileDialog
+        {
+            Title = "DEFファイルを出力",
+            Filter = FileExtensions.StageDefinition + "|*" + FileExtensions.StageDefinition + "|All files (*.*)|*.*",
+            FileName = $"{stage.Name}{FileExtensions.StageDefinition}"
+        };
+
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+            return;
+
+        ExportStageDef(dialog.FileName);    
+
+        MessageBox.Show(
+            $"DEF出力しました。\n{dialog.FileName}",
+            "Export DEF",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Information);
+    }
+
     private void ExportCurrentStageBin()
     {
         var stage = _context.CurrentStage;
@@ -133,6 +176,9 @@ public partial class MainForm
         var bytes = stage.ExportBin();
 
         File.WriteAllBytes(dialog.FileName, bytes);
+
+        // 4. defファイルも同じ場所に出力 (基本的にbinだけ出力する事はない想定のため)
+        ExportStageDef(Path.ChangeExtension(dialog.FileName, FileExtensions.StageDefinition));
 
         MessageBox.Show(
             $"BIN出力しました。\n{dialog.FileName}\n{bytes.Length} bytes",

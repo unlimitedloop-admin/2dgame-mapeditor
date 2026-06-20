@@ -1,4 +1,5 @@
 using StageSmith.Editor.Controls;
+using StageSmith.Infrastructure;
 
 namespace StageSmith.Editor;
 
@@ -166,11 +167,11 @@ public partial class MainForm
     //private void SaveProject() { }        // MainForm.FileOperations.cs で定義済み
     private void CloseProject()         { /* TODO */ }
     private void NewStage()             { /* TODO */ }
-    private void SaveStage()            { /* TODO */ }
+    private void SaveStage() => ExportCurrentStageDefAs();
     private void ReloadStage()          { /* TODO */ }
     private void DropStage()            { /* TODO */ }
     private void ImportTileSet()        { /* TODO */ }
-    private void ExportBin()            { /* TODO */ }
+    private void ExportBin() => ExportCurrentStageBin();
     private void ExportAllStages()      { /* TODO */ }
     private void CutSelection()         { /* TODO */ }
     //private void CopySelection() { }      // MainForm.Commands.cs で定義済み

@@ -130,8 +130,8 @@ public partial class MainForm
         //========================
         // UI構築
         //========================
-        _editorToolStrip.Items.AddRange(new ToolStripItem[]
-        {
+        _editorToolStrip.Items.AddRange(
+        [
             _newButton,
             _openButton,
             _saveButton,
@@ -150,7 +150,7 @@ public partial class MainForm
             _tilePreviewButton,
             new ToolStripSeparator(),
             _addPageButton
-        });
+        ]);
 
         Controls.Add(_editorToolStrip);
 
