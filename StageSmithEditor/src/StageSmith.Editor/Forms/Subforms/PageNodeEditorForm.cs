@@ -188,6 +188,8 @@ public partial class PageNodeEditorForm : Form
         _nodeEditView.CoordChanged    += OnNodeViewCoordChanged;
         _nodeEditView.PageDoubleClick += OnNodeViewPageDoubleClick;
         _nodeEditView.ZoomChanged     += zoom => _zoomLabel!.Text = $"x{zoom:0.00}";
+        _nodeEditView.NodeMoved       += OnNodeMoved;
+        _nodeEditView.NodeCopied      += OnNodeCopied;
 
         // ノードビューエリア（NodeEditView + スクロールバー）
         var nodeViewArea = new Panel { Dock = DockStyle.Fill };
@@ -755,6 +757,73 @@ public partial class PageNodeEditorForm : Form
         // TODO: ページ複製の実装
     }
 
+    //========================
+    // ノードD&Dハンドラ
+    //========================
+
+    /// <summary>Ctrl+ドラッグでノードを移動する。</summary>
+    private void OnNodeMoved(int pageIndex, int newX, int newY)
+    {
+        var stage = _context.CurrentStage;
+        if (stage == null) return;
+
+        var page = stage.Pages.ElementAtOrDefault(pageIndex);
+        if (page == null) return;
+
+        // 移動先に既存ページがある場合はキャンセル
+        var occupied = stage.Pages.Any(p =>
+            p != page && p.NodeX == newX && p.NodeY == newY && p.Header.Z == FilterZ);
+
+        if (occupied) return;
+
+        page.NodeX = newX;
+        page.NodeY = newY;
+
+        _nodeEditView.Invalidate();
+        UpdateInfoDisplay(pageIndex);
+    }
+
+    /// <summary>Ctrl+Shift+ドラッグでノードを複製する。</summary>
+    private void OnNodeCopied(int pageIndex, int newX, int newY)
+    {
+        var stage = _context.CurrentStage;
+        if (stage == null) return;
+
+        var sourcePage = stage.Pages.ElementAtOrDefault(pageIndex);
+        if (sourcePage == null) return;
+
+        // 複製先に既存ページがある場合はキャンセル
+        var occupied = stage.Pages.Any(p =>
+            p.NodeX == newX && p.NodeY == newY && p.Header.Z == FilterZ);
+
+        if (occupied) return;
+
+        // ページを複製（接続情報は引き継がない）
+        var newPage   = sourcePage.Clone();
+        newPage.NodeX = newX;
+        newPage.NodeY = newY;
+
+        // RoomIdを新規採番
+        var newHeader  = newPage.Header;
+        newHeader.RoomId   = GetNextAvailableRoomId(stage);
+        newHeader.LeftPage  = 0xFF;
+        newHeader.RightPage = 0xFF;
+        newHeader.UpPage    = 0xFF;
+        newHeader.DownPage  = 0xFF;
+        newHeader.BackPage  = 0xFF;
+        newHeader.FrontPage = 0xFF;
+        newPage.Header = newHeader;
+
+        stage.Pages.Add(newPage);
+
+        var newIndex = stage.Pages.IndexOf(newPage);
+        _nodeEditView.SetSelectedPage(newIndex);
+        UpdateInfoDisplay(newIndex);
+        PageSelected?.Invoke(newIndex);
+
+        _nodeEditView.Invalidate();
+    }
+
     private void OnContextConnectExisting()
     {
         var pageIndex = _nodeEditView.HitTestPage();
@@ -802,7 +871,43 @@ public partial class PageNodeEditorForm : Form
 
     private void OnContextAssign()
     {
-        // TODO: 部屋割り当ての実装
+        var candidatePos = _nodeEditView.HitTestCandidateResult();
+        if (candidatePos == null) return;
+
+        var stage = _context.CurrentStage;
+        if (stage == null) return;
+
+        // 未配置ページ（同Z階層に配置されていないページ）を収集
+        var placedPositions = stage.Pages
+            .Where(p => p.Header.Z == FilterZ)
+            .Select(p => new Point(p.NodeX, p.NodeY))
+            .ToHashSet();
+
+        // 未配置 = NodeX/NodeYがデフォルト(0,0)で他のページと座標が被っているページ
+        // または、候補位置以外のどこにも配置されていないページ
+        var unplacedPages = stage.Pages
+            .Where(p => p.Header.Z != FilterZ ||
+                        !placedPositions.Contains(new Point(p.NodeX, p.NodeY)) == false)
+            .ToList();
+
+        // シンプルに：全ページから候補位置を選んで割り当てる
+        // 割り当てダイアログ（ページ一覧から選択）
+        using var selectDialog = new AssignPageDialog(stage, FilterZ, candidatePos.Value);
+        if (selectDialog.ShowDialog(this) != DialogResult.OK) return;
+
+        var targetPage = stage.Pages.ElementAtOrDefault(selectDialog.SelectedPageIndex);
+        if (targetPage == null) return;
+
+        targetPage.NodeX    = candidatePos.Value.X;
+        targetPage.NodeY    = candidatePos.Value.Y;
+
+        var h   = targetPage.Header;
+        h.Z     = (byte)FilterZ;
+        targetPage.Header = h;
+
+        _nodeEditView.SetSelectedPage(selectDialog.SelectedPageIndex);
+        UpdateInfoDisplay(selectDialog.SelectedPageIndex);
+        _nodeEditView.Invalidate();
     }
 
     //========================

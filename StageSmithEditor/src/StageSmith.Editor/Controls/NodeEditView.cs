@@ -73,6 +73,20 @@ public class NodeEditView : Panel
     private const int DragThreshold = 4;
 
     //========================
+    // ノードD&D用
+    //========================
+    private int   _dragSourcePageIndex = -1;   // ドラッグ中のページインデックス
+    private bool  _isDraggingNode      = false; // ノードD&D中か
+    private bool  _isDraggingNodeCopy  = false; // 複製D&D中か（Ctrl+Shift）
+    private Point _dragCurrentGridPos  = new(-1, -1); // 現在のグリッド座標（ゴースト描画用）
+
+    /// <summary>ノード移動が確定したとき発火する。PageNodeEditorFormがStageManagerを更新する。</summary>
+    public event Action<int, int, int>? NodeMoved;   // (pageIndex, newX, newY)
+
+    /// <summary>ノード複製が確定したとき発火する。</summary>
+    public event Action<int, int, int>? NodeCopied;  // (pageIndex, newX, newY)
+
+    //========================
     // 右クリック時のヒットテスト結果保持
     //========================
     private int    _contextMenuTargetPageIndex = -1;
@@ -182,6 +196,25 @@ public class NodeEditView : Panel
 
         // 仮ページ（候補位置）を描画
         DrawCandidateNodes(g, stage);
+
+        // ノードD&D中のゴースト描画
+        if (_isDraggingNode && _dragCurrentGridPos.X >= 0)
+            DrawDragGhost(g);
+    }
+
+    /// <summary>ノードD&D中にドロップ先グリッドにゴーストを描画する。</summary>
+    private void DrawDragGhost(Graphics g)
+    {
+        var rect  = GridToRect(_dragCurrentGridPos);
+        var color = _isDraggingNodeCopy
+            ? Color.FromArgb(120, 100, 180, 255)  // 複製：青系半透明
+            : Color.FromArgb(120, 255, 200, 0);   // 移動：黄系半透明
+
+        using var brush = new SolidBrush(color);
+        using var pen   = new Pen(_isDraggingNodeCopy ? Color.CornflowerBlue : Color.Yellow, 2);
+
+        g.FillRectangle(brush, rect);
+        g.DrawRectangle(pen, rect);
     }
 
     private void DrawNode(Graphics g, Page page, int pageIndex)
@@ -366,15 +399,22 @@ public class NodeEditView : Panel
     private void OnMouseDown(object? sender, MouseEventArgs e)
     {
         _mouseDownPos = e.Location;
-        _isDragging   = false;
+        _isDragging      = false;
+        _isDraggingNode  = false;
+        _isDraggingNodeCopy = false;
+        _dragSourcePageIndex = -1;
 
         if (e.Button == MouseButtons.Right)
         {
             _contextMenuTargetPageIndex = HitTestPageIndex(e.Location);
-            // ページに当たらなかった場合のみ候補位置を判定する
             _contextMenuTargetCandidate = _contextMenuTargetPageIndex < 0
                 ? HitTestCandidate(e.Location)
                 : null;
+        }
+        else if (e.Button == MouseButtons.Left && ModifierKeys.HasFlag(Keys.Control))
+        {
+            // Ctrl押下中 → ノードD&D候補
+            _dragSourcePageIndex = HitTestPageIndex(e.Location);
         }
     }
 
@@ -392,35 +432,73 @@ public class NodeEditView : Panel
         {
             var dx = e.X - _mouseDownPos.X;
             var dy = e.Y - _mouseDownPos.Y;
+            var moved = Math.Abs(dx) + Math.Abs(dy) >= DragThreshold;
 
-            if (!_isDragging && Math.Abs(dx) + Math.Abs(dy) >= DragThreshold)
-                _isDragging = true;
-
-            if (_isDragging)
+            if (ModifierKeys.HasFlag(Keys.Control) && _dragSourcePageIndex >= 0)
             {
-                _viewOffset.X += dx;
-                _viewOffset.Y += dy;
-                _mouseDownPos  = e.Location;
-                ViewOffsetChanged?.Invoke(_viewOffset);
-                Invalidate();
+                // Ctrl+ドラッグ → ノードD&D
+                if (!_isDraggingNode && moved)
+                {
+                    _isDraggingNode     = true;
+                    _isDraggingNodeCopy = ModifierKeys.HasFlag(Keys.Shift);
+                }
+
+                if (_isDraggingNode)
+                {
+                    _dragCurrentGridPos = grid;
+                    Invalidate();
+                }
+            }
+            else
+            {
+                // 通常ドラッグ → ビュー移動
+                if (!_isDragging && moved)
+                    _isDragging = true;
+
+                if (_isDragging)
+                {
+                    _viewOffset.X += dx;
+                    _viewOffset.Y += dy;
+                    _mouseDownPos  = e.Location;
+                    ViewOffsetChanged?.Invoke(_viewOffset);
+                    Invalidate();
+                }
             }
         }
     }
 
     private void OnMouseUp(object? sender, MouseEventArgs e)
     {
-        if (e.Button == MouseButtons.Left && !_isDragging)
+        if (e.Button == MouseButtons.Left)
         {
-            var pageIndex = HitTestPageIndex(e.Location);
-            if (pageIndex >= 0)
+            if (_isDraggingNode && _dragSourcePageIndex >= 0)
             {
-                SelectedPageIndex = pageIndex;
-                PageSelected?.Invoke(pageIndex);
-                Invalidate();
+                // ノードD&D確定
+                var targetGrid = ScreenToGrid(e.Location);
+                if (_isDraggingNodeCopy)
+                    NodeCopied?.Invoke(_dragSourcePageIndex, targetGrid.X, targetGrid.Y);
+                else
+                    NodeMoved?.Invoke(_dragSourcePageIndex, targetGrid.X, targetGrid.Y);
+            }
+            else if (!_isDragging)
+            {
+                // クリック確定 → ページ選択
+                var pageIndex = HitTestPageIndex(e.Location);
+                if (pageIndex >= 0)
+                {
+                    SelectedPageIndex = pageIndex;
+                    PageSelected?.Invoke(pageIndex);
+                    Invalidate();
+                }
             }
         }
 
-        _isDragging = false;
+        _isDragging         = false;
+        _isDraggingNode     = false;
+        _isDraggingNodeCopy = false;
+        _dragSourcePageIndex = -1;
+        _dragCurrentGridPos  = new(-1, -1);
+        Invalidate();
     }
 
     private void OnDoubleClick(object? sender, EventArgs e)
