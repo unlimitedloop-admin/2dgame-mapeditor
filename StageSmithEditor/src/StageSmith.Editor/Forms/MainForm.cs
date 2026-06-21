@@ -236,6 +236,10 @@ public partial class MainForm : Form
             {
                 _commandManager.Execute(_currentDragCommand);
                 _mapView.Invalidate();
+
+                // ノードエディタが開いていれば現在ページのプレビューを更新する
+                if (_page != null)
+                    _nodeEditorForm?.InvalidatePagePreview(_page.Id, _page);
             }
 
             _currentDragCommand = null;

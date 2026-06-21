@@ -112,17 +112,17 @@ public partial class PageNodeEditorForm : Form
 
         // ページ情報ラベル群
         _pageIndexLabel = CreateInfoLabel("Page: -", new Point(80, 4));
-        _roomIdLabel = CreateInfoLabel("Room ID: -", new Point(160, 4));
-        _tagsLabel = CreateInfoLabel("Tags: -", new Point(280, 4));
-        _bookmarkLabel = CreateInfoLabel("Bookmark: -", new Point(460, 4));
+        _roomIdLabel    = CreateInfoLabel("Room ID: -", new Point(160, 4));
+        _tagsLabel      = CreateInfoLabel("Tags: -", new Point(280, 4));
+        _bookmarkLabel  = CreateInfoLabel("Bookmark: -", new Point(460, 4));
 
         // 接続情報ラベル群
-        _connectionUpLabel = CreateInfoLabel("Up:    ----", new Point(8, 28));
-        _connectionDownLabel = CreateInfoLabel("Down:  ----", new Point(200, 28));
-        _connectionLeftLabel = CreateInfoLabel("Left:  ----", new Point(8, 48));
-        _connectionRightLabel = CreateInfoLabel("Right: ----", new Point(200, 48));
-        _connectionBackLabel = CreateInfoLabel("Back:  ----", new Point(8, 68));
-        _connectionFrontLabel = CreateInfoLabel("Front: ----", new Point(200, 68));
+        _connectionUpLabel      = CreateInfoLabel("Up:    ----", new Point(8, 28));
+        _connectionDownLabel    = CreateInfoLabel("Down:  ----", new Point(200, 28));
+        _connectionLeftLabel    = CreateInfoLabel("Left:  ----", new Point(8, 48));
+        _connectionRightLabel   = CreateInfoLabel("Right: ----", new Point(200, 48));
+        _connectionBackLabel    = CreateInfoLabel("Back:  ----", new Point(8, 68));
+        _connectionFrontLabel   = CreateInfoLabel("Front: ----", new Point(200, 68));
 
         _infoPanel.Controls.AddRange([
             _zComboBox,
@@ -241,6 +241,25 @@ public partial class PageNodeEditorForm : Form
     {
         _nodeEditView.SetSelectedPage(pageIndex);
         UpdateInfoDisplay(pageIndex);
+    }
+
+    /// <summary>
+    /// タイルセット画像をノードビューに渡してプレビューキャッシュを再生成する。
+    /// MainFormでタイルセットが変更されたとき呼び出す。
+    /// </summary>
+    public void SyncTileset(Bitmap? tileset)
+    {
+        var pages = _context.CurrentStage?.Pages;
+        _nodeEditView.SetTileset(tileset, pages);
+    }
+
+    /// <summary>
+    /// 特定ページのプレビューキャッシュを再生成する。
+    /// ページのタイルを編集したあとにMainFormから呼び出す。
+    /// </summary>
+    public void InvalidatePagePreview(Guid pageId, Page page)
+    {
+        _nodeEditView.InvalidatePageCache(pageId, page);
     }
 
     //========================

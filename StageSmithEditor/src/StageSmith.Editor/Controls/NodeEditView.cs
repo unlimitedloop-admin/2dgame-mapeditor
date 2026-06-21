@@ -99,6 +99,100 @@ public class NodeEditView : Panel
     public int FilterZ { get; set; } = 0;
 
     //========================
+    // タイルプレビューキャッシュ
+    //========================
+    private Bitmap?  _tileset;
+    private readonly Dictionary<Guid, Bitmap> _previewCache = [];
+
+    // プレビュー表示切り替えの閾値
+    private const float PreviewZoomThreshold = 1.5f;
+
+    // プレビュー生成サイズ（1.5x時のノードサイズに合わせる）
+    private const int PreviewW = (int)(NodeW * PreviewZoomThreshold);
+    private const int PreviewH = (int)(NodeH * PreviewZoomThreshold);
+
+    /// <summary>
+    /// タイルセット画像を設定し、全ページのプレビューを一括生成する。
+    /// プロジェクト読み込み時・タイルセット変更時に呼び出す。
+    /// </summary>
+    public void SetTileset(Bitmap? tileset, IReadOnlyList<Page>? pages)
+    {
+        _tileset = tileset;
+        RebuildAllPreviews(pages);
+    }
+
+    /// <summary>
+    /// 指定ページのプレビューキャッシュを再生成する。
+    /// ページ編集後に呼び出す。
+    /// </summary>
+    public void InvalidatePageCache(Guid pageId, Page page)
+    {
+        if (_previewCache.TryGetValue(pageId, out var old))
+        {
+            old.Dispose();
+            _previewCache.Remove(pageId);
+        }
+
+        if (_tileset != null)
+            _previewCache[pageId] = BuildPreview(page, _tileset);
+
+        Invalidate();
+    }
+
+    private void RebuildAllPreviews(IReadOnlyList<Page>? pages)
+    {
+        foreach (var bmp in _previewCache.Values)
+            bmp.Dispose();
+
+        _previewCache.Clear();
+
+        if (_tileset == null || pages == null) return;
+
+        foreach (var page in pages)
+            _previewCache[page.Id] = BuildPreview(page, _tileset);
+    }
+
+    /// <summary>
+    /// 1ページ分のプレビューBitmapを生成する。
+    /// タイルマップをPreviewW x PreviewHに縮小描画する。
+    /// </summary>
+    private static Bitmap BuildPreview(Page page, Bitmap tileset)
+    {
+        var bmp = new Bitmap(PreviewW, PreviewH);
+        using var g = Graphics.FromImage(bmp);
+        g.Clear(Color.FromArgb(30, 30, 35));
+        g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+
+        var tileMap  = page.TileMap;
+        var tileW    = tileMap.Width;
+        var tileH    = tileMap.Height;
+        var cellW    = (float)PreviewW / tileW;
+        var cellH    = (float)PreviewH / tileH;
+
+        // タイルセットの1タイルサイズ（16x16固定）
+        const int SrcTile = 16;
+        var tilesPerRow = tileset.Width / SrcTile;
+
+        for (var y = 0; y < tileH; y++)
+        {
+            for (var x = 0; x < tileW; x++)
+            {
+                var tileId = tileMap.GetTile(x, y);
+                if (tileId == 0) continue;
+
+                var srcX = (tileId % tilesPerRow) * SrcTile;
+                var srcY = (tileId / tilesPerRow) * SrcTile;
+                var src  = new Rectangle(srcX, srcY, SrcTile, SrcTile);
+                var dst  = new RectangleF(x * cellW, y * cellH, cellW, cellH);
+
+                g.DrawImage(tileset, dst, src, GraphicsUnit.Pixel);
+            }
+        }
+
+        return bmp;
+    }
+
+    //========================
     // 初期化
     //========================
     public NodeEditView(EditorContext context)
@@ -113,6 +207,17 @@ public class NodeEditView : Panel
         MouseUp     += OnMouseUp;
         MouseWheel  += OnMouseWheel;
         DoubleClick += OnDoubleClick;
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            foreach (var bmp in _previewCache.Values)
+                bmp.Dispose();
+            _previewCache.Clear();
+        }
+        base.Dispose(disposing);
     }
 
     //========================
@@ -225,17 +330,30 @@ public class NodeEditView : Panel
         using var brush = new SolidBrush(color);
         g.FillRectangle(brush, rect);
 
-        using var borderPen = new Pen(Color.FromArgb(80, 80, 90), 1);
-        g.DrawRectangle(borderPen, rect);
-
-        // 1.5x未満 → 色 + Room IDテキスト
-        // 背景が明るい色（黄色など）のときは黒文字、それ以外は白文字
-        if (_zoom < 1.5f)
+        if (_zoom >= PreviewZoomThreshold && _previewCache.TryGetValue(page.Id, out var preview))
         {
+            // 1.5x以上 → タイルプレビュー画像をノード内に描画
+            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+            g.DrawImage(preview, rect);
+
+            // 選択中は色オーバーレイを薄く重ねて分かるようにする
+            if (pageIndex == SelectedPageIndex)
+            {
+                using var overlay = new SolidBrush(Color.FromArgb(80, 255, 255, 0));
+                g.FillRectangle(overlay, rect);
+            }
+        }
+        else
+        {
+            // 1.5x未満 → 色 + Room IDテキスト
             var textColor = IsLightColor(color) ? Color.Black : Color.White;
             DrawNodeText(g, rect, $"{page.Header.RoomId}", textColor);
         }
-        // TODO: 1.5x以上 → タイルプレビュー（後続タスク）
+
+        // 枠線は常に描画
+        using var borderPen = new Pen(
+            pageIndex == SelectedPageIndex ? Color.Yellow : Color.FromArgb(80, 80, 90), 1);
+        g.DrawRectangle(borderPen, rect);
     }
 
     /// <summary>

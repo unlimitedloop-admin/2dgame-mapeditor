@@ -231,7 +231,10 @@ public partial class MainForm
 
         _tilePalette.SetTileset(_tileset);
         _mapView.SetTileset(_tileset);
-    }
+ 
+        // ノードエディタが開いていればプレビューキャッシュを再生成する
+        _nodeEditorForm?.SyncTileset(_tileset);
+   }
 
     /// <summary>
     /// 現在のステージに新規ページを追加し、追加したページへ移動する。
