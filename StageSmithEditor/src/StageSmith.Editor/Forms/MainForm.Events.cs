@@ -16,12 +16,10 @@ public partial class MainForm
 
             case Keys.Control | Keys.Z:
                 _commandManager.Undo();
-                _mapView.Invalidate();
                 return true;
 
             case Keys.Control | Keys.Y:
                 _commandManager.Redo();
-                _mapView.Invalidate();
                 return true;
 
             case Keys.Control | Keys.Left:

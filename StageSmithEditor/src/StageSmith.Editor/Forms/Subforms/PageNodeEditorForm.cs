@@ -1,3 +1,4 @@
+using StageSmith.Application.Commands;
 using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
 
@@ -18,7 +19,8 @@ public partial class PageNodeEditorForm : Form
     /// MainFormが持つEditorContextへの参照。
     /// ノードエディタはこれを通じてデータを読み書きする。
     /// </summary>
-    private readonly EditorContext _context;
+    private readonly EditorContext  _context;
+    private readonly CommandManager _commandManager;
 
     //========================
     // イベント
@@ -69,9 +71,10 @@ public partial class PageNodeEditorForm : Form
     //========================
     // 初期化
     //========================
-    public PageNodeEditorForm(EditorContext context)
+    public PageNodeEditorForm(EditorContext context, CommandManager commandManager)
     {
-        _context = context;
+        _context        = context;
+        _commandManager = commandManager;
 
         InitializeComponent();
 
@@ -795,11 +798,13 @@ public partial class PageNodeEditorForm : Form
 
         if (occupied) return;
 
-        page.NodeX = newX;
-        page.NodeY = newY;
+        var command = new NodeMoveCommand(page, newX, newY, () =>
+        {
+            _nodeEditView.Invalidate();
+            UpdateInfoDisplay(pageIndex);
+        });
 
-        _nodeEditView.Invalidate();
-        UpdateInfoDisplay(pageIndex);
+        _commandManager.Execute(command);
     }
 
     /// <summary>Ctrl+Shift+ドラッグでノードを複製する。</summary>
@@ -822,9 +827,8 @@ public partial class PageNodeEditorForm : Form
         newPage.NodeX = newX;
         newPage.NodeY = newY;
 
-        // RoomIdを新規採番
-        var newHeader  = newPage.Header;
-        newHeader.RoomId   = GetNextAvailableRoomId(stage);
+        var newHeader       = newPage.Header;
+        newHeader.RoomId    = GetNextAvailableRoomId(stage);
         newHeader.LeftPage  = 0xFF;
         newHeader.RightPage = 0xFF;
         newHeader.UpPage    = 0xFF;
@@ -833,14 +837,20 @@ public partial class PageNodeEditorForm : Form
         newHeader.FrontPage = 0xFF;
         newPage.Header = newHeader;
 
-        stage.Pages.Add(newPage);
+        var command = new NodeCopyCommand(stage, newPage, () =>
+        {
+            // Execute後に選択・表示を更新
+            var newIndex = stage.Pages.IndexOf(newPage);
+            if (newIndex >= 0)
+            {
+                _nodeEditView.SetSelectedPage(newIndex);
+                UpdateInfoDisplay(newIndex);
+                PageSelected?.Invoke(newIndex);
+            }
+            _nodeEditView.Invalidate();
+        });
 
-        var newIndex = stage.Pages.IndexOf(newPage);
-        _nodeEditView.SetSelectedPage(newIndex);
-        UpdateInfoDisplay(newIndex);
-        PageSelected?.Invoke(newIndex);
-
-        _nodeEditView.Invalidate();
+        _commandManager.Execute(command);
     }
 
     private void OnContextConnectExisting()
@@ -1015,6 +1025,16 @@ public partial class PageNodeEditorForm : Form
     {
         switch (keyData)
         {
+            case Keys.Control | Keys.Z:
+                _commandManager.Undo();
+                _nodeEditView.Invalidate();
+                return true;
+
+            case Keys.Control | Keys.Y:
+                _commandManager.Redo();
+                _nodeEditView.Invalidate();
+                return true;
+
             case Keys.Left:     MoveSelection(Direction.Left);  return true;
             case Keys.Right:    MoveSelection(Direction.Right); return true;
             case Keys.Up:       MoveSelection(Direction.Up);    return true;

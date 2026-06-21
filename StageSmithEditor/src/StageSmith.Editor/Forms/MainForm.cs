@@ -126,6 +126,10 @@ public partial class MainForm : Form
                 _mapView.UpdateCursor();
         };
 
+        // CommandManager の変更通知 → MapView を更新
+        // ノードエディタ側でUndo/Redoが実行された場合もここで拾える
+        _commandManager.HistoryChanged += () => _mapView.Invalidate();
+
         NewProject();
 
         UpdateTilePreviewIcon();
@@ -392,9 +396,8 @@ public partial class MainForm : Form
     {
         if (_nodeEditorForm == null || _nodeEditorForm.IsDisposed)
         {
-            _nodeEditorForm = new PageNodeEditorForm(_context);
+            _nodeEditorForm = new PageNodeEditorForm(_context, _commandManager);
 
-            // ノードエディタでページ選択 → MainFormのマップビューを更新
             _nodeEditorForm.PageSelected += pageIndex =>
             {
                 _context.SetPage(pageIndex);
@@ -402,7 +405,7 @@ public partial class MainForm : Form
                 _pageNavBar.UpdateDisplay(_context);
             };
 
-            _nodeEditorForm.Show(this); // オーナー指定でMainFormと連動
+            _nodeEditorForm.Show(this);
         }
         else
         {
