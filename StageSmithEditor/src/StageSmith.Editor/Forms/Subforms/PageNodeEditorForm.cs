@@ -191,8 +191,9 @@ public partial class PageNodeEditorForm : Form
         _nodeEditView.CoordChanged    += OnNodeViewCoordChanged;
         _nodeEditView.PageDoubleClick += OnNodeViewPageDoubleClick;
         _nodeEditView.ZoomChanged     += zoom => _zoomLabel!.Text = $"x{zoom:0.00}";
-        _nodeEditView.NodeMoved       += OnNodeMoved;
-        _nodeEditView.NodeCopied      += OnNodeCopied;
+        _nodeEditView.NodeMoved          += OnNodeMoved;
+        _nodeEditView.NodeCopied         += OnNodeCopied;
+        _nodeEditView.PasteModeConfirmed += OnPasteModeConfirmed;
 
         // ノードビューエリア（NodeEditView + スクロールバー）
         var nodeViewArea = new Panel { Dock = DockStyle.Fill };
@@ -776,7 +777,53 @@ public partial class PageNodeEditorForm : Form
 
     private void OnContextDuplicate()
     {
-        // TODO: ページ複製の実装
+        var pageIndex = _nodeEditView.HitTestPage();
+        if (pageIndex == null) return;
+
+        // 複製モード開始
+        _nodeEditView.StartPasteMode(pageIndex.Value);
+        _coordLabel.Text = "複製先のノードを選択してください（Escでキャンセル）";
+    }
+
+    /// <summary>複製モードで貼り付け先が確定したとき呼ばれる。</summary>
+    private void OnPasteModeConfirmed(int sourcePageIndex, int targetPageIndex, int newX, int newY)
+    {
+        _nodeEditView.CancelPasteMode();
+        _coordLabel.Text = "";
+
+        if (targetPageIndex >= 0)
+            OverwritePage(sourcePageIndex, targetPageIndex);  // 既存ページへの上書き
+        else
+            OnNodeCopied(sourcePageIndex, newX, newY);        // 候補位置への新規追加
+    }
+
+    /// <summary>
+    /// 複製元ページのタイルマップを複製先既存ページに上書きコピーする。
+    /// NodeX/NodeY・接続情報・RoomIdは複製先のものを維持する。
+    /// </summary>
+    private void OverwritePage(int sourcePageIndex, int targetPageIndex)
+    {
+        var stage = _context.CurrentStage;
+        if (stage == null) return;
+
+        var sourcePage = stage.Pages.ElementAtOrDefault(sourcePageIndex);
+        var targetPage = stage.Pages.ElementAtOrDefault(targetPageIndex);
+        if (sourcePage == null || targetPage == null) return;
+
+        // 上書き前のタイルマップを保存してUndoに対応
+        var oldTileMap = targetPage.TileMap.Clone();
+        var newTileMap = sourcePage.TileMap.Clone();
+
+        var command = new TileMapOverwriteCommand(targetPage, oldTileMap, newTileMap, () =>
+        {
+            _nodeEditView.InvalidatePageCache(targetPage.Id, targetPage);
+            _nodeEditView.SetSelectedPage(targetPageIndex);
+            UpdateInfoDisplay(targetPageIndex);
+            PageSelected?.Invoke(targetPageIndex);
+            _nodeEditView.Invalidate();
+        });
+
+        _commandManager.Execute(command);
     }
 
     //========================
@@ -1023,6 +1070,14 @@ public partial class PageNodeEditorForm : Form
     /// </summary>
     protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
     {
+        // Escapeキー → 複製モードキャンセル（通常時はスルー）
+        if (keyData == Keys.Escape && _nodeEditView.IsPasteMode)
+        {
+            _nodeEditView.CancelPasteMode();
+            _coordLabel.Text = "";
+            return true;
+        }
+
         switch (keyData)
         {
             case Keys.Control | Keys.Z:
@@ -1041,6 +1096,24 @@ public partial class PageNodeEditorForm : Form
             case Keys.Down:     MoveSelection(Direction.Down);  return true;
             case Keys.PageUp:   MoveSelectionZ(+1);             return true;
             case Keys.PageDown: MoveSelectionZ(-1);             return true;
+
+            // 複製モード中のEnterキー → 現在選択中ノードに複製確定
+            case Keys.Enter when _nodeEditView.IsPasteMode:
+            {
+                var current = _nodeEditView.SelectedPageIndex;
+                if (current >= 0)
+                {
+                    var stage = _context.CurrentStage;
+                    var page  = stage?.Pages.ElementAtOrDefault(current);
+                    if (page != null)
+                        // キーボード操作の場合は常に既存ページへの上書き
+                        OnPasteModeConfirmed(
+                            _nodeEditView.SelectedPageIndex,
+                            current,
+                            page.NodeX, page.NodeY);
+                }
+                return true;
+            }
         }
 
         return base.ProcessCmdKey(ref msg, keyData);

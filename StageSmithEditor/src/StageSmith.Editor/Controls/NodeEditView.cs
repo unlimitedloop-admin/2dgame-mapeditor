@@ -78,13 +78,47 @@ public class NodeEditView : Panel
     private int   _dragSourcePageIndex = -1;   // ドラッグ中のページインデックス
     private bool  _isDraggingNode      = false; // ノードD&D中か
     private bool  _isDraggingNodeCopy  = false; // 複製D&D中か（Ctrl+Shift）
-    private Point _dragCurrentGridPos  = new(-1, -1); // 現在のグリッド座標（ゴースト描画用）
+    private Point? _dragCurrentGridPos = null; // 現在のグリッド座標（ゴースト描画用）
 
     /// <summary>ノード移動が確定したとき発火する。PageNodeEditorFormがStageManagerを更新する。</summary>
     public event Action<int, int, int>? NodeMoved;   // (pageIndex, newX, newY)
 
     /// <summary>ノード複製が確定したとき発火する。</summary>
     public event Action<int, int, int>? NodeCopied;  // (pageIndex, newX, newY)
+
+    //========================
+    // 複製モード（コンテキストメニュー「このページを複製」）
+    //========================
+    private bool  _isPasteMode         = false; // 複製モード中か
+    private int   _pasteModeSourceIndex = -1;   // 複製元ページインデックス
+    private Point? _pasteHoverGridPos  = null;  // ホバー中のグリッド座標
+
+    /// <summary>複製モードで貼り付け先が確定したとき発火する。</summary>
+    /// <remarks>targetPageIndex が -1 なら候補位置への新規追加、0以上なら既存ページへの上書き。</remarks>
+    public event Action<int, int, int, int>? PasteModeConfirmed; // (sourcePageIndex, targetPageIndex, newX, newY)
+
+    /// <summary>複製モードを開始する。</summary>
+    public void StartPasteMode(int sourcePageIndex)
+    {
+        _isPasteMode          = true;
+        _pasteModeSourceIndex = sourcePageIndex;
+        _pasteHoverGridPos    = null;
+        Cursor                = Cursors.Cross;
+        Invalidate();
+    }
+
+    /// <summary>複製モードを終了する。</summary>
+    public void CancelPasteMode()
+    {
+        _isPasteMode          = false;
+        _pasteModeSourceIndex = -1;
+        _pasteHoverGridPos    = null;
+        Cursor                = Cursors.Default;
+        Invalidate();
+    }
+
+    /// <summary>複製モード中か。</summary>
+    public bool IsPasteMode => _isPasteMode;
 
     //========================
     // 右クリック時のヒットテスト結果保持
@@ -303,14 +337,44 @@ public class NodeEditView : Panel
         DrawCandidateNodes(g, stage);
 
         // ノードD&D中のゴースト描画
-        if (_isDraggingNode && _dragCurrentGridPos.X >= 0)
+        if (_isDraggingNode && _dragCurrentGridPos.HasValue)
             DrawDragGhost(g);
+
+        // 複製モード中のハイライト描画
+        if (_isPasteMode)
+            DrawPasteModeOverlay(g, stage);
+    }
+
+    /// <summary>複製モード中にホバー位置をハイライト描画する。</summary>
+    private void DrawPasteModeOverlay(Graphics g, Stage stage)
+    {
+        if (!_pasteHoverGridPos.HasValue) return;
+
+        var rect = GridToRect(_pasteHoverGridPos.Value);
+
+        // 複製元を太いオレンジ枠で強調
+        if (_pasteModeSourceIndex >= 0)
+        {
+            var sourcePage = stage.Pages.ElementAtOrDefault(_pasteModeSourceIndex);
+            if (sourcePage != null)
+            {
+                var sourceRect = PageToRect(sourcePage);
+                using var sourcePen = new Pen(Color.Orange, 3);
+                g.DrawRectangle(sourcePen, sourceRect);
+            }
+        }
+
+        // ホバー中の貼り付け先をシアン枠でハイライト
+        using var hoverBrush = new SolidBrush(Color.FromArgb(60, 0, 255, 220));
+        using var hoverPen   = new Pen(Color.Cyan, 2);
+        g.FillRectangle(hoverBrush, rect);
+        g.DrawRectangle(hoverPen, rect);
     }
 
     /// <summary>ノードD&D中にドロップ先グリッドにゴーストを描画する。</summary>
     private void DrawDragGhost(Graphics g)
     {
-        var rect  = GridToRect(_dragCurrentGridPos);
+        var rect  = GridToRect(_dragCurrentGridPos!.Value);
         var color = _isDraggingNodeCopy
             ? Color.FromArgb(120, 100, 180, 255)  // 複製：青系半透明
             : Color.FromArgb(120, 255, 200, 0);   // 移動：黄系半透明
@@ -546,6 +610,36 @@ public class NodeEditView : Panel
             CoordChanged?.Invoke(grid.X, grid.Y);
         }
 
+        // 複製モード中はホバー位置を更新して再描画
+        if (_isPasteMode)
+        {
+            var hoverPage      = HitTestPageIndex(e.Location);
+            var hoverCandidate = hoverPage < 0 ? HitTestCandidate(e.Location) : null;
+
+            Point? newHover;
+            if (hoverPage >= 0)
+            {
+                var stage = _context.CurrentStage;
+                var page  = stage?.Pages.ElementAtOrDefault(hoverPage);
+                newHover  = page != null ? new Point(page.NodeX, page.NodeY) : null;
+            }
+            else if (hoverCandidate.HasValue)
+            {
+                newHover = hoverCandidate.Value;
+            }
+            else
+            {
+                newHover = null;
+            }
+
+            if (newHover != _pasteHoverGridPos)
+            {
+                _pasteHoverGridPos = newHover;
+                Invalidate();
+            }
+            return;
+        }
+
         if (e.Button == MouseButtons.Left)
         {
             var dx = e.X - _mouseDownPos.X;
@@ -587,6 +681,22 @@ public class NodeEditView : Panel
 
     private void OnMouseUp(object? sender, MouseEventArgs e)
     {
+        // 複製モード中の左クリック → 貼り付け先確定
+        if (_isPasteMode && e.Button == MouseButtons.Left)
+        {
+            if (_pasteHoverGridPos.HasValue)
+            {
+                // 貼り付け先が既存ページか候補位置かを判定
+                var targetPageIndex = HitTestPageIndex(e.Location);
+                PasteModeConfirmed?.Invoke(
+                    _pasteModeSourceIndex,
+                    targetPageIndex,
+                    _pasteHoverGridPos.Value.X,
+                    _pasteHoverGridPos.Value.Y);
+            }
+            return;
+        }
+
         if (e.Button == MouseButtons.Left)
         {
             if (_isDraggingNode && _dragSourcePageIndex >= 0)
@@ -615,7 +725,7 @@ public class NodeEditView : Panel
         _isDraggingNode     = false;
         _isDraggingNodeCopy = false;
         _dragSourcePageIndex = -1;
-        _dragCurrentGridPos  = new(-1, -1);
+        _dragCurrentGridPos  = null;
         Invalidate();
     }
 
