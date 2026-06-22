@@ -541,6 +541,12 @@ public partial class PageNodeEditorForm : Form
         var pageIndex = _nodeEditView.HitTestPage();
         if (pageIndex == null) return;
 
+        var stage = _context.CurrentStage;
+        if (stage == null) return;
+
+        var page = stage.Pages.ElementAtOrDefault(pageIndex.Value);
+        if (page == null) return;
+
         var result = MessageBox.Show(
             "接続情報のみクリアしますか？\n「いいえ」を選ぶとページ自体を削除します。",
             "部屋の割り当て削除",
@@ -550,19 +556,25 @@ public partial class PageNodeEditorForm : Form
 
         if (result == DialogResult.Yes)
         {
-            ClearPageConnections(pageIndex.Value);
+            // 接続情報クリアのみ
+            var command = new NodeClearConnectionCommand(page, () =>
+            {
+                _nodeEditView.Invalidate();
+                UpdateInfoDisplay(pageIndex.Value);
+            });
+            _commandManager.Execute(command);
         }
         else if (result == DialogResult.No)
         {
-            var stage = _context.CurrentStage;
-            if (stage == null) return;
-            var page = stage.Pages.ElementAtOrDefault(pageIndex.Value);
-            if (page == null) return;
-            stage.RemovePage(page.Id);
+            // ページ削除
+            var command = new NodeRemovePageCommand(stage, page, () =>
+            {
+                _nodeEditView.SetSelectedPage(-1);
+                ClearInfoDisplay();
+                _nodeEditView.Invalidate();
+            });
+            _commandManager.Execute(command);
         }
-        else return;
-
-        _nodeEditView.Invalidate();
     }
 
     // ③ ページの有効化／無効化
@@ -591,7 +603,6 @@ public partial class PageNodeEditorForm : Form
         var sourcePage = stage.Pages.ElementAtOrDefault(pageIndex.Value);
         if (sourcePage == null) return;
 
-        // 移動先グリッド座標を計算
         var (dx, dy) = direction switch
         {
             Direction.Up    => (0, -1),
@@ -604,18 +615,13 @@ public partial class PageNodeEditorForm : Form
         var newX = sourcePage.NodeX + dx;
         var newY = sourcePage.NodeY + dy;
 
-        // 既に同じ座標にページが存在する場合はキャンセル
-        var alreadyExists = stage.Pages.Any(p =>
-            p.NodeX == newX && p.NodeY == newY && p.Header.Z == FilterZ);
-
-        if (alreadyExists)
+        if (stage.Pages.Any(p => p.NodeX == newX && p.NodeY == newY && p.Header.Z == FilterZ))
         {
             MessageBox.Show("その方向には既にページがあります。", "新規ページ作成",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
 
-        // 確認ダイアログ
         var dirName = direction switch
         {
             Direction.Up    => "上",
@@ -625,41 +631,46 @@ public partial class PageNodeEditorForm : Form
             _               => "",
         };
 
-        var confirm = MessageBox.Show(
+        if (MessageBox.Show(
             $"ページ {pageIndex.Value} の{dirName}側に新規ページを増設します。よろしいですか？",
-            "新規ページ作成",
-            MessageBoxButtons.YesNo,
-            MessageBoxIcon.Question
-        );
+            "新規ページ作成", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+            return;
 
-        if (confirm != DialogResult.Yes) return;
-
-        // 新規ページ生成（空きRoomIdを自動採番）
-        var newRoomId = GetNextAvailableRoomId(stage);
+        // 新規ページ生成
         var newPage = new Page
         {
             Name  = $"Page {stage.Pages.Count:D3}",
             NodeX = newX,
             NodeY = newY,
         };
-
         var newHeader = PageHeader.CreateDefault();
-        newHeader.RoomId = newRoomId;
+        newHeader.RoomId = GetNextAvailableRoomId(stage);
         newHeader.Z      = (byte)FilterZ;
         newPage.Header   = newHeader;
 
-        stage.Pages.Add(newPage);
+        // ★ Command生成前にsourceの現在ヘッダーを退避
+        var sourceHeaderBefore = sourcePage.Header;
 
-        // 双方向接続を設定
+        // 双方向接続を計算（sourcePageのHeaderを一時変更）
         ConnectPages(sourcePage, newPage, direction);
+        var sourceHeaderAfter = sourcePage.Header;
 
-        // 新規ページを選択してマップビューに通知
-        var newIndex = stage.Pages.IndexOf(newPage);
-        _nodeEditView.SetSelectedPage(newIndex);
-        UpdateInfoDisplay(newIndex);
-        PageSelected?.Invoke(newIndex);
+        // sourcePageを元に戻す（Commandに任せる）
+        sourcePage.Header = sourceHeaderBefore;
 
-        _nodeEditView.Invalidate();
+        var command = new NodeAddPageCommand(stage, sourcePage, newPage, sourceHeaderAfter, () =>
+        {
+            var idx = stage.Pages.IndexOf(newPage);
+            if (idx >= 0)
+            {
+                _nodeEditView.SetSelectedPage(idx);
+                UpdateInfoDisplay(idx);
+                PageSelected?.Invoke(idx);
+            }
+            _nodeEditView.Invalidate();
+        });
+
+        _commandManager.Execute(command);
     }
 
     /// <summary>
@@ -679,7 +690,6 @@ public partial class PageNodeEditorForm : Form
 
         var newZ = sourcePage.Header.Z + dz;
 
-        // Z値の範囲チェック（0〜255）
         if (newZ < 0 || newZ > 255)
         {
             MessageBox.Show("Z座標が範囲外です。", "新規ページ作成",
@@ -687,13 +697,8 @@ public partial class PageNodeEditorForm : Form
             return;
         }
 
-        // 既に同じ[x,y,z]にページが存在する場合はキャンセル
-        var alreadyExists = stage.Pages.Any(p =>
-            p.NodeX    == sourcePage.NodeX &&
-            p.NodeY    == sourcePage.NodeY &&
-            p.Header.Z == newZ);
-
-        if (alreadyExists)
+        if (stage.Pages.Any(p =>
+            p.NodeX == sourcePage.NodeX && p.NodeY == sourcePage.NodeY && p.Header.Z == newZ))
         {
             MessageBox.Show("その方向には既にページがあります。", "新規ページ作成",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -702,77 +707,79 @@ public partial class PageNodeEditorForm : Form
 
         var dirName = dz > 0 ? "奥" : "手前";
 
-        var confirm = MessageBox.Show(
+        if (MessageBox.Show(
             $"ページ {pageIndex.Value} の{dirName}側に新規ページを増設します。よろしいですか？",
-            "新規ページ作成",
-            MessageBoxButtons.YesNo,
-            MessageBoxIcon.Question
-        );
+            "新規ページ作成", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+            return;
 
-        if (confirm != DialogResult.Yes) return;
-
-        // 新規ページ生成（元ページと同じ[x,y]・Z±1）
-        var newRoomId = GetNextAvailableRoomId(stage);
+        // 新規ページ生成
         var newPage = new Page
         {
             Name  = $"Page {stage.Pages.Count:D3}",
             NodeX = sourcePage.NodeX,
             NodeY = sourcePage.NodeY,
         };
-
         var newHeader = PageHeader.CreateDefault();
-        newHeader.RoomId = newRoomId;
+        newHeader.RoomId = GetNextAvailableRoomId(stage);
         newHeader.Z      = (byte)newZ;
         newPage.Header   = newHeader;
 
-        stage.Pages.Add(newPage);
+        // ★ Command生成前にsourceの現在ヘッダーを退避
+        var sourceHeaderBefore = sourcePage.Header;
 
-        // 双方向接続を設定（Back/Front）
+        // Back/Front接続を計算（sourcePageのHeaderを一時変更）
         var sh = sourcePage.Header;
         var th = newPage.Header;
-
-        if (dz > 0)
-        {
-            sh.BackPage  = th.RoomId;
-            th.FrontPage = sh.RoomId;
-        }
-        else
-        {
-            sh.FrontPage = th.RoomId;
-            th.BackPage  = sh.RoomId;
-        }
-
+        if (dz > 0) { sh.BackPage  = th.RoomId; th.FrontPage = sh.RoomId; }
+        else        { sh.FrontPage = th.RoomId; th.BackPage  = sh.RoomId; }
         sourcePage.Header = sh;
         newPage.Header    = th;
+        var sourceHeaderAfter = sourcePage.Header;
 
-        // FilterZを新しいZ階層に切り替えて新規ページを選択
-        _nodeEditView.FilterZ = newZ;
-        RefreshZComboBox();
+        // sourcePageを元に戻す（Commandに任せる）
+        sourcePage.Header = sourceHeaderBefore;
 
-        var newIndex = stage.Pages.IndexOf(newPage);
-        _nodeEditView.SetSelectedPage(newIndex);
-        UpdateInfoDisplay(newIndex);
-        PageSelected?.Invoke(newIndex);
+        var capturedNewZ = newZ;
+        var command = new NodeAddPageCommand(stage, sourcePage, newPage, sourceHeaderAfter, () =>
+        {
+            _nodeEditView.FilterZ = capturedNewZ;
+            RefreshZComboBox();
 
-        _nodeEditView.Invalidate();
+            var idx = stage.Pages.IndexOf(newPage);
+            if (idx >= 0)
+            {
+                _nodeEditView.SetSelectedPage(idx);
+                UpdateInfoDisplay(idx);
+                PageSelected?.Invoke(idx);
+            }
+            _nodeEditView.Invalidate();
+        });
+
+        _commandManager.Execute(command);
     }
     private void OnContextClearConnection()
     {
         var pageIndex = _nodeEditView.HitTestPage();
         if (pageIndex == null) return;
 
-        var confirm = MessageBox.Show(
+        var stage = _context.CurrentStage;
+        if (stage == null) return;
+
+        var page = stage.Pages.ElementAtOrDefault(pageIndex.Value);
+        if (page == null) return;
+
+        if (MessageBox.Show(
             "このページの接続情報をすべてクリアします。よろしいですか？",
             "接続をクリア",
             MessageBoxButtons.YesNo,
-            MessageBoxIcon.Question
-        );
+            MessageBoxIcon.Question) != DialogResult.Yes) return;
 
-        if (confirm != DialogResult.Yes) return;
-
-        ClearPageConnections(pageIndex.Value);
-        _nodeEditView.Invalidate();
-        UpdateInfoDisplay(pageIndex.Value);
+        var command = new NodeClearConnectionCommand(page, () =>
+        {
+            _nodeEditView.Invalidate();
+            UpdateInfoDisplay(pageIndex.Value);
+        });
+        _commandManager.Execute(command);
     }
 
     private void OnContextDuplicate()
@@ -989,24 +996,6 @@ public partial class PageNodeEditorForm : Form
     //========================
     // 接続操作ヘルパー
     //========================
-
-    /// <summary>
-    /// 指定ページの接続情報をすべて0xFFにリセットする。
-    /// </summary>
-    private void ClearPageConnections(int pageIndex)
-    {
-        var page = _context.CurrentStage?.Pages.ElementAtOrDefault(pageIndex);
-        if (page == null) return;
-
-        var h = page.Header;
-        h.LeftPage  = 0xFF;
-        h.RightPage = 0xFF;
-        h.UpPage    = 0xFF;
-        h.DownPage  = 0xFF;
-        h.FrontPage = 0xFF;
-        h.BackPage  = 0xFF;
-        page.Header = h;
-    }
 
     /// <summary>
     /// source → new の方向に双方向接続を設定する。
