@@ -36,6 +36,7 @@ public partial class MainForm : Form
     private readonly StageExplorerContent _stageExplorerContent;
     private readonly PropertyWindowContent _propertyWindowContent;
     private PageNodeEditorForm? _nodeEditorForm;
+    private MetaTileEditorForm? _metaTileEditorForm;
 
     //========================
     // Controls（DockContent 経由で参照）
@@ -410,6 +411,22 @@ public partial class MainForm : Form
         else
         {
             _nodeEditorForm.BringToFront();
+        }
+    }
+
+    /// <summary>
+    /// メタタイルエディタを開く。既に開いていれば前面に出す。
+    /// </summary>
+    private void OpenMetaTileEditor()
+    {
+        if (_metaTileEditorForm == null || _metaTileEditorForm.IsDisposed)
+        {
+            _metaTileEditorForm = new MetaTileEditorForm(_tileset);
+            _metaTileEditorForm.Show(this);
+        }
+        else
+        {
+            _metaTileEditorForm.BringToFront();
         }
     }
 }

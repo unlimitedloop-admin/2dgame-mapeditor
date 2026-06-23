@@ -79,7 +79,7 @@ public partial class MainForm
         _menuWindowMarkerManager.Click  += (_, _) => { /* TODO: MarkerManager */ };
         _menuWindowStageMapViewer.Click += (_, _) => { /* TODO: StageMapViewer */ };
         _menuWindowPageNodeEditor.Click += (_, _) => OpenNodeEditor();
-        _menuWindowMetaTileEditor.Click += (_, _) => { /* TODO: MetaTileEditor */ };
+        _menuWindowMetaTileEditor.Click += (_, _) => OpenMetaTileEditor();
         _menuWindowResetLayout.Click    += (_, _) => InitializeDockLayout();
 
         // ========================
@@ -87,7 +87,7 @@ public partial class MainForm
         // ========================
         _menuHelpAbout.Click += (_, _) =>
             MessageBox.Show(
-                "StageSmith Editor\nVersion 0.1",
+                "StageSmith Editor\nVersion 0.6",
                 "About",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information
