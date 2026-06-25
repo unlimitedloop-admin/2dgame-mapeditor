@@ -1,3 +1,4 @@
+using StageSmith.Application.Commands;
 using StageSmith.Core.Models;
 using StageSmith.Editor.Controls;
 
@@ -12,6 +13,11 @@ public sealed class MetaTileEditorForm : Form
     private readonly MetaTilePreviewControl _preview = new();
 
     private readonly ComboBox _sizeComboBox = new();
+
+    private readonly CommandManager _commandManager = new();
+
+    private readonly Dictionary<(int X, int Y), MetaTileCellChange> _pendingPaintChanges = [];
+    private bool _isPainting;
 
     private int _selectedTileId = -1;
 
@@ -43,10 +49,11 @@ public sealed class MetaTileEditorForm : Form
             _canvas.SetSelectedTile(tileId);
         };
 
-        _canvas.MetaTileChanged += () =>
-        {
-            _preview.Invalidate();
-        };
+        _canvas.EditStarted += BeginMetaTilePaint;
+        _canvas.TilePaintRequested += PaintMetaTileCell;
+        _canvas.EditFinished += EndMetaTilePaint;
+
+        _commandManager.HistoryChanged += RefreshMetaTileViews;
     }
 
     private void InitializeLayout()
@@ -113,7 +120,7 @@ public sealed class MetaTileEditorForm : Form
         Controls.Add(root);
     }
 
-    private Control CreateToolBar()
+    private FlowLayoutPanel CreateToolBar()
     {
         var panel = new FlowLayoutPanel
         {
@@ -167,14 +174,103 @@ public sealed class MetaTileEditorForm : Form
 
         clearButton.Click += (_, _) =>
         {
-            _currentMetaTile.Clear();
-            _canvas.Invalidate();
-            _preview.Invalidate();
+            _commandManager.Execute(
+                new MetaTileClearCommand(_currentMetaTile, RefreshMetaTileViews)
+            );
         };
 
         panel.Controls.Add(_sizeComboBox);
         panel.Controls.Add(clearButton);
 
         return panel;
+    }
+
+    private void BeginMetaTilePaint()
+    {
+        _isPainting = true;
+        _pendingPaintChanges.Clear();
+    }
+
+    private void PaintMetaTileCell(int x, int y, byte tileId)
+    {
+        if (!_isPainting)
+            return;
+
+        var beforeTileId = _currentMetaTile.GetTile(x, y);
+
+        if (!_pendingPaintChanges.TryGetValue((x, y), out var existingChange))
+        {
+            if (beforeTileId == tileId)
+                return;
+
+            _pendingPaintChanges[(x, y)] = new MetaTileCellChange(
+                x,
+                y,
+                beforeTileId,
+                tileId
+            );
+        }
+        else
+        {
+            if (existingChange.BeforeTileId == tileId)
+            {
+                _pendingPaintChanges.Remove((x, y));
+            }
+            else
+            {
+                _pendingPaintChanges[(x, y)] = existingChange with
+                {
+                    AfterTileId = tileId
+                };
+            }
+        }
+
+        _currentMetaTile.SetTile(x, y, tileId);
+        RefreshMetaTileViews();
+    }
+
+    private void EndMetaTilePaint()
+    {
+        if (!_isPainting)
+            return;
+
+        _isPainting = false;
+
+        if (_pendingPaintChanges.Count == 0)
+            return;
+
+        var changes = _pendingPaintChanges.Values.ToList();
+        _pendingPaintChanges.Clear();
+
+        var command = new MetaTileBatchPaintCommand(
+            _currentMetaTile,
+            changes,
+            RefreshMetaTileViews
+        );
+
+        _commandManager.Execute(command);
+    }
+
+    private void RefreshMetaTileViews()
+    {
+        _canvas.Invalidate();
+        _preview.Invalidate();
+    }
+
+    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+    {
+        if (keyData == (Keys.Control | Keys.Z))
+        {
+            _commandManager.Undo();
+            return true;
+        }
+
+        if (keyData == (Keys.Control | Keys.Y))
+        {
+            _commandManager.Redo();
+            return true;
+        }
+
+        return base.ProcessCmdKey(ref msg, keyData);
     }
 }

@@ -4,13 +4,14 @@ public sealed class MetaTile
 {
     public const byte EmptyTile = 0xFF;
 
-    public int Id { get; set; }
+    public Guid Id { get; init; } = Guid.NewGuid();
+
     public string Name { get; set; } = "New MetaTile";
 
     public int Width { get; private set; }
     public int Height { get; private set; }
 
-    public byte[] Tiles { get; private set; }
+    public byte[] Tiles { get; private set; } = [];
 
     public MetaTile(int width = 4, int height = 4)
     {
@@ -54,11 +55,9 @@ public sealed class MetaTile
 
         Width = width;
         Height = height;
+
         Tiles = new byte[Width * Height];
         Array.Fill(Tiles, EmptyTile);
-
-        if (oldTiles == null)
-            return;
 
         var copyWidth = Math.Min(oldWidth, Width);
         var copyHeight = Math.Min(oldHeight, Height);

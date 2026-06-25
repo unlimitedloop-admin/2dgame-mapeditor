@@ -13,7 +13,10 @@ public sealed class MetaTileCanvasControl : DoubleBufferedPanel
     private const int MarginSize = 16;
 
     public event Action<int>? TilePicked;
-    public event Action? MetaTileChanged;
+    //public event Action? MetaTileChanged;
+    public event Action? EditStarted;
+    public event Action<int, int, byte>? TilePaintRequested;
+    public event Action? EditFinished;
 
     public MetaTileCanvasControl()
     {
@@ -139,20 +142,56 @@ public sealed class MetaTileCanvasControl : DoubleBufferedPanel
     protected override void OnMouseDown(MouseEventArgs e)
     {
         base.OnMouseDown(e);
-        HandleMouse(e);
+
+        if (e.Button == MouseButtons.Left)
+        {
+            EditStarted?.Invoke();
+            RequestPaint(e);
+        }
+        else if (e.Button == MouseButtons.Right)
+        {
+            PickTile(e);
+        }
     }
 
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
 
-        if (e.Button == MouseButtons.Left || e.Button == MouseButtons.Right)
+        if (e.Button == MouseButtons.Left)
         {
-            HandleMouse(e);
+            RequestPaint(e);
         }
     }
 
-    private void HandleMouse(MouseEventArgs e)
+    protected override void OnMouseUp(MouseEventArgs e)
+    {
+        base.OnMouseUp(e);
+
+        if (e.Button == MouseButtons.Left)
+        {
+            EditFinished?.Invoke();
+        }
+    }
+
+    private void RequestPaint(MouseEventArgs e)
+    {
+        if (_metaTile == null)
+            return;
+
+        if (_selectedTileId < 0)
+            return;
+
+        var x = (e.X - MarginSize) / CellSize;
+        var y = (e.Y - MarginSize) / CellSize;
+
+        if (x < 0 || x >= _metaTile.Width || y < 0 || y >= _metaTile.Height)
+            return;
+
+        TilePaintRequested?.Invoke(x, y, (byte)_selectedTileId);
+    }
+
+    private void PickTile(MouseEventArgs e)
     {
         if (_metaTile == null)
             return;
@@ -163,23 +202,11 @@ public sealed class MetaTileCanvasControl : DoubleBufferedPanel
         if (x < 0 || x >= _metaTile.Width || y < 0 || y >= _metaTile.Height)
             return;
 
-        if (e.Button == MouseButtons.Left)
-        {
-            if (_selectedTileId < 0)
-                return;
+        var tileId = _metaTile.GetTile(x, y);
 
-            _metaTile.SetTile(x, y, (byte)_selectedTileId);
-            MetaTileChanged?.Invoke();
-            Invalidate();
-        }
-        else if (e.Button == MouseButtons.Right)
+        if (tileId != MetaTile.EmptyTile)
         {
-            var tileId = _metaTile.GetTile(x, y);
-
-            if (tileId != MetaTile.EmptyTile)
-            {
-                TilePicked?.Invoke(tileId);
-            }
+            TilePicked?.Invoke(tileId);
         }
     }
 }
