@@ -419,9 +419,23 @@ public partial class MainForm : Form
     /// </summary>
     private void OpenMetaTileEditor()
     {
+        var stage = _context.CurrentStage;
+
+        if (stage == null)
+        {
+            MessageBox.Show(
+                this,
+                "ステージがありません。",
+                "MetaTile Editor",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+            return;
+        }
+
         if (_metaTileEditorForm == null || _metaTileEditorForm.IsDisposed)
         {
-            _metaTileEditorForm = new MetaTileEditorForm(_tileset);
+            _metaTileEditorForm = new MetaTileEditorForm(stage, _tileset);
             _metaTileEditorForm.Show(this);
         }
         else

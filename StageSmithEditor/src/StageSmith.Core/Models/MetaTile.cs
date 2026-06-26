@@ -4,7 +4,7 @@ public sealed class MetaTile
 {
     public const byte EmptyTile = 0xFF;
 
-    public Guid Id { get; init; } = Guid.NewGuid();
+    public int Id { get; set; }
 
     public string Name { get; set; } = "New MetaTile";
 
@@ -69,5 +69,17 @@ public sealed class MetaTile
                 Tiles[y * Width + x] = oldTiles[y * oldWidth + x];
             }
         }
+    }
+
+    public MetaTile Clone(bool keepId = true)
+    {
+        var clone = new MetaTile(Width, Height)
+        {
+            Id = keepId ? Id : 0,
+            Name = Name
+        };
+
+        Array.Copy(Tiles, clone.Tiles, Tiles.Length);
+        return clone;
     }
 }

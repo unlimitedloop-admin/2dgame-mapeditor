@@ -6,28 +6,49 @@ namespace StageSmith.Editor;
 
 public sealed class MetaTileEditorForm : Form
 {
-    private readonly MetaTile _currentMetaTile = new(4, 4);
+    private readonly Stage _stage;
+
+    /// <summary>
+    /// 直接 Stage.MetaTiles を編集せず、作業コピーを編集する。
+    /// Save / Save As 時に Stage へ反映する。
+    /// </summary>
+    private MetaTile _currentMetaTile = new(4, 4);
 
     private readonly TilePaletteControl _tilePalette = new();
     private readonly MetaTileCanvasControl _canvas = new();
     private readonly MetaTilePreviewControl _preview = new();
 
+    private readonly ComboBox _savedMetaTileComboBox = new();
+    private readonly TextBox _nameTextBox = new();
     private readonly ComboBox _sizeComboBox = new();
+    private readonly Label _statusLabel = new();
 
-    private readonly CommandManager _commandManager = new();
+    private CommandManager _commandManager = new();
 
     private readonly Dictionary<(int X, int Y), MetaTileCellChange> _pendingPaintChanges = [];
     private bool _isPainting;
 
+    private bool _suppressSizeChanged;
+    private bool _suppressSavedSelectionChanged;
+
+    /// <summary>
+    /// null の場合は未保存の新規メタタイル。
+    /// 値がある場合は、その Id の保存済みメタタイルを改訂中。
+    /// </summary>
+    private int? _editingMetaTileId;
+
     private int _selectedTileId = -1;
 
-    public MetaTileEditorForm(Bitmap? tileset)
+    public MetaTileEditorForm(Stage stage, Bitmap? tileset)
     {
+        _stage = stage ?? throw new ArgumentNullException(nameof(stage));
+
         Text = "MetaTile Editor";
         StartPosition = FormStartPosition.CenterParent;
-        Size = new Size(720, 520);
+        Size = new Size(820, 560);
 
         InitializeLayout();
+        InitializeCommandManager();
 
         _tilePalette.SetTileset(tileset);
         _canvas.SetTileset(tileset);
@@ -53,7 +74,8 @@ public sealed class MetaTileEditorForm : Form
         _canvas.TilePaintRequested += PaintMetaTileCell;
         _canvas.EditFinished += EndMetaTilePaint;
 
-        _commandManager.HistoryChanged += RefreshMetaTileViews;
+        RefreshSavedMetaTileList();
+        SetWorkingMetaTile(new MetaTile(4, 4), editingMetaTileId: null);
     }
 
     private void InitializeLayout()
@@ -68,7 +90,7 @@ public sealed class MetaTileEditorForm : Form
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 240));
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 72));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 70));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 30));
 
@@ -126,45 +148,36 @@ public sealed class MetaTileEditorForm : Form
         {
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = true,
             Padding = new Padding(8, 6, 8, 4)
         };
 
-        panel.Controls.Add(new Label
+        var newButton = new Button
         {
-            Text = "Size:",
-            AutoSize = true,
-            TextAlign = ContentAlignment.MiddleLeft,
-            Padding = new Padding(0, 5, 4, 0)
-        });
-
-        _sizeComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
-        _sizeComboBox.Width = 100;
-        _sizeComboBox.Items.AddRange(
-        [
-            "2 x 2",
-            "4 x 4",
-            "8 x 8",
-            "1 x 4",
-            "4 x 1"
-        ]);
-        _sizeComboBox.SelectedIndex = 1;
-
-        _sizeComboBox.SelectedIndexChanged += (_, _) =>
-        {
-            var (w, h) = _sizeComboBox.SelectedItem?.ToString() switch
-            {
-                "2 x 2" => (2, 2),
-                "4 x 4" => (4, 4),
-                "8 x 8" => (8, 8),
-                "1 x 4" => (1, 4),
-                "4 x 1" => (4, 1),
-                _ => (4, 4)
-            };
-
-            _currentMetaTile.Resize(w, h);
-            _canvas.SetMetaTile(_currentMetaTile);
-            _preview.SetMetaTile(_currentMetaTile);
+            Text = "New",
+            AutoSize = true
         };
+
+        newButton.Click += (_, _) =>
+        {
+            SetWorkingMetaTile(new MetaTile(4, 4), editingMetaTileId: null);
+        };
+
+        var saveButton = new Button
+        {
+            Text = "Save",
+            AutoSize = true
+        };
+
+        saveButton.Click += (_, _) => SaveCurrentMetaTile();
+
+        var saveAsButton = new Button
+        {
+            Text = "Save As",
+            AutoSize = true
+        };
+
+        saveAsButton.Click += (_, _) => SaveCurrentMetaTileAsNew();
 
         var clearButton = new Button
         {
@@ -179,10 +192,237 @@ public sealed class MetaTileEditorForm : Form
             );
         };
 
+        _savedMetaTileComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+        _savedMetaTileComboBox.Width = 180;
+        _savedMetaTileComboBox.SelectedIndexChanged += (_, _) =>
+        {
+            if (_suppressSavedSelectionChanged)
+                return;
+
+            if (_savedMetaTileComboBox.SelectedItem is not MetaTileListItem item)
+                return;
+
+            LoadSavedMetaTile(item.Id);
+        };
+
+        _nameTextBox.Width = 150;
+        _nameTextBox.TextChanged += (_, _) =>
+        {
+            _currentMetaTile.Name = GetMetaTileName();
+        };
+
+        _sizeComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+        _sizeComboBox.Width = 100;
+        _sizeComboBox.Items.AddRange(
+        [
+            "2 x 2",
+            "4 x 4",
+            "8 x 8",
+            "1 x 4",
+            "4 x 1"
+        ]);
+
+        _sizeComboBox.SelectedIndexChanged += (_, _) =>
+        {
+            if (_suppressSizeChanged)
+                return;
+
+            var (w, h) = _sizeComboBox.SelectedItem?.ToString() switch
+            {
+                "2 x 2" => (2, 2),
+                "4 x 4" => (4, 4),
+                "8 x 8" => (8, 8),
+                "1 x 4" => (1, 4),
+                "4 x 1" => (4, 1),
+                _ => (4, 4)
+            };
+
+            _currentMetaTile.Resize(w, h);
+            _canvas.SetMetaTile(_currentMetaTile);
+            _preview.SetMetaTile(_currentMetaTile);
+            RefreshMetaTileViews();
+        };
+
+        _statusLabel.AutoSize = true;
+        _statusLabel.Padding = new Padding(12, 5, 0, 0);
+
+        panel.Controls.Add(new Label
+        {
+            Text = "Saved:",
+            AutoSize = true,
+            Padding = new Padding(0, 5, 4, 0)
+        });
+        panel.Controls.Add(_savedMetaTileComboBox);
+
+        panel.Controls.Add(new Label
+        {
+            Text = "Name:",
+            AutoSize = true,
+            Padding = new Padding(8, 5, 4, 0)
+        });
+        panel.Controls.Add(_nameTextBox);
+
+        panel.Controls.Add(new Label
+        {
+            Text = "Size:",
+            AutoSize = true,
+            Padding = new Padding(8, 5, 4, 0)
+        });
         panel.Controls.Add(_sizeComboBox);
+
+        panel.Controls.Add(newButton);
+        panel.Controls.Add(saveButton);
+        panel.Controls.Add(saveAsButton);
         panel.Controls.Add(clearButton);
+        panel.Controls.Add(_statusLabel);
 
         return panel;
+    }
+
+    private void InitializeCommandManager()
+    {
+        _commandManager.HistoryChanged += RefreshMetaTileViews;
+    }
+
+    private void ResetCommandManager()
+    {
+        _commandManager.HistoryChanged -= RefreshMetaTileViews;
+        _commandManager = new CommandManager();
+        _commandManager.HistoryChanged += RefreshMetaTileViews;
+    }
+
+    private void SetWorkingMetaTile(MetaTile metaTile, int? editingMetaTileId)
+    {
+        _editingMetaTileId = editingMetaTileId;
+        _currentMetaTile = metaTile.Clone(keepId: editingMetaTileId.HasValue);
+
+        if (editingMetaTileId.HasValue)
+        {
+            _currentMetaTile.Id = editingMetaTileId.Value;
+        }
+
+        _nameTextBox.Text = _currentMetaTile.Name;
+        SetSizeComboBoxFromMetaTile(_currentMetaTile);
+
+        _canvas.SetMetaTile(_currentMetaTile);
+        _preview.SetMetaTile(_currentMetaTile);
+
+        ResetCommandManager();
+        RefreshMetaTileViews();
+        UpdateStatus();
+    }
+
+    private void SetSizeComboBoxFromMetaTile(MetaTile metaTile)
+    {
+        _suppressSizeChanged = true;
+
+        var sizeText = $"{metaTile.Width} x {metaTile.Height}";
+        var index = _sizeComboBox.Items.IndexOf(sizeText);
+
+        _sizeComboBox.SelectedIndex = index >= 0
+            ? index
+            : _sizeComboBox.Items.IndexOf("4 x 4");
+
+        _suppressSizeChanged = false;
+    }
+
+    private string GetMetaTileName()
+    {
+        var name = _nameTextBox.Text.Trim();
+        return string.IsNullOrWhiteSpace(name)
+            ? "New MetaTile"
+            : name;
+    }
+
+    private void SaveCurrentMetaTile()
+    {
+        _currentMetaTile.Name = GetMetaTileName();
+
+        if (_editingMetaTileId.HasValue)
+        {
+            _currentMetaTile.Id = _editingMetaTileId.Value;
+
+            if (_stage.UpdateMetaTile(_currentMetaTile))
+            {
+                RefreshSavedMetaTileList(selectId: _editingMetaTileId);
+                UpdateStatus("Saved.");
+                return;
+            }
+        }
+
+        var saved = _stage.AddMetaTile(_currentMetaTile);
+        _editingMetaTileId = saved.Id;
+        SetWorkingMetaTile(saved, saved.Id);
+        RefreshSavedMetaTileList(selectId: saved.Id);
+        UpdateStatus("Saved as new.");
+    }
+
+    private void SaveCurrentMetaTileAsNew()
+    {
+        _currentMetaTile.Name = GetMetaTileName();
+
+        var saved = _stage.AddMetaTile(_currentMetaTile);
+        _editingMetaTileId = saved.Id;
+
+        SetWorkingMetaTile(saved, saved.Id);
+        RefreshSavedMetaTileList(selectId: saved.Id);
+        UpdateStatus("Saved as new.");
+    }
+
+    private void LoadSavedMetaTile(int metaTileId)
+    {
+        var saved = _stage.FindMetaTile(metaTileId);
+        if (saved is null)
+        {
+            UpdateStatus("Selected MetaTile was not found.");
+            RefreshSavedMetaTileList();
+            return;
+        }
+
+        SetWorkingMetaTile(saved, saved.Id);
+        UpdateStatus("Loaded.");
+    }
+
+    private void RefreshSavedMetaTileList(int? selectId = null)
+    {
+        _suppressSavedSelectionChanged = true;
+
+        _savedMetaTileComboBox.Items.Clear();
+
+        foreach (var metaTile in _stage.MetaTiles.OrderBy(x => x.Id))
+        {
+            _savedMetaTileComboBox.Items.Add(new MetaTileListItem(metaTile.Id, metaTile.Name));
+        }
+
+        if (selectId.HasValue)
+        {
+            for (var i = 0; i < _savedMetaTileComboBox.Items.Count; i++)
+            {
+                if (_savedMetaTileComboBox.Items[i] is MetaTileListItem item &&
+                    item.Id == selectId.Value)
+                {
+                    _savedMetaTileComboBox.SelectedIndex = i;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            _savedMetaTileComboBox.SelectedIndex = -1;
+        }
+
+        _suppressSavedSelectionChanged = false;
+    }
+
+    private void UpdateStatus(string? message = null)
+    {
+        var mode = _editingMetaTileId.HasValue
+            ? $"Editing ID {_editingMetaTileId.Value:D3}"
+            : "New / Unsaved";
+
+        _statusLabel.Text = string.IsNullOrWhiteSpace(message)
+            ? mode
+            : $"{mode} - {message}";
     }
 
     private void BeginMetaTilePaint()
@@ -272,5 +512,22 @@ public sealed class MetaTileEditorForm : Form
         }
 
         return base.ProcessCmdKey(ref msg, keyData);
+    }
+
+    private sealed class MetaTileListItem
+    {
+        public int Id { get; }
+        private readonly string _name;
+
+        public MetaTileListItem(int id, string name)
+        {
+            Id = id;
+            _name = name;
+        }
+
+        public override string ToString()
+        {
+            return $"{Id:D3}: {_name}";
+        }
     }
 }

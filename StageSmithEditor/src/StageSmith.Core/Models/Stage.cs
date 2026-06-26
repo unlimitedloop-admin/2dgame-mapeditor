@@ -16,7 +16,7 @@ public sealed class Stage
     /// .def 出力には使わない。
     /// </summary>
     public string Description { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// 将来の .def 出力時に使う表示名・識別子
     /// </summary>
@@ -24,7 +24,13 @@ public sealed class Stage
 
     public string TilesetImagePath { get; set; } = string.Empty;
 
-    public List<Page> Pages { get; set; } = new();
+    public List<Page> Pages { get; set; } = [];
+
+    /// <summary>
+    /// ステージ単位で管理するメタタイル定義。
+    /// .sseproj の保存対象にする想定。
+    /// </summary>
+    public List<MetaTile> MetaTiles { get; set; } = [];
 
     public Page AddPage(string? name = null)
     {
@@ -61,9 +67,62 @@ public sealed class Stage
         return Pages.FirstOrDefault(x => x.Id == pageId);
     }
 
+    public MetaTile AddMetaTile(MetaTile source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+
+        var metaTile = source.Clone(keepId: false);
+        metaTile.Id = GetNextMetaTileId();
+
+        if (string.IsNullOrWhiteSpace(metaTile.Name))
+        {
+            metaTile.Name = $"MetaTile {metaTile.Id:D3}";
+        }
+
+        MetaTiles.Add(metaTile);
+        return metaTile;
+    }
+
+    public bool UpdateMetaTile(MetaTile source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+
+        var index = MetaTiles.FindIndex(x => x.Id == source.Id);
+        if (index < 0)
+        {
+            return false;
+        }
+
+        MetaTiles[index] = source.Clone(keepId: true);
+        return true;
+    }
+
+    public bool RemoveMetaTile(int metaTileId)
+    {
+        var target = FindMetaTile(metaTileId);
+        if (target is null)
+        {
+            return false;
+        }
+
+        return MetaTiles.Remove(target);
+    }
+
+    public MetaTile? FindMetaTile(int metaTileId)
+    {
+        return MetaTiles.FirstOrDefault(x => x.Id == metaTileId);
+    }
+
+    private int GetNextMetaTileId()
+    {
+        return MetaTiles.Count == 0
+            ? 0
+            : MetaTiles.Max(x => x.Id) + 1;
+    }
+
     /// <summary>
     /// このステージの複製を生成する。
-    /// Id は新規発行、Pages は各ページごとにディープコピーされる。
+    /// Id は新規発行、Pages / MetaTiles はディープコピーされる。
     /// </summary>
     public Stage Clone()
     {
@@ -71,6 +130,7 @@ public sealed class Stage
         {
             Name = Name,
             StageNumber = StageNumber,
+            Description = Description,
             Key = Key,
             TilesetImagePath = TilesetImagePath
         };
@@ -78,6 +138,11 @@ public sealed class Stage
         foreach (var page in Pages)
         {
             clone.Pages.Add(page.Clone());
+        }
+
+        foreach (var metaTile in MetaTiles)
+        {
+            clone.MetaTiles.Add(metaTile.Clone(keepId: true));
         }
 
         return clone;
@@ -92,6 +157,6 @@ public sealed class Stage
             bytes.AddRange(page.ToBinary());
         }
 
-        return bytes.ToArray();
+        return [.. bytes];
     }
 }
