@@ -35,6 +35,7 @@ public partial class MainForm : Form
     private readonly MapViewContent _mapViewContent;
     private readonly StageExplorerContent _stageExplorerContent;
     private readonly PropertyWindowContent _propertyWindowContent;
+    private readonly MetaTilePaletteContent _metaTilePaletteContent;
     private PageNodeEditorForm? _nodeEditorForm;
     private MetaTileEditorForm? _metaTileEditorForm;
 
@@ -45,6 +46,7 @@ public partial class MainForm : Form
     private TilePaletteControl _tilePalette => _mapViewContent.TilePalette;
     private PropertyWindowControl _propertyWindow => _propertyWindowContent.PropertyWindow;
     private StageExplorerControl _stageExplorer => _stageExplorerContent.StageExplorer;
+    private MetaTilePaletteControl _metaTilePalette => _metaTilePaletteContent.MetaTilePalette;
     private PageNavBarControl _pageNavBar => _mapViewContent.PageNavBar;
 
     //========================
@@ -91,10 +93,12 @@ public partial class MainForm : Form
         _mapViewContent = new MapViewContent();
         _stageExplorerContent = new StageExplorerContent();
         _propertyWindowContent = new PropertyWindowContent();
+        _metaTilePaletteContent = new MetaTilePaletteContent();
 
         // クリック時のフォーカス設定
         _mapView.Click += (s, e) => _mapView.Focus();
         _tilePalette.Click += (s, e) => _tilePalette.Focus();
+        _metaTilePalette.Click += (s, e) => _metaTilePalette.Focus();
         Click += (s, e) => _mapView.Focus();
 
         InitializeMenuHandlers();
@@ -103,6 +107,7 @@ public partial class MainForm : Form
         InitializeDockLayout();
         BindToolManager();
         BindTilePalette();
+        BindMetaTilePalette();
         BindPageNavBar();
 
         // PropertyWindow のバインド
@@ -146,8 +151,15 @@ public partial class MainForm : Form
     // =========================
     private void InitializeDockLayout()
     {
-        // 左: StageExplorer
+        // 左上: StageExplorer
         _stageExplorerContent.Show(_dockPanel, DockState.DockLeft);
+
+        // 左下: MetaTilePalette
+        _metaTilePaletteContent.Show(
+            _stageExplorerContent.Pane,
+            DockAlignment.Bottom,
+            0.35
+        );
 
         // 右: PropertyWindow
         _propertyWindowContent.Show(_dockPanel, DockState.DockRight);
@@ -248,6 +260,27 @@ public partial class MainForm : Form
             }
 
             _currentDragCommand = null;
+        };
+    }
+
+    //========================
+    // MetaTilePalette バインド
+    //========================
+    private void BindMetaTilePalette()
+    {
+        _metaTilePalette.MetaTileSelected += metaTile =>
+        {
+            _context.SetSelectedMetaTile(metaTile);
+
+            // 通常タイル選択と競合しないように、見た目上の選択を解除する。
+            _selectedTileId = -1;
+            _tilePalette.SetSelected(-1);
+
+            // 現段階では MapView 側の配置処理は次フェーズ。
+            // プレビューも通常タイル用なので一旦消す。
+            _mapView.PreviewTileId = -1;
+            _mapView.ShowPreview = false;
+            _mapView.Invalidate();
         };
     }
 

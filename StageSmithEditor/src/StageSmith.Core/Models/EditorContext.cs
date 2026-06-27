@@ -1,5 +1,11 @@
 namespace StageSmith.Core.Models;
 
+public enum EditorBrushKind
+{
+    Tile,
+    MetaTile
+}
+
 public class EditorContext
 {
     //========================
@@ -16,14 +22,46 @@ public class EditorContext
     //========================
     // 参照（安全取得）
     //========================
-    public Stage? CurrentStage =>
-        Project?.Stages.ElementAtOrDefault(CurrentStageIndex);
+    public Stage? CurrentStage => Project?.Stages.ElementAtOrDefault(CurrentStageIndex);
 
-    public Page? CurrentPage =>
-        CurrentStage?.Pages.ElementAtOrDefault(CurrentPageIndex);
+    public Page? CurrentPage => CurrentStage?.Pages.ElementAtOrDefault(CurrentPageIndex);
 
-    public TileMap? CurrentTileMap =>
-        CurrentPage?.TileMap;
+    public TileMap? CurrentTileMap => CurrentPage?.TileMap;
+
+    //========================
+    // 現在の配置ブラシ
+    //========================
+    public EditorBrushKind CurrentBrushKind { get; private set; } = EditorBrushKind.Tile;
+
+    public int SelectedTileId { get; private set; } = -1;
+
+    public MetaTile? SelectedMetaTile { get; private set; }
+
+    public event Action? BrushChanged;
+
+    private void NotifyBrushChanged()
+    {
+        BrushChanged?.Invoke();
+    }
+
+    public void SetSelectedTile(int tileId)
+    {
+        SelectedTileId = tileId;
+        SelectedMetaTile = null;
+        CurrentBrushKind = EditorBrushKind.Tile;
+
+        NotifyBrushChanged();
+    }
+
+    public void SetSelectedMetaTile(MetaTile? metaTile)
+    {
+        SelectedMetaTile = metaTile;
+        CurrentBrushKind = metaTile == null
+            ? EditorBrushKind.Tile
+            : EditorBrushKind.MetaTile;
+
+        NotifyBrushChanged();
+    }
 
     //========================
     // 操作

@@ -231,6 +231,7 @@ public partial class MainForm
 
         _tilePalette.SetTileset(_tileset);
         _mapView.SetTileset(_tileset);
+        _metaTilePalette.SetTileset(_tileset);
  
         // ノードエディタが開いていればプレビューキャッシュを再生成する
         _nodeEditorForm?.SyncTileset(_tileset);
@@ -279,12 +280,16 @@ public partial class MainForm
         _mapView.PreviewTileId = -1;
 
         _tilePalette.SetTileset(null);
+        _metaTilePalette.SetStage(null);
+        _metaTilePalette.SetTileset(null);
+        _context.SetSelectedMetaTile(null);
 
         _propertyWindow.RefreshProperties();
         _pageNavBar.UpdateDisplay(_context);
 
         _mapView.Invalidate();
         _tilePalette.Invalidate();
+        _metaTilePalette.RefreshPalette();
     }
 
     private void ApplyContextToView()
@@ -295,6 +300,7 @@ public partial class MainForm
         _page = page;
 
         _mapView.SetTileMap(page?.TileMap);
+        _metaTilePalette.SetStage(stage);
 
         if (!string.IsNullOrWhiteSpace(stage?.TilesetImagePath))
         {
@@ -309,6 +315,7 @@ public partial class MainForm
 
         _mapView.Invalidate();
         _tilePalette.Invalidate();
+        _metaTilePalette.RefreshPalette();
     }
 
     /// <summary>
