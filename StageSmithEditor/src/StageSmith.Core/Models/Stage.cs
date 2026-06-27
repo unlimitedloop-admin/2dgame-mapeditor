@@ -120,6 +120,50 @@ public sealed class Stage
             : MetaTiles.Max(x => x.Id) + 1;
     }
 
+
+    /// <summary>
+    /// JSON読込後の安全化処理。
+    /// MetaTiles など、古いプロジェクトファイルに存在しない可能性がある項目を補正する。
+    /// </summary>
+    public void Normalize()
+    {
+        Pages ??= [];
+        MetaTiles ??= [];
+
+        foreach (var metaTile in MetaTiles)
+        {
+            metaTile.Normalize();
+        }
+
+        NormalizeMetaTileIds();
+    }
+
+    private void NormalizeMetaTileIds()
+    {
+        var usedIds = new HashSet<int>();
+
+        foreach (var metaTile in MetaTiles)
+        {
+            if (metaTile.Id < 0 || !usedIds.Add(metaTile.Id))
+            {
+                metaTile.Id = GetNextAvailableMetaTileId(usedIds);
+                usedIds.Add(metaTile.Id);
+            }
+        }
+    }
+
+    private static int GetNextAvailableMetaTileId(HashSet<int> usedIds)
+    {
+        var id = 0;
+
+        while (usedIds.Contains(id))
+        {
+            id++;
+        }
+
+        return id;
+    }
+
     /// <summary>
     /// このステージの複製を生成する。
     /// Id は新規発行、Pages / MetaTiles はディープコピーされる。

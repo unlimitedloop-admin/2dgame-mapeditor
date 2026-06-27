@@ -18,6 +18,22 @@ public sealed class EditorProject
     [JsonIgnore]
     public bool HasStages => Stages.Count > 0;
 
+    /// <summary>
+    /// JSON読込後の安全化処理。
+    /// 古いプロジェクトファイルや不完全なJSONから復元した場合の不整合を補正する。
+    /// </summary>
+    public void Normalize()
+    {
+        Name ??= "New Project";
+        BaseDirectory ??= string.Empty;
+        Stages ??= [];
+
+        foreach (var stage in Stages)
+        {
+            stage.Normalize();
+        }
+    }
+
     public Stage AddStage(string name)
     {
         var stage = new Stage

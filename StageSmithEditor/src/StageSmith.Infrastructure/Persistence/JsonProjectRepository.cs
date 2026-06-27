@@ -23,10 +23,13 @@ public sealed class JsonProjectRepository : IProjectRepository
     // プロジェクトの保存と読み込みをJSON形式で行う
     public void Save(EditorProject project, string path)
     {
-        var json = JsonSerializer.Serialize(project, new JsonSerializerOptions
-        {
-            WriteIndented = true
-        });
+        ArgumentNullException.ThrowIfNull(project);
+
+        // 保存前にも正規化しておく。
+        // これにより、古いデータを読み込んでそのまま保存した場合も安定する。
+        project.Normalize();
+
+        var json = JsonSerializer.Serialize(project, _options);
 
         File.WriteAllText(path, json);
     }
@@ -36,7 +39,11 @@ public sealed class JsonProjectRepository : IProjectRepository
     {
         var json = File.ReadAllText(path);
 
-        return JsonSerializer.Deserialize<EditorProject>(json)
+        var project = JsonSerializer.Deserialize<EditorProject>(json, _options)
             ?? throw new InvalidOperationException("プロジェクトファイルの読み込みに失敗しました。");
+
+        project.Normalize();
+
+        return project;
     }
 }
