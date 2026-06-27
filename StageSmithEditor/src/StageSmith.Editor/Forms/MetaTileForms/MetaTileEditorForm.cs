@@ -17,6 +17,7 @@ public sealed class MetaTileEditorForm : Form
     private readonly TilePaletteControl _tilePalette = new();
     private readonly MetaTileCanvasControl _canvas = new();
     private readonly MetaTilePreviewControl _preview = new();
+    private readonly Panel _previewHost = new();
 
     private readonly ComboBox _savedMetaTileComboBox = new();
     private readonly TextBox _nameTextBox = new();
@@ -36,8 +37,6 @@ public sealed class MetaTileEditorForm : Form
     /// 値がある場合は、その Id の保存済みメタタイルを改訂中。
     /// </summary>
     private int? _editingMetaTileId;
-
-    private int _selectedTileId = -1;
 
     public MetaTileEditorForm(Stage stage, Bitmap? tileset)
     {
@@ -59,13 +58,11 @@ public sealed class MetaTileEditorForm : Form
 
         _tilePalette.TileSelected += tileId =>
         {
-            _selectedTileId = tileId;
             _canvas.SetSelectedTile(tileId);
         };
 
         _canvas.TilePicked += tileId =>
         {
-            _selectedTileId = tileId;
             _tilePalette.SetSelected(tileId);
             _canvas.SetSelectedTile(tileId);
         };
@@ -127,8 +124,31 @@ public sealed class MetaTileEditorForm : Form
             Dock = DockStyle.Fill
         };
 
-        _preview.Dock = DockStyle.Fill;
-        previewGroup.Controls.Add(_preview);
+        _previewHost.Dock = DockStyle.Fill;
+        _previewHost.AutoScroll = true;
+        _previewHost.BackColor = Color.FromArgb(16, 16, 16);
+        _previewHost.TabStop = true;
+        _previewHost.Controls.Add(_preview);
+
+        _preview.PreviewScaleChanged += scale =>
+        {
+            UpdateStatus($"Preview zoom: {scale}x");
+        };
+
+        _previewHost.MouseEnter += (_, _) => _previewHost.Focus();
+        _previewHost.MouseDown += (_, _) => _previewHost.Focus();
+        _previewHost.MouseWheel += (_, e) =>
+        {
+            if ((ModifierKeys & Keys.Control) != Keys.Control)
+                return;
+
+            if (e.Delta > 0)
+                _preview.ZoomIn();
+            else if (e.Delta < 0)
+                _preview.ZoomOut();
+        };
+
+        previewGroup.Controls.Add(_previewHost);
 
         root.Controls.Add(toolBar, 0, 0);
         root.SetColumnSpan(toolBar, 2);

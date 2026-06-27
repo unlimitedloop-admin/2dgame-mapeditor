@@ -1,6 +1,5 @@
 using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
-using System.Diagnostics;
 
 namespace StageSmith.Editor.Controls;
 
@@ -19,6 +18,7 @@ public class TilePaletteControl : DoubleBufferedPanel
         DoubleBuffered = true;
         AutoScroll = true;
         ResizeRedraw = true;
+        TabStop = true;
     }
 
     public void SetTileset(Bitmap? tileset)
@@ -50,6 +50,66 @@ public class TilePaletteControl : DoubleBufferedPanel
         Invalidate();
     }
 
+    protected override void OnMouseEnter(EventArgs e)
+    {
+        base.OnMouseEnter(e);
+        Focus();
+    }
+
+    protected override void OnMouseDown(MouseEventArgs e)
+    {
+        base.OnMouseDown(e);
+        Focus();
+
+        if (_tileset == null) return;
+
+        var srcSize = MapConstants.DefaultTileSize;   // 16: タイル枚数の計算用
+        var dstSize = ViewerConstants.TileRenderSize; // 32: クリック位置の計算用
+        var offset = AutoScrollPosition;
+
+        var rawX = e.X - offset.X;
+        var rawY = e.Y - offset.Y;
+
+        if (rawX < 0 || rawY < 0) return;
+
+        var cellSize = dstSize + TileSpacing;
+
+        var col = rawX / cellSize;
+        var row = rawY / cellSize;
+
+        var tilesPerRow = _tileset.Width / srcSize;
+        var tilesPerCol = _tileset.Height / srcSize;
+
+        if (col < 0 || col >= tilesPerRow ||
+            row < 0 || row >= tilesPerCol)
+            return;
+
+        // --- 余白クリック防止 ---
+        var offsetX = rawX % cellSize;
+        var offsetY = rawY % cellSize;
+
+        if (offsetX >= dstSize || offsetY >= dstSize)
+            return;
+
+        var index = row * tilesPerRow + col;
+
+        SelectedTileIndex = index;
+        TileSelected?.Invoke(index);
+
+        Invalidate();
+    }
+
+    protected override void OnMouseWheel(MouseEventArgs e)
+    {
+        if ((ModifierKeys & Keys.Shift) == Keys.Shift)
+        {
+            ScrollHorizontal(e.Delta);
+            return;
+        }
+
+        base.OnMouseWheel(e);
+    }
+
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
@@ -62,7 +122,7 @@ public class TilePaletteControl : DoubleBufferedPanel
         g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
         g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Half;
 
-        g.Clear(this.BackColor);
+        g.Clear(BackColor);
 
         var srcSize = MapConstants.DefaultTileSize;   // 16: 画像の切り出しサイズ
         var dstSize = ViewerConstants.TileRenderSize; // 32: 画面上の描画サイズ
@@ -108,45 +168,31 @@ public class TilePaletteControl : DoubleBufferedPanel
         }
     }
 
-    protected override void OnMouseDown(MouseEventArgs e)
+    private void ScrollHorizontal(int wheelDelta)
     {
-        base.OnMouseDown(e);
-
-        if (_tileset == null) return;
-
-        var srcSize = MapConstants.DefaultTileSize;   // 16: タイル枚数の計算用
-        var dstSize = ViewerConstants.TileRenderSize; // 32: クリック位置の計算用
-        var offset = AutoScrollPosition;
-
-        var rawX = e.X - offset.X;
-        var rawY = e.Y - offset.Y;
-
-        if (rawX < 0 || rawY < 0) return;
-
-        var cellSize = dstSize + TileSpacing;
-
-        var col = rawX / cellSize;
-        var row = rawY / cellSize;
-
-        var tilesPerRow = _tileset.Width / srcSize;
-        var tilesPerCol = _tileset.Height / srcSize;
-
-        if (col < 0 || col >= tilesPerRow ||
-            row < 0 || row >= tilesPerCol)
+        if (!HorizontalScroll.Visible)
             return;
 
-        // --- 余白クリック防止 ---
-        var offsetX = rawX % cellSize;
-        var offsetY = rawY % cellSize;
+        var step = Math.Max(32, ViewerConstants.TileRenderSize + TileSpacing);
+        var direction = wheelDelta > 0 ? -1 : 1;
 
-        if (offsetX >= dstSize || offsetY >= dstSize)
+        var requestedValue = HorizontalScroll.Value + (direction * step);
+        var maxValue = Math.Max(
+            HorizontalScroll.Minimum,
+            HorizontalScroll.Maximum - HorizontalScroll.LargeChange + 1
+        );
+
+        var newValue = Math.Clamp(
+            requestedValue,
+            HorizontalScroll.Minimum,
+            maxValue
+        );
+
+        if (HorizontalScroll.Value == newValue)
             return;
 
-        var index = row * tilesPerRow + col;
-
-        SelectedTileIndex = index;
-        TileSelected?.Invoke(index);
-
+        HorizontalScroll.Value = newValue;
+        AutoScrollPosition = new Point(newValue, -AutoScrollPosition.Y);
         Invalidate();
     }
 }

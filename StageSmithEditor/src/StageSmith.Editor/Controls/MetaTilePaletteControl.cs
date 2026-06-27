@@ -21,6 +21,7 @@ public sealed class MetaTilePaletteControl : DoubleBufferedPanel
     private const int ItemSize = 76;
     private const int ItemSpacing = 6;
     private const int ItemPadding = 6;
+    private const int BottomPadding = 24;
     private const int MinPreviewTileSize = 4;
 
     public event Action<MetaTile>? MetaTileSelected;
@@ -181,7 +182,7 @@ public sealed class MetaTilePaletteControl : DoubleBufferedPanel
 
         AutoScrollMinSize = new Size(
             columns * (ItemSize + ItemSpacing) + ItemSpacing,
-            rowCount * (ItemSize + ItemSpacing) + ItemSpacing
+            rowCount * (ItemSize + ItemSpacing) + ItemSpacing + BottomPadding
         );
     }
 
