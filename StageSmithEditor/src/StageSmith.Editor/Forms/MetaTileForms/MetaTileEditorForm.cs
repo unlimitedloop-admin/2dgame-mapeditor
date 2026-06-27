@@ -179,6 +179,14 @@ public sealed class MetaTileEditorForm : Form
 
         saveAsButton.Click += (_, _) => SaveCurrentMetaTileAsNew();
 
+        var deleteButton = new Button
+        {
+            Text = "Delete",
+            AutoSize = true
+        };
+
+        deleteButton.Click += (_, _) => DeleteCurrentMetaTile();
+
         var clearButton = new Button
         {
             Text = "Clear",
@@ -273,6 +281,7 @@ public sealed class MetaTileEditorForm : Form
         panel.Controls.Add(newButton);
         panel.Controls.Add(saveButton);
         panel.Controls.Add(saveAsButton);
+        panel.Controls.Add(deleteButton);
         panel.Controls.Add(clearButton);
         panel.Controls.Add(_statusLabel);
 
@@ -367,6 +376,48 @@ public sealed class MetaTileEditorForm : Form
         SetWorkingMetaTile(saved, saved.Id);
         RefreshSavedMetaTileList(selectId: saved.Id);
         UpdateStatus("Saved as new.");
+    }
+
+    private void DeleteCurrentMetaTile()
+    {
+        if (!_editingMetaTileId.HasValue)
+        {
+            UpdateStatus("Nothing to delete.");
+            return;
+        }
+
+        var metaTileId = _editingMetaTileId.Value;
+        var target = _stage.FindMetaTile(metaTileId);
+
+        if (target is null)
+        {
+            UpdateStatus("Selected MetaTile was not found.");
+            RefreshSavedMetaTileList();
+            SetWorkingMetaTile(new MetaTile(4, 4), editingMetaTileId: null);
+            return;
+        }
+
+        var result = MessageBox.Show(
+            this,
+            $"Delete MetaTile {target.Id:D3}: {target.Name}?",
+            "Delete MetaTile",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Warning
+        );
+
+        if (result != DialogResult.Yes)
+            return;
+
+        if (!_stage.RemoveMetaTile(metaTileId))
+        {
+            UpdateStatus("Delete failed.");
+            RefreshSavedMetaTileList();
+            return;
+        }
+
+        RefreshSavedMetaTileList();
+        SetWorkingMetaTile(new MetaTile(4, 4), editingMetaTileId: null);
+        UpdateStatus("Deleted.");
     }
 
     private void LoadSavedMetaTile(int metaTileId)

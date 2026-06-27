@@ -13,7 +13,6 @@ public sealed class MetaTileCanvasControl : DoubleBufferedPanel
     private const int MarginSize = 16;
 
     public event Action<int>? TilePicked;
-    //public event Action? MetaTileChanged;
     public event Action? EditStarted;
     public event Action<int, int, byte>? TilePaintRequested;
     public event Action? EditFinished;
@@ -150,6 +149,11 @@ public sealed class MetaTileCanvasControl : DoubleBufferedPanel
         }
         else if (e.Button == MouseButtons.Right)
         {
+            EditStarted?.Invoke();
+            RequestErase(e);
+        }
+        else if (e.Button == MouseButtons.Middle)
+        {
             PickTile(e);
         }
     }
@@ -162,13 +166,17 @@ public sealed class MetaTileCanvasControl : DoubleBufferedPanel
         {
             RequestPaint(e);
         }
+        else if (e.Button == MouseButtons.Right)
+        {
+            RequestErase(e);
+        }
     }
 
     protected override void OnMouseUp(MouseEventArgs e)
     {
         base.OnMouseUp(e);
 
-        if (e.Button == MouseButtons.Left)
+        if (e.Button == MouseButtons.Left || e.Button == MouseButtons.Right)
         {
             EditFinished?.Invoke();
         }
@@ -189,6 +197,20 @@ public sealed class MetaTileCanvasControl : DoubleBufferedPanel
             return;
 
         TilePaintRequested?.Invoke(x, y, (byte)_selectedTileId);
+    }
+
+    private void RequestErase(MouseEventArgs e)
+    {
+        if (_metaTile == null)
+            return;
+
+        var x = (e.X - MarginSize) / CellSize;
+        var y = (e.Y - MarginSize) / CellSize;
+
+        if (x < 0 || x >= _metaTile.Width || y < 0 || y >= _metaTile.Height)
+            return;
+
+        TilePaintRequested?.Invoke(x, y, MetaTile.EmptyTile);
     }
 
     private void PickTile(MouseEventArgs e)
