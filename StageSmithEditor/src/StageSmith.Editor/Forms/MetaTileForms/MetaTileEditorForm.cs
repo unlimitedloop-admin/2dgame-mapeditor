@@ -511,7 +511,41 @@ public sealed class MetaTileEditorForm : Form
             return true;
         }
 
+        if (keyData == (Keys.Control | Keys.A))
+        {
+            var focusedControl = FindFocusedControl(this);
+
+            if (focusedControl is TextBoxBase textBox)
+            {
+                textBox.SelectAll();
+                return true;
+            }
+
+            // ComboBox などに Ctrl+A が流れると例外になる場合があるため、現時点では握りつぶす。
+            return true;
+        }
+
         return base.ProcessCmdKey(ref msg, keyData);
+    }
+
+    private static Control? FindFocusedControl(Control parent)
+    {
+        // TODO: Implement logic to find the focused control within the form.
+        foreach(Control child in parent.Controls)
+        {
+            if (child.Focused)
+            {
+                return child;
+            }
+
+            var focusedChild = FindFocusedControl(child);
+            if (focusedChild != null)
+            {
+                return focusedChild;
+            }
+        }
+
+        return null;
     }
 
     private sealed class MetaTileListItem

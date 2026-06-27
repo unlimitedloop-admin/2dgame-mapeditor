@@ -1067,6 +1067,19 @@ public partial class PageNodeEditorForm : Form
             return true;
         }
 
+        if (keyData == (Keys.Control | Keys.A))
+        {
+            var focusedControl = FindFocusedControl(this);
+
+            if (focusedControl is TextBoxBase textBox)
+            {
+                textBox.SelectAll();
+                return true;
+            }
+
+            return true;
+        }
+
         switch (keyData)
         {
             case Keys.Control | Keys.Z:
@@ -1189,6 +1202,21 @@ public partial class PageNodeEditorForm : Form
             AutoSize = true,
             Font = new Font("Yu Gothic UI", 9f),
         };
+    }
+
+    private static Control? FindFocusedControl(Control parent)
+    {
+        foreach (Control control in parent.Controls)
+        {
+            if (control.Focused)
+                return control;
+
+            var focusedChild = FindFocusedControl(control);
+            if (focusedChild is not null)
+                return focusedChild;
+        }
+
+        return null;
     }
 }
 
