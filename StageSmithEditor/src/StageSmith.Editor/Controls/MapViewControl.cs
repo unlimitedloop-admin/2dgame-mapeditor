@@ -54,6 +54,18 @@ public class MapViewControl : DoubleBufferedPanel
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public int PreviewTileId { get; set; } = -1;
 
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public MetaTile? PreviewMetaTile { get; set; }
+
+    /// <summary>
+    /// 外部側で特殊ブラシを処理したい場合、MapViewControl内部のTool処理を抑止する。
+    /// 例：MetaTile配置中はPenTool/SelectionToolへ入力を渡さない。
+    /// </summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public Func<bool>? ShouldSuppressToolInput { get; set; }
+
     // ===== Paste Preview =====
     private bool _showPreview = false;
     [Browsable(false)]
@@ -194,8 +206,21 @@ public class MapViewControl : DoubleBufferedPanel
     private void DrawPreview(Graphics g)
     {
         if (!_showPreview) return;
-        if (_tileset == null || PreviewTileId < 0) return;
+        if (_tileset == null) return;
         if (_hoverTile.X < 0 || _hoverTile.Y < 0) return;
+
+        if (PreviewMetaTile != null)
+        {
+            DrawMetaTilePreview(g, PreviewMetaTile);
+            return;
+        }
+
+        DrawTilePreview(g);
+    }
+
+    private void DrawTilePreview(Graphics g)
+    {
+        if (_tileset == null || PreviewTileId < 0) return;
 
         var srcSize = MapConstants.DefaultTileSize;   // 16: 画像の切り出しサイズ
         var dstSize = ViewerConstants.TileRenderSize; // 32: 画面上の描画サイズ
@@ -212,6 +237,76 @@ public class MapViewControl : DoubleBufferedPanel
             dstSize,
             dstSize
         );
+
+        DrawImageTransparent(g, srcRect, dstRect);
+
+        using var pen = new Pen(Color.Yellow, 2);
+        g.DrawRectangle(pen, dstRect);
+    }
+
+    private void DrawMetaTilePreview(Graphics g, MetaTile metaTile)
+    {
+        if (_tileset == null) return;
+
+        var srcSize = MapConstants.DefaultTileSize;
+        var dstSize = ViewerConstants.TileRenderSize;
+        var margin = ViewerConstants.MapViewMargin;
+        var tilesPerRow = Math.Max(1, _tileset.Width / srcSize);
+
+        var minX = int.MaxValue;
+        var minY = int.MaxValue;
+        var maxX = int.MinValue;
+        var maxY = int.MinValue;
+
+        for (var y = 0; y < metaTile.Height; y++)
+        {
+            for (var x = 0; x < metaTile.Width; x++)
+            {
+                var tileId = metaTile.GetTile(x, y);
+
+                if (tileId == MetaTile.EmptyTile)
+                    continue;
+
+                var mapX = _hoverTile.X + x;
+                var mapY = _hoverTile.Y + y;
+
+                // プレビューも実配置と同じく範囲外は無視する。
+                if (!IsInside(mapX, mapY))
+                    continue;
+
+                var sx = (tileId % tilesPerRow) * srcSize;
+                var sy = (tileId / tilesPerRow) * srcSize;
+
+                var srcRect = new Rectangle(sx, sy, srcSize, srcSize);
+                var dstRect = new Rectangle(
+                    margin + mapX * dstSize,
+                    margin + mapY * dstSize,
+                    dstSize,
+                    dstSize
+                );
+
+                DrawImageTransparent(g, srcRect, dstRect);
+
+                minX = Math.Min(minX, dstRect.Left);
+                minY = Math.Min(minY, dstRect.Top);
+                maxX = Math.Max(maxX, dstRect.Right);
+                maxY = Math.Max(maxY, dstRect.Bottom);
+            }
+        }
+
+        if (minX == int.MaxValue)
+            return;
+
+        using var pen = new Pen(Color.Yellow, 2);
+        g.DrawRectangle(
+            pen,
+            new Rectangle(minX, minY, maxX - minX - 1, maxY - minY - 1)
+        );
+    }
+
+    private void DrawImageTransparent(Graphics g, Rectangle srcRect, Rectangle dstRect)
+    {
+        if (_tileset == null) return;
 
         using var attr = new System.Drawing.Imaging.ImageAttributes();
 
@@ -232,9 +327,6 @@ public class MapViewControl : DoubleBufferedPanel
             GraphicsUnit.Pixel,
             attr
         );
-
-        using var pen = new Pen(Color.Yellow, 2);
-        g.DrawRectangle(pen, dstRect);
     }
 
     // =========================
@@ -252,6 +344,14 @@ public class MapViewControl : DoubleBufferedPanel
 
         var isAlt = (ModifierKeys & Keys.Alt) != 0;
         var isShift = (ModifierKeys & Keys.Shift) != 0;
+
+        // MetaTileなど、外部側で左クリックを処理する特殊ブラシの場合、
+        // MapViewControl内部のTool処理へ入力を渡さない。
+        if (e.Button == MouseButtons.Left &&
+            ShouldSuppressToolInput?.Invoke() == true)
+        {
+            return;
+        }
 
         // ========================
         // ① スポイト（最優先）
@@ -304,7 +404,10 @@ public class MapViewControl : DoubleBufferedPanel
         var currentTool = _toolManager?.CurrentTool;
         if (e.Button == MouseButtons.Left)
         {
-            currentTool?.OnMouseMove(x, y);
+            if (ShouldSuppressToolInput?.Invoke() != true)
+            {
+                currentTool?.OnMouseMove(x, y);
+            }
         }
         Invalidate();
     }
@@ -328,6 +431,12 @@ public class MapViewControl : DoubleBufferedPanel
             return;
         }
 
+        if (e.Button == MouseButtons.Left &&
+            ShouldSuppressToolInput?.Invoke() == true)
+        {
+            return;
+        }
+
         _toolManager?.CurrentTool?.OnMouseUp(x, y);
     }
 
@@ -339,6 +448,12 @@ public class MapViewControl : DoubleBufferedPanel
         var dstSize = ViewerConstants.TileRenderSize;
         var margin  = ViewerConstants.MapViewMargin;
         return ((px - margin) / dstSize, (py - margin) / dstSize);
+    }
+
+    public bool TryScreenToTile(int px, int py, out int x, out int y)
+    {
+        (x, y) = ScreenToTile(px, py);
+        return IsInside(x, y);
     }
 
     private bool IsInside(int x, int y)
