@@ -9,6 +9,7 @@ public class MapViewControl : DoubleBufferedPanel
 {
     private TileMap? _tileMap;
     private Bitmap? _tileset;
+    private bool _ownsTileset;
 
     private bool _showGrid = true;
 
@@ -98,7 +99,7 @@ public class MapViewControl : DoubleBufferedPanel
 
     public void SetTileset(Bitmap? tileset)
     {
-        _tileset = tileset;
+        ReplaceTileset(tileset);
         Invalidate();
     }
 
@@ -128,7 +129,7 @@ public class MapViewControl : DoubleBufferedPanel
 
         g.Clear(BackColor);
 
-        if (_tileset != null)
+        if (GetUsableTileset() != null)
         {
             DrawTiles(g);
         }
@@ -142,7 +143,7 @@ public class MapViewControl : DoubleBufferedPanel
 
         // SelectionToolに描かせる
         SelectionTool?.DrawOverlay(g, ViewerConstants.TileRenderSize, ViewerConstants.MapViewMargin);
-        SelectionTool?.DrawMovingOverlay(g, ViewerConstants.TileRenderSize, _tileset, ViewerConstants.MapViewMargin);
+        SelectionTool?.DrawMovingOverlay(g, ViewerConstants.TileRenderSize, GetUsableTileset(), ViewerConstants.MapViewMargin);
 
         // Extended add plus cursor at copy mode
         if (SelectionTool?.IsCopyModeActive() == true)
@@ -153,12 +154,13 @@ public class MapViewControl : DoubleBufferedPanel
 
     private void DrawTiles(Graphics g)
     {
-        if (_tileMap == null || _tileset == null) return;
+        var tileset = GetUsableTileset();
+        if (_tileMap == null || tileset == null) return;
 
         var srcSize = MapConstants.DefaultTileSize;   // 16: 画像の切り出しサイズ
         var dstSize = ViewerConstants.TileRenderSize; // 32: 画面上の描画サイズ
         var margin  = ViewerConstants.MapViewMargin;  // 32: 上下左右マージン
-        var tilesPerRow = _tileset.Width / srcSize;
+        var tilesPerRow = tileset.Width / srcSize;
 
         for (var y = 0; y < _tileMap.Height; y++)
         {
@@ -176,7 +178,7 @@ public class MapViewControl : DoubleBufferedPanel
                     dstSize,
                     dstSize);
 
-                g.DrawImage(_tileset, dstRect, srcRect, GraphicsUnit.Pixel);
+                g.DrawImage(tileset, dstRect, srcRect, GraphicsUnit.Pixel);
             }
         }
     }
@@ -206,7 +208,7 @@ public class MapViewControl : DoubleBufferedPanel
     private void DrawPreview(Graphics g)
     {
         if (!_showPreview) return;
-        if (_tileset == null) return;
+        if (GetUsableTileset() == null) return;
         if (_hoverTile.X < 0 || _hoverTile.Y < 0) return;
 
         if (PreviewMetaTile != null)
@@ -220,12 +222,13 @@ public class MapViewControl : DoubleBufferedPanel
 
     private void DrawTilePreview(Graphics g)
     {
-        if (_tileset == null || PreviewTileId < 0) return;
+        var tileset = GetUsableTileset();
+        if (tileset == null || PreviewTileId < 0) return;
 
         var srcSize = MapConstants.DefaultTileSize;   // 16: 画像の切り出しサイズ
         var dstSize = ViewerConstants.TileRenderSize; // 32: 画面上の描画サイズ
         var margin  = ViewerConstants.MapViewMargin;
-        var tilesPerRow = _tileset.Width / srcSize;
+        var tilesPerRow = tileset.Width / srcSize;
 
         var sx = (PreviewTileId % tilesPerRow) * srcSize;
         var sy = (PreviewTileId / tilesPerRow) * srcSize;
@@ -246,12 +249,13 @@ public class MapViewControl : DoubleBufferedPanel
 
     private void DrawMetaTilePreview(Graphics g, MetaTile metaTile)
     {
-        if (_tileset == null) return;
+        var tileset = GetUsableTileset();
+        if (tileset == null) return;
 
         var srcSize = MapConstants.DefaultTileSize;
         var dstSize = ViewerConstants.TileRenderSize;
         var margin = ViewerConstants.MapViewMargin;
-        var tilesPerRow = Math.Max(1, _tileset.Width / srcSize);
+        var tilesPerRow = Math.Max(1, tileset.Width / srcSize);
 
         var minX = int.MaxValue;
         var minY = int.MaxValue;
@@ -306,7 +310,8 @@ public class MapViewControl : DoubleBufferedPanel
 
     private void DrawImageTransparent(Graphics g, Rectangle srcRect, Rectangle dstRect)
     {
-        if (_tileset == null) return;
+        var tileset = GetUsableTileset();
+        if (tileset == null) return;
 
         using var attr = new System.Drawing.Imaging.ImageAttributes();
 
@@ -318,7 +323,7 @@ public class MapViewControl : DoubleBufferedPanel
         attr.SetColorMatrix(matrix);
 
         g.DrawImage(
-            _tileset,
+            tileset,
             dstRect,
             srcRect.X,
             srcRect.Y,
@@ -327,6 +332,80 @@ public class MapViewControl : DoubleBufferedPanel
             GraphicsUnit.Pixel,
             attr
         );
+    }
+
+
+    private void ReplaceTileset(Bitmap? source)
+    {
+        DisposeOwnedTileset();
+
+        if (source == null)
+            return;
+
+        try
+        {
+            _tileset = new Bitmap(source);
+            _ownsTileset = true;
+        }
+        catch (ArgumentException)
+        {
+            _tileset = null;
+            _ownsTileset = false;
+        }
+        catch (ObjectDisposedException)
+        {
+            _tileset = null;
+            _ownsTileset = false;
+        }
+    }
+
+    private Bitmap? GetUsableTileset()
+    {
+        var tileset = _tileset;
+
+        if (tileset == null)
+            return null;
+
+        return IsBitmapUsable(tileset) ? tileset : null;
+    }
+
+    private static bool IsBitmapUsable(Bitmap bitmap)
+    {
+        try
+        {
+            _ = bitmap.Width;
+            _ = bitmap.Height;
+            return true;
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+        catch (ObjectDisposedException)
+        {
+            return false;
+        }
+    }
+
+    private void DisposeOwnedTileset()
+    {
+        if (_ownsTileset)
+        {
+            _tileset?.Dispose();
+        }
+
+        _tileset = null;
+        _ownsTileset = false;
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            DisposeOwnedTileset();
+        }
+
+        base.Dispose(disposing);
     }
 
     // =========================

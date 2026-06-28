@@ -6,6 +6,7 @@ namespace StageSmith.Editor.Controls;
 public class TilePaletteControl : DoubleBufferedPanel
 {
     private Bitmap? _tileset;
+    private bool _ownsTileset;
 
     public int SelectedTileIndex { get; private set; } = -1;
 
@@ -23,24 +24,8 @@ public class TilePaletteControl : DoubleBufferedPanel
 
     public void SetTileset(Bitmap? tileset)
     {
-        _tileset = tileset;
-
-        if (_tileset == null)
-        {
-            AutoScrollMinSize = Size.Empty;
-            Invalidate();
-            return;
-        }
-
-        var srcSize = MapConstants.DefaultTileSize;   // 16: タイル枚数の計算用
-        var dstSize = ViewerConstants.TileRenderSize; // 32: 実際の表示サイズ
-        var cols = _tileset.Width / srcSize;
-        var rows = _tileset.Height / srcSize;
-
-        AutoScrollMinSize = new Size(
-            cols * (dstSize + TileSpacing),
-            rows * (dstSize + TileSpacing));
-
+        ReplaceTileset(tileset);
+        UpdateScrollSize();
         Invalidate();
     }
 
@@ -61,7 +46,8 @@ public class TilePaletteControl : DoubleBufferedPanel
         base.OnMouseDown(e);
         Focus();
 
-        if (_tileset == null) return;
+        var tileset = GetUsableTileset();
+        if (tileset == null) return;
 
         var srcSize = MapConstants.DefaultTileSize;   // 16: タイル枚数の計算用
         var dstSize = ViewerConstants.TileRenderSize; // 32: クリック位置の計算用
@@ -77,8 +63,8 @@ public class TilePaletteControl : DoubleBufferedPanel
         var col = rawX / cellSize;
         var row = rawY / cellSize;
 
-        var tilesPerRow = _tileset.Width / srcSize;
-        var tilesPerCol = _tileset.Height / srcSize;
+        var tilesPerRow = tileset.Width / srcSize;
+        var tilesPerCol = tileset.Height / srcSize;
 
         if (col < 0 || col >= tilesPerRow ||
             row < 0 || row >= tilesPerCol)
@@ -114,7 +100,8 @@ public class TilePaletteControl : DoubleBufferedPanel
     {
         base.OnPaint(e);
 
-        if (_tileset == null) return;
+        var tileset = GetUsableTileset();
+        if (tileset == null) return;
 
         var g = e.Graphics;
 
@@ -126,8 +113,8 @@ public class TilePaletteControl : DoubleBufferedPanel
 
         var srcSize = MapConstants.DefaultTileSize;   // 16: 画像の切り出しサイズ
         var dstSize = ViewerConstants.TileRenderSize; // 32: 画面上の描画サイズ
-        var tilesPerRow = _tileset.Width / srcSize;
-        var tilesPerCol = _tileset.Height / srcSize;
+        var tilesPerRow = tileset.Width / srcSize;
+        var tilesPerCol = tileset.Height / srcSize;
         var totalTiles = tilesPerRow * tilesPerCol;
 
         var offset = AutoScrollPosition;
@@ -150,7 +137,7 @@ public class TilePaletteControl : DoubleBufferedPanel
             );
 
             // --- 拡大描画 ---
-            g.DrawImage(_tileset, dstRect, srcRect, GraphicsUnit.Pixel);
+            g.DrawImage(tileset, dstRect, srcRect, GraphicsUnit.Pixel);
 
             // --- 選択枠 ---
             if (i == SelectedTileIndex)
@@ -194,5 +181,98 @@ public class TilePaletteControl : DoubleBufferedPanel
         HorizontalScroll.Value = newValue;
         AutoScrollPosition = new Point(newValue, -AutoScrollPosition.Y);
         Invalidate();
+    }
+
+    private void UpdateScrollSize()
+    {
+        var tileset = GetUsableTileset();
+
+        if (tileset == null)
+        {
+            AutoScrollMinSize = Size.Empty;
+            return;
+        }
+
+        var srcSize = MapConstants.DefaultTileSize;   // 16: タイル枚数の計算用
+        var dstSize = ViewerConstants.TileRenderSize; // 32: 実際の表示サイズ
+        var cols = tileset.Width / srcSize;
+        var rows = tileset.Height / srcSize;
+
+        AutoScrollMinSize = new Size(
+            cols * (dstSize + TileSpacing),
+            rows * (dstSize + TileSpacing));
+    }
+
+    private void ReplaceTileset(Bitmap? source)
+    {
+        DisposeOwnedTileset();
+
+        if (source == null)
+            return;
+
+        try
+        {
+            _tileset = new Bitmap(source);
+            _ownsTileset = true;
+        }
+        catch (ArgumentException)
+        {
+            _tileset = null;
+            _ownsTileset = false;
+        }
+        catch (ObjectDisposedException)
+        {
+            _tileset = null;
+            _ownsTileset = false;
+        }
+    }
+
+    private Bitmap? GetUsableTileset()
+    {
+        var tileset = _tileset;
+
+        if (tileset == null)
+            return null;
+
+        return IsBitmapUsable(tileset) ? tileset : null;
+    }
+
+    private static bool IsBitmapUsable(Bitmap bitmap)
+    {
+        try
+        {
+            _ = bitmap.Width;
+            _ = bitmap.Height;
+            return true;
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+        catch (ObjectDisposedException)
+        {
+            return false;
+        }
+    }
+
+    private void DisposeOwnedTileset()
+    {
+        if (_ownsTileset)
+        {
+            _tileset?.Dispose();
+        }
+
+        _tileset = null;
+        _ownsTileset = false;
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            DisposeOwnedTileset();
+        }
+
+        base.Dispose(disposing);
     }
 }

@@ -11,6 +11,7 @@ public sealed class MetaTilePaletteControl : DoubleBufferedPanel
 {
     private Stage? _stage;
     private Bitmap? _tileset;
+    private bool _ownsTileset;
 
     private readonly ToolTip _toolTip = new();
     private readonly List<MetaTileLayoutItem> _items = [];
@@ -52,8 +53,38 @@ public sealed class MetaTilePaletteControl : DoubleBufferedPanel
 
     public void SetTileset(Bitmap? tileset)
     {
-        _tileset = tileset;
+        ReplaceTileset(tileset);
         Invalidate();
+    }
+
+    private void ReplaceTileset(Bitmap? source)
+    {
+        if (_ownsTileset)
+        {
+            _tileset?.Dispose();
+        }
+
+        _tileset = null;
+        _ownsTileset = false;
+
+        if (source == null)
+            return;
+
+        try
+        {
+            _tileset = new Bitmap(source);
+            _ownsTileset = true;
+        }
+        catch (ArgumentException)
+        {
+            // 呼び出し元の Bitmap が既に Dispose 済みの場合。
+            // ここではフォールバック表示に切り替える。
+            _tileset = null;
+        }
+        catch (ObjectDisposedException)
+        {
+            _tileset = null;
+        }
     }
 
     public void RefreshPalette()
@@ -239,14 +270,16 @@ public sealed class MetaTilePaletteControl : DoubleBufferedPanel
     {
         var previewRect = Rectangle.Inflate(itemRect, -ItemPadding, -ItemPadding);
 
-        if (_tileset == null)
+        var tileset = _tileset;
+
+        if (tileset == null || !IsBitmapUsable(tileset))
         {
             DrawFallbackLabel(g, previewRect, metaTile);
             return;
         }
 
         var srcSize = MapConstants.DefaultTileSize;
-        var tilesPerRow = Math.Max(1, _tileset.Width / srcSize);
+        var tilesPerRow = Math.Max(1, tileset.Width / srcSize);
 
         var tileSize = Math.Min(
             previewRect.Width / Math.Max(1, metaTile.Width),
@@ -281,7 +314,7 @@ public sealed class MetaTilePaletteControl : DoubleBufferedPanel
                     tileSize
                 );
 
-                g.DrawImage(_tileset, dstRect, srcRect, GraphicsUnit.Pixel);
+                g.DrawImage(tileset, dstRect, srcRect, GraphicsUnit.Pixel);
             }
         }
     }
@@ -300,6 +333,41 @@ public sealed class MetaTilePaletteControl : DoubleBufferedPanel
             rect.X + (rect.Width - size.Width) / 2,
             rect.Y + (rect.Height - size.Height) / 2
         );
+    }
+
+    private static bool IsBitmapUsable(Bitmap bitmap)
+    {
+        try
+        {
+            _ = bitmap.Width;
+            _ = bitmap.Height;
+            return true;
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+        catch (ObjectDisposedException)
+        {
+            return false;
+        }
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _toolTip.Dispose();
+
+            if (_ownsTileset)
+            {
+                _tileset?.Dispose();
+                _tileset = null;
+                _ownsTileset = false;
+            }
+        }
+
+        base.Dispose(disposing);
     }
 
     private sealed record MetaTileLayoutItem(MetaTile MetaTile, Rectangle Bounds);

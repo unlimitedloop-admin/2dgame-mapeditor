@@ -7,6 +7,7 @@ public sealed class MetaTilePreviewControl : DoubleBufferedPanel
 {
     private MetaTile? _metaTile;
     private Bitmap? _tileset;
+    private bool _ownsTileset;
 
     private const int MinPreviewScale = 1;
     private const int MaxPreviewScale = 8;
@@ -52,7 +53,7 @@ public sealed class MetaTilePreviewControl : DoubleBufferedPanel
 
     public void SetTileset(Bitmap? tileset)
     {
-        _tileset = tileset;
+        ReplaceTileset(tileset);
         Invalidate();
     }
 
@@ -105,7 +106,9 @@ public sealed class MetaTilePreviewControl : DoubleBufferedPanel
         var g = e.Graphics;
         g.Clear(BackColor);
 
-        if (_metaTile == null || _tileset == null)
+        var tileset = GetUsableTileset();
+
+        if (_metaTile == null || tileset == null)
             return;
 
         g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
@@ -113,7 +116,7 @@ public sealed class MetaTilePreviewControl : DoubleBufferedPanel
 
         var srcSize = MapConstants.DefaultTileSize;
         var dstSize = srcSize * PreviewScale;
-        var tilesPerRow = Math.Max(1, _tileset.Width / srcSize);
+        var tilesPerRow = Math.Max(1, tileset.Width / srcSize);
 
         for (var y = 0; y < _metaTile.Height; y++)
         {
@@ -135,7 +138,7 @@ public sealed class MetaTilePreviewControl : DoubleBufferedPanel
                     dstSize
                 );
 
-                g.DrawImage(_tileset, dstRect, srcRect, GraphicsUnit.Pixel);
+                g.DrawImage(tileset, dstRect, srcRect, GraphicsUnit.Pixel);
             }
         }
     }
@@ -154,5 +157,78 @@ public sealed class MetaTilePreviewControl : DoubleBufferedPanel
             Math.Max(1, _metaTile.Width * tileSize),
             Math.Max(1, _metaTile.Height * tileSize)
         );
+    }
+
+    private void ReplaceTileset(Bitmap? source)
+    {
+        DisposeOwnedTileset();
+
+        if (source == null)
+            return;
+
+        try
+        {
+            _tileset = new Bitmap(source);
+            _ownsTileset = true;
+        }
+        catch (ArgumentException)
+        {
+            _tileset = null;
+            _ownsTileset = false;
+        }
+        catch (ObjectDisposedException)
+        {
+            _tileset = null;
+            _ownsTileset = false;
+        }
+    }
+
+    private Bitmap? GetUsableTileset()
+    {
+        var tileset = _tileset;
+
+        if (tileset == null)
+            return null;
+
+        return IsBitmapUsable(tileset) ? tileset : null;
+    }
+
+    private static bool IsBitmapUsable(Bitmap bitmap)
+    {
+        try
+        {
+            _ = bitmap.Width;
+            _ = bitmap.Height;
+            return true;
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+        catch (ObjectDisposedException)
+        {
+            return false;
+        }
+    }
+
+    private void DisposeOwnedTileset()
+    {
+        if (_ownsTileset)
+        {
+            _tileset?.Dispose();
+        }
+
+        _tileset = null;
+        _ownsTileset = false;
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            DisposeOwnedTileset();
+        }
+
+        base.Dispose(disposing);
     }
 }
