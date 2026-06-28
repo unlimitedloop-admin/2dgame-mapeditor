@@ -172,4 +172,33 @@ public partial class MainForm
         _mapView.ShowPreview = _selectedTileId >= 0;
         _mapView.Invalidate();
     }
+
+    private void RefreshMetaTilePaletteFromCurrentStage()
+    {
+        var stage = _context.CurrentStage;
+
+        _metaTilePalette.SetStage(stage);
+        _metaTilePalette.SetTileset(_tileset);
+        _metaTilePalette.RefreshPalette();
+
+        var selectedMetaTile = _context.SelectedMetaTile;
+
+        if (selectedMetaTile == null || stage == null)
+            return;
+
+        var refreshed = stage.FindMetaTile(selectedMetaTile.Id);
+
+        if (refreshed == null)
+        {
+            _context.SetSelectedMetaTile(null);
+            _mapView.PreviewMetaTile = null;
+        }
+        else
+        {
+            _context.SetSelectedMetaTile(refreshed);
+            _mapView.PreviewMetaTile = refreshed;
+        }
+
+        _mapView.Invalidate();
+    }
 }

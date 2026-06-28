@@ -469,6 +469,9 @@ public partial class MainForm : Form
         if (_metaTileEditorForm == null || _metaTileEditorForm.IsDisposed)
         {
             _metaTileEditorForm = new MetaTileEditorForm(stage, _tileset);
+
+            _metaTileEditorForm.MetaTilesChanged += RefreshMetaTilePaletteFromCurrentStage;
+
             _metaTileEditorForm.Show(this);
         }
         else

@@ -38,6 +38,8 @@ public sealed class MetaTileEditorForm : Form
     /// </summary>
     private int? _editingMetaTileId;
 
+    public event Action? MetaTilesChanged;
+
     public MetaTileEditorForm(Stage stage, Bitmap? tileset)
     {
         _stage = stage ?? throw new ArgumentNullException(nameof(stage));
@@ -383,6 +385,7 @@ public sealed class MetaTileEditorForm : Form
         _editingMetaTileId = saved.Id;
         SetWorkingMetaTile(saved, saved.Id);
         RefreshSavedMetaTileList(selectId: saved.Id);
+        MetaTilesChanged?.Invoke();
         UpdateStatus("Saved as new.");
     }
 
@@ -395,6 +398,7 @@ public sealed class MetaTileEditorForm : Form
 
         SetWorkingMetaTile(saved, saved.Id);
         RefreshSavedMetaTileList(selectId: saved.Id);
+        MetaTilesChanged?.Invoke();
         UpdateStatus("Saved as new.");
     }
 
@@ -437,6 +441,7 @@ public sealed class MetaTileEditorForm : Form
 
         RefreshSavedMetaTileList();
         SetWorkingMetaTile(new MetaTile(4, 4), editingMetaTileId: null);
+        MetaTilesChanged?.Invoke();
         UpdateStatus("Deleted.");
     }
 
