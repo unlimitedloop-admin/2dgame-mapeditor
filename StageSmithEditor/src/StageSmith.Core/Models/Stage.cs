@@ -40,12 +40,18 @@ public sealed class Stage
             ? Pages.Max(p => p.NodeX) + 1
             : 0;
 
+        var roomId = GetNextAvailableRoomId();
+
         var page = new Page
         {
             Name  = name ?? $"Page {Pages.Count:D3}",
             NodeX = nextX,
             NodeY = 0,
         };
+        
+        var header = page.Header;
+        header.RoomId = roomId;
+        page.Header = header;
 
         Pages.Add(page);
         return page;
@@ -190,6 +196,27 @@ public sealed class Stage
         }
 
         return clone;
+    }
+
+    private byte GetNextAvailableRoomId()
+    {
+        var used = Pages
+            .Select(p => p.Header.RoomId)
+            .Where(id => id != 0xFF)
+            .ToHashSet();
+
+        for (var i = 0; i <= byte.MaxValue; i++)
+        {
+            var id = (byte)i;
+
+            if (id == 0xFF)
+                continue;
+
+            if (!used.Contains(id))
+                return id;
+        }
+
+        throw new InvalidOperationException("利用可能な RoomId がありません。");
     }
 
     public byte[] ExportBin()

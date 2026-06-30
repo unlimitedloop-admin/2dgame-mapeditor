@@ -1,6 +1,7 @@
 using StageSmith.Application.Commands;
 using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
+using StageSmith.Editor.Controllers;
 using StageSmith.Editor.Controls;
 using StageSmith.Editor.DockContents;
 using StageSmith.Editor.Tools;
@@ -19,10 +20,11 @@ public partial class MainForm : Form
     private readonly EditorContext _context = new();
 
     //========================
-    // Managers
+    // Managers / Controllers
     //========================
     private readonly CommandManager _commandManager = new();
     private readonly ToolManager _toolManager = new();
+    private PageNavigationController? _pageNavigationController;
 
     //========================
     // DockPanel
@@ -36,6 +38,10 @@ public partial class MainForm : Form
     private readonly StageExplorerContent _stageExplorerContent;
     private readonly PropertyWindowContent _propertyWindowContent;
     private readonly MetaTilePaletteContent _metaTilePaletteContent;
+
+    //========================
+    // EditorForms
+    //========================
     private PageNodeEditorForm? _nodeEditorForm;
     private MetaTileEditorForm? _metaTileEditorForm;
 
@@ -108,7 +114,7 @@ public partial class MainForm : Form
         BindToolManager();
         BindTilePalette();
         BindMetaTilePalette();
-        BindPageNavBar();
+        BindPageNavigationController();
 
         // PropertyWindow のバインド
         _propertyWindow.Bind(_context);
@@ -287,10 +293,17 @@ public partial class MainForm : Form
     //========================
     // PageNavBar バインド
     //========================
-    private void BindPageNavBar()
+    private void BindPageNavigationController()
     {
-        _pageNavBar.NavRequested += NavigatePage;
-        _pageNavBar.UpdateDisplay(_context);
+        _pageNavigationController = new PageNavigationController(
+            _context,
+            _pageNavBar,
+            _mapView
+        );
+
+        _context.ContextChanged += OnEditorContextChanged;
+
+        _pageNavigationController.Refresh();
     }
 
     /// <summary>
@@ -299,13 +312,7 @@ public partial class MainForm : Form
     /// </summary>
     public void NavigatePage(NavAction action)
     {
-        switch (action)
-        {
-            case NavAction.First: _context.MoveFirstPage(); break;
-            case NavAction.Prev: _context.MovePrevPage(); break;
-            case NavAction.Next: _context.MoveNextPage(); break;
-            case NavAction.Last: _context.MoveLastPage(); break;
-        }
+        _pageNavigationController?.Navigate(action);
 
         ApplyContextToView();
         _stageExplorer.RebuildTree();

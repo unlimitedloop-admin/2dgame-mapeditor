@@ -147,6 +147,16 @@ public partial class MainForm
         UpdateTilePreviewIcon();
     }
 
+    private void OnEditorContextChanged()
+    {
+        ApplyContextToView();
+
+        _stageExplorer.RebuildTree();
+        SyncExplorerHighlight();
+
+        _nodeEditorForm?.SyncPageSelection(_context.CurrentPageIndex);
+    }
+
     private void UpdateTilePreviewIcon()
     {
         if (_mapView.ShowPreview)

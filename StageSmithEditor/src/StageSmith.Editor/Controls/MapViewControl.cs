@@ -82,6 +82,17 @@ public class MapViewControl : DoubleBufferedPanel
         }
     }
 
+    // ===== Adjacent Navigation =====
+    public event EventHandler<AdjacentNavigationRequestedEventArgs>? AdjacentNavigationRequested;
+
+    private MapAdjacentState _adjacentState = new();
+
+    public void SetAdjacentState(MapAdjacentState state)
+    {
+        _adjacentState = state;
+        Invalidate();
+    }
+
     public MapViewControl()
     {
         DoubleBuffered = true;
@@ -144,6 +155,8 @@ public class MapViewControl : DoubleBufferedPanel
         // SelectionToolに描かせる
         SelectionTool?.DrawOverlay(g, ViewerConstants.TileRenderSize, ViewerConstants.MapViewMargin);
         SelectionTool?.DrawMovingOverlay(g, ViewerConstants.TileRenderSize, GetUsableTileset(), ViewerConstants.MapViewMargin);
+
+        DrawAdjacentNavigationButtons(g);
 
         // Extended add plus cursor at copy mode
         if (SelectionTool?.IsCopyModeActive() == true)
@@ -417,6 +430,19 @@ public class MapViewControl : DoubleBufferedPanel
 
         if (_tileMap == null) return;
 
+        if (e.Button == MouseButtons.Left &&
+            TryHitAdjacentNavigationButton(e.Location, out var direction))
+        {
+            var hasAdjacent = _adjacentState.HasAdjacent(direction);
+
+            AdjacentNavigationRequested?.Invoke(
+                this,
+                new AdjacentNavigationRequestedEventArgs(direction, hasAdjacent)
+            );
+
+            return;
+        }
+
         var (x, y) = ScreenToTile(e.X, e.Y);
 
         if (!IsInside(x, y)) return;
@@ -577,5 +603,168 @@ public class MapViewControl : DoubleBufferedPanel
         }
 
         Cursor = currentTool?.GetCursor(x, y) ?? Cursors.Default;
+    }
+
+    private void DrawAdjacentNavigationButtons(Graphics g)
+    {
+        foreach (var direction in new[]
+        {
+            PageDirection.Up,
+            PageDirection.Down,
+            PageDirection.Left,
+            PageDirection.Right
+        })
+        {
+            var rect = GetAdjacentNavigationButtonRect(direction);
+            if (rect.IsEmpty)
+                continue;
+
+            var hasAdjacent = _adjacentState.HasAdjacent(direction);
+            var text = hasAdjacent
+                ? GetDirectionArrowText(direction)
+                : "＋";
+
+            using var backBrush = new SolidBrush(
+                hasAdjacent
+                    ? Color.FromArgb(90, 90, 110)
+                    : Color.FromArgb(70, 100, 70)
+            );
+
+            using var borderPen = new Pen(Color.FromArgb(180, Color.White));
+            using var textBrush = new SolidBrush(Color.White);
+
+            g.FillEllipse(backBrush, rect);
+            g.DrawEllipse(borderPen, rect);
+
+            using var font = new Font("Yu Gothic UI", 10f, FontStyle.Bold);
+
+            var format = new StringFormat
+            {
+                Alignment = StringAlignment.Center,
+                LineAlignment = StringAlignment.Center
+            };
+
+            g.DrawString(text, font, textBrush, rect, format);
+        }
+    }
+
+    private static string GetDirectionArrowText(PageDirection direction)
+    {
+        return direction switch
+        {
+            PageDirection.Up => "▲",
+            PageDirection.Down => "▼",
+            PageDirection.Left => "◀",
+            PageDirection.Right => "▶",
+            _ => string.Empty
+        };
+    }
+
+    private Rectangle GetAdjacentNavigationButtonRect(PageDirection direction)
+    {
+        if (_tileMap == null)
+            return Rectangle.Empty;
+
+        var margin = ViewerConstants.MapViewMargin;
+        var tileSize = ViewerConstants.TileRenderSize;
+
+        var mapWidth = _tileMap.Width * tileSize;
+        var mapHeight = _tileMap.Height * tileSize;
+
+        var mapLeft = margin;
+        var mapTop = margin;
+        var mapRight = mapLeft + mapWidth;
+        var mapBottom = mapTop + mapHeight;
+
+        const int buttonSize = 24;
+
+        return direction switch
+        {
+            PageDirection.Up => new Rectangle(
+                mapLeft + mapWidth / 2 - buttonSize / 2,
+                (margin - buttonSize) / 2,
+                buttonSize,
+                buttonSize),
+
+            PageDirection.Down => new Rectangle(
+                mapLeft + mapWidth / 2 - buttonSize / 2,
+                mapBottom + (margin - buttonSize) / 2,
+                buttonSize,
+                buttonSize),
+
+            PageDirection.Left => new Rectangle(
+                (margin - buttonSize) / 2,
+                mapTop + mapHeight / 2 - buttonSize / 2,
+                buttonSize,
+                buttonSize),
+
+            PageDirection.Right => new Rectangle(
+                mapRight + (margin - buttonSize) / 2,
+                mapTop + mapHeight / 2 - buttonSize / 2,
+                buttonSize,
+                buttonSize),
+
+            _ => Rectangle.Empty
+        };
+    }
+
+    private bool TryHitAdjacentNavigationButton(Point point, out PageDirection direction)
+    {
+        foreach (var dir in new[]
+        {
+            PageDirection.Up,
+            PageDirection.Down,
+            PageDirection.Left,
+            PageDirection.Right
+        })
+        {
+            if (GetAdjacentNavigationButtonRect(dir).Contains(point))
+            {
+                direction = dir;
+                return true;
+            }
+        }
+
+        direction = default;
+        return false;
+    }
+}
+
+public sealed class MapAdjacentState
+{
+    public byte Up { get; init; } = 0xFF;
+    public byte Down { get; init; } = 0xFF;
+    public byte Left { get; init; } = 0xFF;
+    public byte Right { get; init; } = 0xFF;
+
+    public byte GetRoomId(PageDirection direction)
+    {
+        return direction switch
+        {
+            PageDirection.Up => Up,
+            PageDirection.Down => Down,
+            PageDirection.Left => Left,
+            PageDirection.Right => Right,
+            _ => 0xFF
+        };
+    }
+
+    public bool HasAdjacent(PageDirection direction)
+    {
+        return GetRoomId(direction) != 0xFF;
+    }
+}
+
+public sealed class AdjacentNavigationRequestedEventArgs : EventArgs
+{
+    public PageDirection Direction { get; }
+    public bool HasAdjacentPage { get; }
+
+    public AdjacentNavigationRequestedEventArgs(
+        PageDirection direction,
+        bool hasAdjacentPage)
+    {
+        Direction = direction;
+        HasAdjacentPage = hasAdjacentPage;
     }
 }
