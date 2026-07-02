@@ -10,6 +10,8 @@ namespace StageSmith.Editor.DockContents;
 /// </summary>
 public class MapViewContent : DockContent
 {
+    private readonly Panel _mapScrollPanel;
+
     public MapViewControl MapView { get; }
     public TilePaletteControl TilePalette { get; }
     public PageNavBarControl PageNavBar { get; }
@@ -43,14 +45,33 @@ public class MapViewContent : DockContent
         };
 
         // MapView + PageNavBar を Panel1 に収める
-        MapView = new MapViewControl
+        _mapScrollPanel = new Panel
         {
-            Dock = DockStyle.Fill
+            Dock = DockStyle.Fill,
+            AutoScroll = true,
+            BackColor = SystemColors.ControlDark
         };
 
-        PageNavBar = new PageNavBarControl();  // Dock.Bottom なので自動的に下に配置
+        MapView = new MapViewControl
+        {
+            Dock = DockStyle.None,
+            Location = new Point(0, 0)
+        };
 
-        splitContainer.Panel1.Controls.Add(MapView);
+        MapView.Size = MapView.GetPreferredContentSize();
+
+        MapView.ZoomChanged += (_, _) =>
+        {
+            MapView.Size = MapView.GetPreferredContentSize();
+            _mapScrollPanel.AutoScrollMinSize = MapView.Size;
+        };
+
+        _mapScrollPanel.Controls.Add(MapView);
+        _mapScrollPanel.AutoScrollMinSize = MapView.Size;
+
+        PageNavBar = new PageNavBarControl();
+
+        splitContainer.Panel1.Controls.Add(_mapScrollPanel);
         splitContainer.Panel1.Controls.Add(PageNavBar);
 
         TilePalette = new TilePaletteControl

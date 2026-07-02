@@ -190,9 +190,9 @@ public partial class MainForm
     private void ClearSearchHighlight() { /* TODO */ }
     private void ToggleShowTileNumbers(bool show) { /* TODO */ }
     private void ToggleMarkerOverlay(bool show)   { /* TODO */ }
-    private void ZoomIn()               { /* TODO */ }
-    private void ZoomOut()              { /* TODO */ }
-    private void ResetZoom()            { /* TODO */ }
+    private void ZoomIn() => _mapView.ZoomIn();
+    private void ZoomOut() => _mapView.ZoomOut();
+    private void ResetZoom() => _mapView.ResetZoom();
     private void OpenJumpPageDialog()   { /* TODO */ }
     private void NavigateBack()         { /* TODO */ }
     private void NavigateForward()      { /* TODO */ }

@@ -8,9 +8,8 @@ public static class ViewerConstants
     public static readonly Size MainFormClientSize = new(1200, 900);
 
     /// <summary>
-    /// エディタ上でのタイル描画サイズ（ピクセル）。
-    /// MapConstants.DefaultTileSize はゲーム側の論理サイズなので変更不可。
-    /// ズーム倍率を変えたい場合はここだけ変更する。
+    /// 1.0x時のタイル描画サイズ。
+    /// 実際の描画サイズは MapViewControl.CurrentTileRenderSize で決定する。
     /// </summary>
     public const int TileRenderSize = 32; // 16 × 2倍
 

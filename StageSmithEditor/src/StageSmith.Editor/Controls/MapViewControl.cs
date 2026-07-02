@@ -13,6 +13,25 @@ public class MapViewControl : DoubleBufferedPanel
 
     private bool _showGrid = true;
 
+    // ===== Zoom =====
+    private const float MinZoomScale = 0.5f;
+    private const float DefaultZoomScale = 1.0f;
+    private const float MaxZoomScale = 2.0f;
+    private const float ZoomStep = 0.5f;
+
+    private float _zoomScale = DefaultZoomScale;
+
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public float ZoomScale => _zoomScale;
+
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public int CurrentTileRenderSize
+        => Math.Max(1, (int)MathF.Round(ViewerConstants.TileRenderSize * _zoomScale));
+
+    public event EventHandler? ZoomChanged;
+
     private Point _hoverTile = new(-1, -1);
 
     // ===== Tool =====
@@ -105,6 +124,7 @@ public class MapViewControl : DoubleBufferedPanel
     public void SetTileMap(TileMap? map)
     {
         _tileMap = map;
+        UpdatePreferredControlSize();
         Invalidate();
     }
 
@@ -153,8 +173,8 @@ public class MapViewControl : DoubleBufferedPanel
         DrawPreview(g);
 
         // SelectionToolに描かせる
-        SelectionTool?.DrawOverlay(g, ViewerConstants.TileRenderSize, ViewerConstants.MapViewMargin);
-        SelectionTool?.DrawMovingOverlay(g, ViewerConstants.TileRenderSize, GetUsableTileset(), ViewerConstants.MapViewMargin);
+        SelectionTool?.DrawOverlay(g, CurrentTileRenderSize, ViewerConstants.MapViewMargin);
+        SelectionTool?.DrawMovingOverlay(g, CurrentTileRenderSize, GetUsableTileset(), ViewerConstants.MapViewMargin);
 
         DrawAdjacentNavigationButtons(g);
 
@@ -171,7 +191,7 @@ public class MapViewControl : DoubleBufferedPanel
         if (_tileMap == null || tileset == null) return;
 
         var srcSize = MapConstants.DefaultTileSize;   // 16: 画像の切り出しサイズ
-        var dstSize = ViewerConstants.TileRenderSize; // 32: 画面上の描画サイズ
+        var dstSize = CurrentTileRenderSize; // 32: 画面上の描画サイズ
         var margin  = ViewerConstants.MapViewMargin;  // 32: 上下左右マージン
         var tilesPerRow = tileset.Width / srcSize;
 
@@ -200,7 +220,7 @@ public class MapViewControl : DoubleBufferedPanel
     {
         if (_tileMap == null) return;
 
-        var dstSize = ViewerConstants.TileRenderSize;
+        var dstSize = CurrentTileRenderSize;
         var margin  = ViewerConstants.MapViewMargin;
 
         using var pen = new Pen(Color.FromArgb(80, Color.White));
@@ -239,7 +259,7 @@ public class MapViewControl : DoubleBufferedPanel
         if (tileset == null || PreviewTileId < 0) return;
 
         var srcSize = MapConstants.DefaultTileSize;   // 16: 画像の切り出しサイズ
-        var dstSize = ViewerConstants.TileRenderSize; // 32: 画面上の描画サイズ
+        var dstSize = CurrentTileRenderSize; // 32: 画面上の描画サイズ
         var margin  = ViewerConstants.MapViewMargin;
         var tilesPerRow = tileset.Width / srcSize;
 
@@ -266,7 +286,7 @@ public class MapViewControl : DoubleBufferedPanel
         if (tileset == null) return;
 
         var srcSize = MapConstants.DefaultTileSize;
-        var dstSize = ViewerConstants.TileRenderSize;
+        var dstSize = CurrentTileRenderSize;
         var margin = ViewerConstants.MapViewMargin;
         var tilesPerRow = Math.Max(1, tileset.Width / srcSize);
 
@@ -548,9 +568,9 @@ public class MapViewControl : DoubleBufferedPanel
     // =========================
     // 補助
     // =========================
-    private static (int x, int y) ScreenToTile(int px, int py)
+    private (int x, int y) ScreenToTile(int px, int py)
     {
-        var dstSize = ViewerConstants.TileRenderSize;
+        var dstSize = CurrentTileRenderSize;
         var margin  = ViewerConstants.MapViewMargin;
         return ((px - margin) / dstSize, (py - margin) / dstSize);
     }
@@ -666,7 +686,7 @@ public class MapViewControl : DoubleBufferedPanel
             return Rectangle.Empty;
 
         var margin = ViewerConstants.MapViewMargin;
-        var tileSize = ViewerConstants.TileRenderSize;
+        var tileSize = CurrentTileRenderSize;
 
         var mapWidth = _tileMap.Width * tileSize;
         var mapHeight = _tileMap.Height * tileSize;
@@ -727,6 +747,59 @@ public class MapViewControl : DoubleBufferedPanel
 
         direction = default;
         return false;
+    }
+
+    public void ZoomIn()
+    {
+        SetZoomScale(_zoomScale + ZoomStep);
+    }
+
+    public void ZoomOut()
+    {
+        SetZoomScale(_zoomScale - ZoomStep);
+    }
+
+    public void ResetZoom()
+    {
+        SetZoomScale(DefaultZoomScale);
+    }
+
+    public void SetZoomScale(float scale)
+    {
+        var clamped = Math.Clamp(scale, MinZoomScale, MaxZoomScale);
+
+        if (Math.Abs(_zoomScale - clamped) < 0.001f)
+            return;
+
+        _zoomScale = clamped;
+
+        UpdatePreferredControlSize();
+
+        ZoomChanged?.Invoke(this, EventArgs.Empty);
+        Invalidate();
+    }
+
+    public Size GetPreferredContentSize()
+    {
+        var width = (_tileMap?.Width ?? MapConstants.PageTileWidth) * CurrentTileRenderSize;
+        var height = (_tileMap?.Height ?? MapConstants.PageTileHeight) * CurrentTileRenderSize;
+
+        return new Size(
+            width + ViewerConstants.MapViewMargin * 2,
+            height + ViewerConstants.MapViewMargin * 2
+        );
+    }
+
+    private void UpdatePreferredControlSize()
+    {
+        var size = GetPreferredContentSize();
+
+        MinimumSize = size;
+
+        if (Dock == DockStyle.None)
+        {
+            Size = size;
+        }
     }
 }
 
