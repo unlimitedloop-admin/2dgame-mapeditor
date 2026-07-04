@@ -317,6 +317,11 @@ public partial class MainForm : Form
             _mapView
         );
 
+        _pageNavBar.NavRequested += NavigatePage;
+        _pageNavBar.ZRequested += NavigateToZ;
+
+        _pageNavBar.UpdateDisplay(_context);
+
         _context.ContextChanged += OnEditorContextChanged;
 
         _pageNavigationController.Refresh();
@@ -561,5 +566,40 @@ public partial class MainForm : Form
 
         if (content.DockPanel != null)
             content.Hide();
+    }
+
+    private void NavigateToZ(int targetZ)
+    {
+        var stage = _context.CurrentStage;
+        var currentPage = _context.CurrentPage;
+
+        if (stage == null || currentPage == null)
+            return;
+
+        var targetIndex = stage.Pages.FindIndex(page =>
+            page.NodeX == currentPage.NodeX &&
+            page.NodeY == currentPage.NodeY &&
+            page.Header.Z == targetZ);
+
+        if (targetIndex < 0)
+        {
+            // 存在しないZを指定した場合は現在値へ戻す
+            _pageNavBar.UpdateDisplay(_context);
+            return;
+        }
+
+        MoveToPageIndex(targetIndex);
+    }
+
+    private void MoveToPageIndex(int pageIndex)
+    {
+        _context.SetPage(pageIndex);
+
+        ApplyContextToView();
+        _stageExplorer.RebuildTree();
+        SyncExplorerHighlight();
+        _pageNavBar.UpdateDisplay(_context);
+
+        _nodeEditorForm?.SyncPageSelection(_context.CurrentPageIndex);
     }
 }

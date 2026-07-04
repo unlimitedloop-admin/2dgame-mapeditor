@@ -139,6 +139,9 @@ public partial class MainForm
         _menuNavGoLeftRoom.Enabled  = page?.Header.LeftPage  != 0xFF;
         _menuNavGoUpRoom.Enabled    = page?.Header.UpPage    != 0xFF;
         _menuNavGoDownRoom.Enabled  = page?.Header.DownPage  != 0xFF;
+
+        _menuNavBack.Enabled = CanMoveZLayer(forward: false);
+        _menuNavForward.Enabled = CanMoveZLayer(forward: true);
     }
 
     // ========================
@@ -163,15 +166,68 @@ public partial class MainForm
         var stage = _context.CurrentStage;
         if (stage == null) return;
 
-        var targetIndex = stage.Pages
-            .FindIndex(p => p.Header.RoomId == targetRoomId);
+        var targetIndex = stage.Pages.FindIndex(p => p.Header.RoomId == targetRoomId);
 
         if (targetIndex < 0) return;
 
-        _context.SetPage(targetIndex);
-        ApplyContextToView();
-        _pageNavBar.UpdateDisplay(_context);
-        _nodeEditorForm?.SyncPageSelection(_context.CurrentPageIndex);
+        MoveToPageIndex(targetIndex);
+    }
+
+    // ========================
+    // Zレイヤー移動
+    // ========================
+    private void NavigateZLayer(bool forward)
+    {
+        var stage = _context.CurrentStage;
+        var currentPage = _context.CurrentPage;
+
+        if (stage == null || currentPage == null)
+            return;
+
+        var currentZ = currentPage.Header.Z;
+
+        var candidates = stage.Pages
+            .Select((page, index) => new { Page = page, Index = index })
+            .Where(x =>
+                x.Page.NodeX == currentPage.NodeX &&
+                x.Page.NodeY == currentPage.NodeY &&
+                x.Page.Id != currentPage.Id);
+
+        var target = forward
+            ? candidates
+                .Where(x => x.Page.Header.Z > currentZ)
+                .OrderBy(x => x.Page.Header.Z)
+                .FirstOrDefault()
+            : candidates
+                .Where(x => x.Page.Header.Z < currentZ)
+                .OrderByDescending(x => x.Page.Header.Z)
+                .FirstOrDefault();
+
+        if (target == null)
+            return;
+
+        MoveToPageIndex(target.Index);
+    }
+
+    private bool CanMoveZLayer(bool forward)
+    {
+        var stage = _context.CurrentStage;
+        var currentPage = _context.CurrentPage;
+
+        if (stage == null || currentPage == null)
+            return false;
+
+        var currentZ = currentPage.Header.Z;
+
+        return stage.Pages.Any(page =>
+            page.NodeX == currentPage.NodeX &&
+            page.NodeY == currentPage.NodeY &&
+            page.Id != currentPage.Id &&
+            (
+                forward
+                    ? page.Header.Z > currentZ
+                    : page.Header.Z < currentZ
+            ));
     }
 
     // ========================
@@ -208,6 +264,6 @@ public partial class MainForm
     private void ZoomOut() => _mapView.ZoomOut();
     private void ResetZoom() => _mapView.ResetZoom();
     private void OpenJumpPageDialog()   { /* TODO */ }
-    private void NavigateBack()         { /* TODO */ }
-    private void NavigateForward()      { /* TODO */ }
+    private void NavigateBack() => NavigateZLayer(forward: false);
+    private void NavigateForward() => NavigateZLayer(forward: true);
 }

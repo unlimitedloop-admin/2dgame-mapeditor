@@ -11,9 +11,11 @@ public class PageNavBarControl : UserControl
     //========================
     // イベント
     //========================
-
     /// <summary>ページ移動ボタンが押されたとき発火する。</summary>
     public event Action<NavAction>? NavRequested;
+
+    /// <summary>Z座標変更（直接指定）が要求されたとき発火する。</summary>
+    public event Action<int>? ZRequested;
 
     //========================
     // Controls
@@ -23,6 +25,8 @@ public class PageNavBarControl : UserControl
     private readonly Label _pageLabel;
     private readonly Button _nextButton;
     private readonly Button _lastButton;
+    private readonly NumericUpDown _zNumeric;
+    private bool _updating;
 
     //========================
     // 定数
@@ -39,43 +43,86 @@ public class PageNavBarControl : UserControl
         Dock = DockStyle.Bottom;
         BackColor = SystemColors.ControlDark;
 
-        _firstButton = CreateNavButton("|◀", "最初のページ (Ctrl+←)");
-        _prevButton = CreateNavButton("◀", "前のページ (Ctrl+←)");
+        _firstButton = CreateNavButton("|◀", "最初のページ");
+        _prevButton = CreateNavButton("◀", "前のページ");
         _pageLabel = new Label
         {
             TextAlign = ContentAlignment.MiddleCenter,
             ForeColor = Color.White,
             Font = new Font("Yu Gothic UI", 9f),
             AutoSize = false,
-            Width = 90
+            Width = 80
         };
-        _nextButton = CreateNavButton("▶", "次のページ (Ctrl+→)");
-        _lastButton = CreateNavButton("▶|", "最後のページ (Ctrl+→)");
+        _nextButton = CreateNavButton("▶", "次のページ");
+        _lastButton = CreateNavButton("▶|", "最後のページ");
 
-        // イベント
         _firstButton.Click += (_, _) => NavRequested?.Invoke(NavAction.First);
         _prevButton.Click += (_, _) => NavRequested?.Invoke(NavAction.Prev);
         _nextButton.Click += (_, _) => NavRequested?.Invoke(NavAction.Next);
         _lastButton.Click += (_, _) => NavRequested?.Invoke(NavAction.Last);
 
-        // レイアウト
-        var panel = new FlowLayoutPanel
+        var leftPanel = new FlowLayoutPanel
         {
-            Dock = DockStyle.Fill,
+            Dock = DockStyle.Left,
             FlowDirection = FlowDirection.LeftToRight,
             WrapContents = false,
             AutoSize = false,
+            Width = ButtonWidth * 4 + _pageLabel.Width + 32,
             BackColor = Color.Transparent,
             Padding = new Padding(4, 2, 4, 2)
         };
 
-        panel.Controls.Add(_firstButton);
-        panel.Controls.Add(_prevButton);
-        panel.Controls.Add(_pageLabel);
-        panel.Controls.Add(_nextButton);
-        panel.Controls.Add(_lastButton);
+        leftPanel.Controls.Add(_firstButton);
+        leftPanel.Controls.Add(_prevButton);
+        leftPanel.Controls.Add(_pageLabel);
+        leftPanel.Controls.Add(_nextButton);
+        leftPanel.Controls.Add(_lastButton);
 
-        Controls.Add(panel);
+        var zLabel = new Label
+        {
+            Text = "Z",
+            ForeColor = Color.White,
+            TextAlign = ContentAlignment.MiddleCenter,
+            AutoSize = false,
+            Width = 20,
+            Height = BarHeight - 4,
+            Font = new Font("Yu Gothic UI", 9f, FontStyle.Bold)
+        };
+
+        _zNumeric = new NumericUpDown
+        {
+            Minimum = 0,
+            Maximum = 255,
+            Width = 64,
+            Height = BarHeight - 4,
+            TextAlign = HorizontalAlignment.Right,
+            TabStop = false
+        };
+
+        _zNumeric.ValueChanged += (_, _) =>
+        {
+            if (_updating)
+                return;
+
+            ZRequested?.Invoke((int)_zNumeric.Value);
+        };
+
+        var rightPanel = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Right,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            AutoSize = false,
+            Width = 96,
+            BackColor = Color.Transparent,
+            Padding = new Padding(4, 2, 4, 2)
+        };
+
+        rightPanel.Controls.Add(zLabel);
+        rightPanel.Controls.Add(_zNumeric);
+
+        Controls.Add(leftPanel);
+        Controls.Add(rightPanel);
     }
 
     //========================
@@ -98,6 +145,29 @@ public class PageNavBarControl : UserControl
         _prevButton.Enabled = current > 1;
         _nextButton.Enabled = current < total;
         _lastButton.Enabled = current < total;
+
+        _updating = true;
+        try
+        {
+            var page = context.CurrentPage;
+
+            if (page == null)
+            {
+                _zNumeric.Enabled = false;
+                _zNumeric.Value = 0;
+            }
+            else
+            {
+                _zNumeric.Enabled = true;
+
+                var z = Math.Clamp((int)page.Header.Z, 0, 255);
+                _zNumeric.Value = z;
+            }
+        }
+        finally
+        {
+            _updating = false;
+        }
     }
 
     //========================
