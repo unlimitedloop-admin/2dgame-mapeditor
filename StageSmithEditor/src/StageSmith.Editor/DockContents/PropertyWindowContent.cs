@@ -14,6 +14,7 @@ public class PropertyWindowContent : DockContent
     public PropertyWindowContent()
     {
         Text = "Properties";
+        HideOnClose = true;
         CloseButtonVisible = true;
         DockAreas = DockAreas.DockLeft
                   | DockAreas.DockRight

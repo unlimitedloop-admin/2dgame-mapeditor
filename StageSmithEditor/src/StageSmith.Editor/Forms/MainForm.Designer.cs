@@ -193,6 +193,7 @@ namespace StageSmith.Editor
             // Window
             // ========================
             _menuWindow                 = new ToolStripMenuItem("Window");
+            _menuWindowMapView          = new ToolStripMenuItem("Map View")             { ShortcutKeys = Keys.F6 };
             _menuWindowStageExplorer    = new ToolStripMenuItem("Stage Explorer")       { ShortcutKeys = Keys.F7 };
             _menuWindowProperties       = new ToolStripMenuItem("Properties Window")    { ShortcutKeys = Keys.F8 };
             _menuWindowBookmarkList     = new ToolStripMenuItem("Bookmark List")        { ShortcutKeys = Keys.F9 };
@@ -204,6 +205,7 @@ namespace StageSmith.Editor
             _menuWindowResetLayout      = new ToolStripMenuItem("Reset Window Layout");
 
             _menuWindow.DropDownItems.AddRange([
+                _menuWindowMapView,
                 _menuWindowStageExplorer,
                 _menuWindowProperties,
                 _menuWindowBookmarkList,
@@ -336,6 +338,7 @@ namespace StageSmith.Editor
 
         // Window
         private ToolStripMenuItem _menuWindow               = null!;
+        private ToolStripMenuItem _menuWindowMapView        = null!;
         private ToolStripMenuItem _menuWindowStageExplorer  = null!;
         private ToolStripMenuItem _menuWindowProperties     = null!;
         private ToolStripMenuItem _menuWindowBookmarkList   = null!;

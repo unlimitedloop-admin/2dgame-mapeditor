@@ -18,9 +18,10 @@ public class MapViewContent : DockContent
 
     public MapViewContent()
     {
-        Text = "Map View";
-        CloseButtonVisible = false;     // 中央パネルは閉じさせない
-        DockAreas = DockAreas.Document; // 中央ドキュメント領域に固定
+        Text = "Map View (1.0x)";
+        HideOnClose = true;
+        CloseButtonVisible = true;
+        DockAreas = DockAreas.Document;
 
         // 上下に分割（マップビュー上、タイルパレット下）
         var splitContainer = new SplitContainer
@@ -82,5 +83,10 @@ public class MapViewContent : DockContent
         splitContainer.Panel2.Controls.Add(TilePalette);
 
         Controls.Add(splitContainer);
+    }
+
+    public void UpdateZoomTitle(float zoomScale)
+    {
+        Text = $"Map View ({zoomScale:0.0}x)";
     }
 }

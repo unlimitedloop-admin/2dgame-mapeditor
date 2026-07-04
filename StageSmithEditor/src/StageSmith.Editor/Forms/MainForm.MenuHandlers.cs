@@ -72,6 +72,7 @@ public partial class MainForm
         // ========================
         // Window
         // ========================
+        _menuWindowMapView.Click        += (_, _) => ShowMapViewContent();
         _menuWindowStageExplorer.Click  += (_, _) => _stageExplorerContent.Show(_dockPanel);
         _menuWindowProperties.Click     += (_, _) => _propertyWindowContent.Show(_dockPanel);
         _menuWindowBookmarkList.Click   += (_, _) => { /* TODO: BookmarkList */ };
@@ -80,7 +81,7 @@ public partial class MainForm
         _menuWindowStageMapViewer.Click += (_, _) => { /* TODO: StageMapViewer */ };
         _menuWindowPageNodeEditor.Click += (_, _) => OpenNodeEditor();
         _menuWindowMetaTileEditor.Click += (_, _) => OpenMetaTileEditor();
-        _menuWindowResetLayout.Click    += (_, _) => InitializeDockLayout();
+        _menuWindowResetLayout.Click    += (_, _) => ResetDockLayout();
 
         // ========================
         // Help
@@ -94,9 +95,10 @@ public partial class MainForm
             );
 
         // ========================
-        // Edit / Navigation メニューの有効状態管理
+        // Edit / View / Navigation メニューの有効状態管理
         // ========================
         _menuEdit.DropDownOpening       += (_, _) => RefreshEditMenuState();
+        _menuView.DropDownOpening       += (_, _) => RefreshViewMenuState();
         _menuNavigation.DropDownOpening += (_, _) => RefreshNavigationMenuState();
     }
 
@@ -112,6 +114,18 @@ public partial class MainForm
         _menuEditPaste.Enabled  = _context.HasPage;
         _menuEditDelete.Enabled = _context.HasPage;
         _menuEditFill.Enabled   = _context.HasPage;
+    }
+
+    // ========================
+    // View メニュー有効状態
+    // ========================
+    private void RefreshViewMenuState()
+    {
+        var hasMapView = _mapViewContent is { IsDisposed: false };
+
+        _menuViewZoomIn.Enabled = hasMapView && _mapView.CanZoomIn;
+        _menuViewZoomOut.Enabled = hasMapView && _mapView.CanZoomOut;
+        _menuViewResetZoom.Enabled = hasMapView && !_mapView.IsDefaultZoom;
     }
 
     // ========================

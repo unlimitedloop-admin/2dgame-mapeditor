@@ -30,6 +30,10 @@ public class MapViewControl : DoubleBufferedPanel
     public int CurrentTileRenderSize
         => Math.Max(1, (int)MathF.Round(ViewerConstants.TileRenderSize * _zoomScale));
 
+    public bool CanZoomIn => _zoomScale < MaxZoomScale;
+    public bool CanZoomOut => _zoomScale > MinZoomScale;
+    public bool IsDefaultZoom => Math.Abs(_zoomScale - DefaultZoomScale) < 0.001f;
+
     public event EventHandler? ZoomChanged;
 
     private Point _hoverTile = new(-1, -1);

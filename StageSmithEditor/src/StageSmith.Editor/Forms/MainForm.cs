@@ -86,10 +86,9 @@ public partial class MainForm : Form
         {
             Dock = DockStyle.Fill,
             DocumentStyle = DocumentStyle.DockingWindow,
+            // VS2015 テーマを適用（インストール済みの場合）
+            Theme = new VS2015BlueTheme()
         };
-
-        // VS2015 テーマを適用（インストール済みの場合）
-        _dockPanel.Theme = new VS2015BlueTheme();
 
         Controls.Add(_dockPanel);   // DockPanel をその下に配置
         InitializeToolStrip();
@@ -100,6 +99,12 @@ public partial class MainForm : Form
         _stageExplorerContent = new StageExplorerContent();
         _propertyWindowContent = new PropertyWindowContent();
         _metaTilePaletteContent = new MetaTilePaletteContent();
+
+        _mapView.ZoomChanged += (_, _) =>
+        {
+            _mapViewContent.UpdateZoomTitle(_mapView.ZoomScale);
+            RefreshViewMenuState();
+        };
 
         // クリック時のフォーカス設定
         _mapView.Click += (s, e) => _mapView.Focus();
@@ -157,21 +162,32 @@ public partial class MainForm : Form
     // =========================
     private void InitializeDockLayout()
     {
-        // 左上: StageExplorer
-        _stageExplorerContent.Show(_dockPanel, DockState.DockLeft);
+        if (!_stageExplorerContent.IsDisposed)
+        {
+            _stageExplorerContent.Show(_dockPanel, DockState.DockLeft);
+        }
 
-        // 左下: MetaTilePalette
-        _metaTilePaletteContent.Show(
-            _stageExplorerContent.Pane,
-            DockAlignment.Bottom,
-            0.35
-        );
+        if (!_metaTilePaletteContent.IsDisposed &&
+            !_stageExplorerContent.IsDisposed &&
+            _stageExplorerContent.Pane != null)
+        {
+            _metaTilePaletteContent.Show(
+                _stageExplorerContent.Pane,
+                DockAlignment.Bottom,
+                0.35
+            );
+        }
 
-        // 右: PropertyWindow
-        _propertyWindowContent.Show(_dockPanel, DockState.DockRight);
+        if (!_propertyWindowContent.IsDisposed)
+        {
+            _propertyWindowContent.Show(_dockPanel, DockState.DockRight);
+        }
 
-        // 中央: MapView + TilePalette（Document 領域）
-        _mapViewContent.Show(_dockPanel, DockState.Document);
+        if (!_mapViewContent.IsDisposed)
+        {
+            _mapViewContent.Show(_dockPanel, DockState.Document);
+            _mapViewContent.UpdateZoomTitle(_mapView.ZoomScale);
+        }
     }
 
     // =========================
@@ -430,6 +446,36 @@ public partial class MainForm : Form
             _selectionTool?.ClearSelection();
     }
 
+    private void ShowDockContent(DockContent content, DockState dockState)
+    {
+        if (content.IsDisposed)
+        {
+            MessageBox.Show(
+                $"{content.Text} は破棄されています。アプリを再起動してください。",
+                "Window",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning
+            );
+            return;
+        }
+
+        if (content.DockPanel == null)
+        {
+            content.Show(_dockPanel, dockState);
+        }
+        else
+        {
+            content.Show();
+            content.Activate();
+        }
+    }
+
+    private void ShowMapViewContent()
+    {
+        ShowDockContent(_mapViewContent, DockState.Document);
+        _mapViewContent.UpdateZoomTitle(_mapView.ZoomScale);
+    }
+
     /// <summary>
     /// ノードエディタを開く。既に開いていれば前面に出す。
     /// </summary>
@@ -485,5 +531,35 @@ public partial class MainForm : Form
         {
             _metaTileEditorForm.BringToFront();
         }
+    }
+
+    private void ResetDockLayout()
+    {
+        _dockPanel.SuspendLayout(true);
+
+        try
+        {
+            HideDockContent(_mapViewContent);
+            HideDockContent(_stageExplorerContent);
+            HideDockContent(_propertyWindowContent);
+            HideDockContent(_metaTilePaletteContent);
+
+            InitializeDockLayout();
+
+            _mapViewContent.UpdateZoomTitle(_mapView.ZoomScale);
+        }
+        finally
+        {
+            _dockPanel.ResumeLayout(true, true);
+        }
+    }
+
+    private static void HideDockContent(DockContent content)
+    {
+        if (content.IsDisposed)
+            return;
+
+        if (content.DockPanel != null)
+            content.Hide();
     }
 }

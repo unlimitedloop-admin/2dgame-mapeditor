@@ -14,6 +14,7 @@ public sealed class MetaTilePaletteContent : DockContent
     public MetaTilePaletteContent()
     {
         Text = "MetaTile Palette";
+        HideOnClose = true;
         CloseButtonVisible = true;
         DockAreas = DockAreas.DockLeft
                   | DockAreas.DockRight

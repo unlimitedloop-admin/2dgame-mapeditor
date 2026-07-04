@@ -14,6 +14,7 @@ public class StageExplorerContent : DockContent
     public StageExplorerContent()
     {
         Text = "Stage Explorer";
+        HideOnClose = true;
         CloseButtonVisible = true;
         DockAreas = DockAreas.DockLeft
                   | DockAreas.DockRight
