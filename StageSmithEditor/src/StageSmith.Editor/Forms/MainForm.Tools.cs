@@ -1,6 +1,6 @@
+using StageSmith.Application.Commands;
 using StageSmith.Core.Constants;
-using System.Drawing;
-using System.Windows.Forms;
+using StageSmith.Editor.Tools;
 
 namespace StageSmith.Editor;
 
@@ -26,7 +26,7 @@ public partial class MainForm
     private ToolStripButton _addPageButton = null!;
 
     //========================
-    // 初期化
+    // ツールストリップ初期化
     //========================
     private void InitializeToolStrip()
     {
@@ -155,6 +155,154 @@ public partial class MainForm
         Controls.Add(_editorToolStrip);
 
         UpdateToolbarCheckedState();
+    }
+
+    // =========================
+    // ツール初期化
+    // =========================
+    private void InitializeTools()
+    {
+        // Pen
+        _penTool = new PenTool(
+            () => _page?.TileMap,
+            () => _selectedTileId,
+            _commandManager,
+            () => _mapView.Invalidate()
+        );
+
+        // Picker
+        _pickerTool = new PickerTool(
+            (x, y) => _page?.TileMap.GetTile(x, y) ?? -1,
+            tileId =>
+            {
+                if (tileId < 0) return;
+
+                _selectedTileId = tileId;
+                _tilePalette.SetSelected(tileId);
+                _mapView.PreviewTileId = tileId;
+            }
+        );
+
+        // Selection
+        _selectionTool = new SelectionTool(
+            (x, y) =>
+            {
+                var map = _page?.TileMap;
+                return (byte)(map == null ? 0 : map.GetTile(x, y));
+            },
+            () => (_page?.TileMap.Width ?? 16, _page?.TileMap.Height ?? 15)
+        );
+
+        _selectionTool.SelectionChanged += () => _mapView.Invalidate();
+        _selectionTool.MoveRequested += OnSelectionMoveRequested;
+        _selectionTool.Confirmed += ApplySelectionFill;
+
+        // Fill
+        _fillTool = new FillTool(
+            () => _page?.TileMap,
+            positions =>
+            {
+                if (_page == null || _selectedTileId < 0)
+                    return;
+
+                var command = new TilePaintCommand(
+                    _page.TileMap,
+                    positions,
+                    (byte)_selectedTileId
+                );
+
+                _commandManager.Execute(command);
+                _mapView.Invalidate();
+            },
+            _selectedTileId
+        );
+
+        // MapView接続（DockContent 生成後なので直接参照可能）
+        _mapView.ToolManager = _toolManager;
+        _mapView.PickerTool = _pickerTool;
+        _mapView.SelectionTool = _selectionTool;
+        _mapView.FillTool = _fillTool;
+
+        _toolManager.SetTool(_penTool);
+
+        // Drag Command
+        _mapView.MouseDown += (s, e) =>
+        {
+            if (e.Button == MouseButtons.Left &&
+                _page != null &&
+                _currentMode == EditorToolMode.Pen)
+            {
+                _currentDragCommand = new DragPaintCommand(_page.TileMap);
+            }
+        };
+
+        _mapView.MouseUp += (s, e) =>
+        {
+            if (_currentDragCommand != null && _currentDragCommand.HasChanges)
+            {
+                _commandManager.Execute(_currentDragCommand);
+                _mapView.Invalidate();
+
+                // ノードエディタが開いていれば現在ページのプレビューを更新する
+                if (_page != null)
+                    _nodeEditorForm?.InvalidatePagePreview(_page.Id, _page);
+            }
+
+            _currentDragCommand = null;
+        };
+    }
+
+    //========================
+    // ToolManager 同期
+    //========================
+    private void BindToolManager()
+    {
+        _toolManager.ToolChanged += tool =>
+        {
+            if (ReferenceEquals(tool, _penTool))
+                _currentMode = EditorToolMode.Pen;
+            else if (ReferenceEquals(tool, _selectionTool))
+                _currentMode = EditorToolMode.Selection;
+
+            UpdateToolbarCheckedState();
+            _mapView.Invalidate();
+        };
+    }
+
+    //========================
+    // Tool 変更（Command 経由）
+    //========================
+    private void ChangeTool(ITool? tool)
+    {
+        if (tool == null) return;
+
+        _commandManager.Execute(
+            new ChangeToolCommand(_toolManager, tool)
+        );
+    }
+
+    //========================
+    // モード変更（統一）
+    //========================
+    private void SetToolMode(EditorToolMode mode)
+    {
+        if (_currentMode == mode)
+            return;
+
+        ITool? tool = mode switch
+        {
+            EditorToolMode.Pen => _penTool,
+            EditorToolMode.Selection => _selectionTool,
+            _ => null
+        };
+
+        if (tool == null)
+            return;
+
+        ChangeTool(tool);
+
+        if (mode == EditorToolMode.Pen)
+            _selectionTool?.ClearSelection();
     }
 
     private void BindTilePalette()

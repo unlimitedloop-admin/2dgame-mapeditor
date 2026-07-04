@@ -291,42 +291,4 @@ public partial class MainForm
         _tilePalette.Invalidate();
         _metaTilePalette.RefreshPalette();
     }
-
-    private void ApplyContextToView()
-    {
-        var stage = _context.CurrentStage;
-        var page = _context.CurrentPage;
-
-        _page = page;
-
-        _mapView.SetTileMap(page?.TileMap);
-        _metaTilePalette.SetStage(stage);
-
-        if (!string.IsNullOrWhiteSpace(stage?.TilesetImagePath))
-        {
-            LoadTilesetImage(stage.TilesetImagePath);
-        }
-
-        _propertyWindow.RefreshProperties();
-
-        SyncExplorerHighlight();
-
-        _pageNavBar.UpdateDisplay(_context);
-
-        _mapView.Invalidate();
-        _tilePalette.Invalidate();
-        _metaTilePalette.RefreshPalette();
-    }
-
-    /// <summary>
-    /// 現在の EditorContext に合わせて StageExplorer のハイライトを更新する。
-    /// </summary>
-    private void SyncExplorerHighlight()
-    {
-        var stage = _context.CurrentStage;
-        var page = _context.CurrentPage;
-
-        if (stage != null && page != null)
-            _stageExplorer.SetCurrentPage(stage, page);
-    }
 }

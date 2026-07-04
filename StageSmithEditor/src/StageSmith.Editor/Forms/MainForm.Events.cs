@@ -7,7 +7,7 @@ public partial class MainForm
 {
     protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
     {
-        // ── Ctrl 系（TextBox フォーカス中でも有効） ──────────────────
+        // ── Ctrl / Alt 系（TextBox フォーカス中でも有効） ──────────────────
         switch (keyData)
         {
             case Keys.Control | Keys.Shift | Keys.S:
@@ -22,12 +22,30 @@ public partial class MainForm
                 _commandManager.Redo();
                 return true;
 
+            // 隣接Room移動
             case Keys.Control | Keys.Left:
-                NavigatePage(NavAction.Prev);
+                NavigateAdjacentRoom(Direction.Left);
                 return true;
 
             case Keys.Control | Keys.Right:
-                NavigatePage(NavAction.Next);
+                NavigateAdjacentRoom(Direction.Right);
+                return true;
+
+            case Keys.Control | Keys.Up:
+                NavigateAdjacentRoom(Direction.Up);
+                return true;
+
+            case Keys.Control | Keys.Down:
+                NavigateAdjacentRoom(Direction.Down);
+                return true;
+
+            // Zレイヤー移動
+            case Keys.Alt | Keys.Left:
+                NavigateBack();
+                return true;
+
+            case Keys.Alt | Keys.Right:
+                NavigateForward();
                 return true;
 
             case Keys.Control | Keys.T:
@@ -145,16 +163,6 @@ public partial class MainForm
     {
         _mapView.ShowPreview = !_mapView.ShowPreview;
         UpdateTilePreviewIcon();
-    }
-
-    private void OnEditorContextChanged()
-    {
-        ApplyContextToView();
-
-        _stageExplorer.RebuildTree();
-        SyncExplorerHighlight();
-
-        _nodeEditorForm?.SyncPageSelection(_context.CurrentPageIndex);
     }
 
     private void UpdateTilePreviewIcon()
