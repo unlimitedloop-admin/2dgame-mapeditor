@@ -50,8 +50,6 @@ public partial class MainForm
                 _mapView.Invalidate();
                 return;
             }
-
-            //ApplyContextToView();
         };
 
         SyncExplorerHighlight();

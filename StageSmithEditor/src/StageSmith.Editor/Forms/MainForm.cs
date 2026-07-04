@@ -156,25 +156,4 @@ public partial class MainForm : Form
     private void MainForm_Load(object sender, EventArgs e)
     {
     }
-
-    //========================
-    // MetaTilePalette バインド
-    //========================
-    private void BindMetaTilePalette()
-    {
-        _metaTilePalette.MetaTileSelected += metaTile =>
-        {
-            _context.SetSelectedMetaTile(metaTile);
-
-            // 通常タイル選択と競合しないように、見た目上の選択を解除する。
-            _selectedTileId = -1;
-            _tilePalette.SetSelected(-1);
-
-            // 現段階では MapView 側の配置処理は次フェーズ。
-            // プレビューも通常タイル用なので一旦消す。
-            _mapView.PreviewTileId = -1;
-            _mapView.ShowPreview = false;
-            _mapView.Invalidate();
-        };
-    }
 }

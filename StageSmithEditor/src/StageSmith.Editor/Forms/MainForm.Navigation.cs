@@ -114,22 +114,6 @@ public partial class MainForm
         _pageNavigationController.Refresh();
     }
 
-    /// <summary>
-    /// ページ移動を実行し、ビューを更新する。
-    /// ナビゲーションバーのボタンとキーショートカットの両方から呼ばれる。
-    /// </summary>
-    public void NavigatePage(NavAction action)
-    {
-        _pageNavigationController?.Navigate(action);
-
-        //ApplyContextToView();
-        //_stageExplorer.RebuildTree();
-        //_pageNavBar.UpdateDisplay(_context);
-
-        //// ノードエディタが開いていれば選択も同期
-        //_nodeEditorForm?.SyncPageSelection(_context.CurrentPageIndex);
-    }
-
     private void NavigateToZ(int targetZ)
     {
         var stage = _context.CurrentStage;
@@ -170,4 +154,10 @@ public partial class MainForm
     // ========================
     private void NavigateBack() => NavigateZLayer(forward: false);
     private void NavigateForward() => NavigateZLayer(forward: true);
+
+    /// <summary>
+    /// ページ移動を実行し、ビューを更新する。
+    /// ナビゲーションバーのボタンとキーショートカットの両方から呼ばれる。
+    /// </summary>
+    public void NavigatePage(NavAction action) => _pageNavigationController?.Navigate(action);
 }
