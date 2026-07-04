@@ -38,7 +38,8 @@ public class MapViewContent : DockContent
         {
             var sc = (SplitContainer)s!;
             var target = ViewerConstants.MapViewContentSize.Height
-                       + ViewerConstants.NavBarHeight;
+                       + ViewerConstants.NavBarHeight
+                       + ViewerConstants.MapViewPanelExtraHeight;
             if (sc.SplitterDistance != target && sc.Height > target)
             {
                 sc.SplitterDistance = target;
@@ -70,7 +71,10 @@ public class MapViewContent : DockContent
         _mapScrollPanel.Controls.Add(MapView);
         _mapScrollPanel.AutoScrollMinSize = MapView.Size;
 
-        PageNavBar = new PageNavBarControl();
+        PageNavBar = new PageNavBarControl
+        {
+            Dock = DockStyle.Bottom
+        };
 
         splitContainer.Panel1.Controls.Add(_mapScrollPanel);
         splitContainer.Panel1.Controls.Add(PageNavBar);

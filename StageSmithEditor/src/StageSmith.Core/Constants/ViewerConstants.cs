@@ -27,6 +27,12 @@ public static class ViewerConstants
     public const int MapViewMargin = 32;
 
     /// <summary>
+    /// MapView 上段領域の追加余白。
+    /// 下側の隣接ページナビゲーションが見切れないようにするためのレイアウト調整値。
+    /// </summary>
+    public const int MapViewPanelExtraHeight = 12;
+
+    /// <summary>
     /// マップビューの描画解像度（タイル数 × TileRenderSize）。
     /// </summary>
     public static readonly Size MapViewRenderSize = new(

@@ -14,8 +14,8 @@ public sealed class TileMap
     [JsonPropertyName("Tiles")]
     public int[] TilesForJson
     {
-        get => Tiles.Select(b => (int)b).ToArray();
-        set => Tiles = value.Select(i => (byte)i).ToArray();
+        get => [.. Tiles.Select(b => (int)b)];
+        set => Tiles = [.. value.Select(i => (byte)i)];
     }
 
     public TileMap()
