@@ -1,5 +1,4 @@
 using StageSmith.Core.Constants;
-using StageSmith.Core.Models;
 
 namespace StageSmith.Editor.Controls;
 
@@ -11,8 +10,12 @@ public class TilePaletteControl : DoubleBufferedPanel
     public int SelectedTileIndex { get; private set; } = -1;
 
     public event Action<int>? TileSelected;
+    public event EventHandler? TilesetImageSelectionRequested;
 
     private const int TileSpacing = 2;
+
+    private readonly ContextMenuStrip _contextMenu;
+    private readonly ToolStripMenuItem _selectTilesetImageMenuItem;
 
     public TilePaletteControl()
     {
@@ -20,11 +23,39 @@ public class TilePaletteControl : DoubleBufferedPanel
         AutoScroll = true;
         ResizeRedraw = true;
         TabStop = true;
+
+        _selectTilesetImageMenuItem = new ToolStripMenuItem("タイルセット画像を選択...");
+        _selectTilesetImageMenuItem.Click += (_, _) =>
+        {
+            TilesetImageSelectionRequested?.Invoke(this, EventArgs.Empty);
+        };
+
+        _contextMenu = new ContextMenuStrip();
+        _contextMenu.Items.Add(_selectTilesetImageMenuItem);
+
+        ContextMenuStrip = _contextMenu;
     }
 
     public void SetTileset(Bitmap? tileset)
     {
         ReplaceTileset(tileset);
+
+        var usableTileset = GetUsableTileset();
+
+        if (usableTileset == null)
+        {
+            SelectedTileIndex = -1;
+        }
+        else
+        {
+            var tileCount =
+                (usableTileset.Width / MapConstants.DefaultTileSize) *
+                (usableTileset.Height / MapConstants.DefaultTileSize);
+
+            if (SelectedTileIndex >= tileCount)
+                SelectedTileIndex = -1;
+        }
+
         UpdateScrollSize();
         Invalidate();
     }
@@ -45,6 +76,15 @@ public class TilePaletteControl : DoubleBufferedPanel
     {
         base.OnMouseDown(e);
         Focus();
+
+        // 右クリックは ContextMenuStrip に任せる。
+        // タイル選択処理には入らない。
+        if (e.Button == MouseButtons.Right)
+            return;
+
+        // 左クリック以外ではタイル選択しない。
+        if (e.Button != MouseButtons.Left)
+            return;
 
         var tileset = GetUsableTileset();
         if (tileset == null) return;
@@ -271,6 +311,9 @@ public class TilePaletteControl : DoubleBufferedPanel
         if (disposing)
         {
             DisposeOwnedTileset();
+
+            _selectTilesetImageMenuItem.Dispose();
+            _contextMenu.Dispose();
         }
 
         base.Dispose(disposing);

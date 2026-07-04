@@ -154,7 +154,7 @@ public partial class MainForm
     private void SaveStage() => ExportCurrentStageDefAs();
     private void ReloadStage()          { /* TODO */ }
     private void DropStage()            { /* TODO */ }
-    private void ImportTileSet()        { /* TODO */ }
+    private void ImportTileSet() => OpenTilesetImage();
     private void ExportBin() => ExportCurrentStageBin();
     private void ExportAllStages()      { /* TODO */ }
     private void CutSelection()         { /* TODO */ }

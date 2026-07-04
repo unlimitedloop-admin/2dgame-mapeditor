@@ -199,7 +199,7 @@ public partial class MainForm
 
         using var dialog = new OpenFileDialog
         {
-            Title = "タイル画像を開く",
+            Title = "タイルセット画像を選択",
             Filter = FileExtensions.ImageFilter
         };
 
@@ -226,16 +226,52 @@ public partial class MainForm
             return;
         }
 
-        _tileset?.Dispose();
-        _tileset = new Bitmap(path);
+        try
+        {
+            using var loaded = new Bitmap(path);
 
-        _tilePalette.SetTileset(_tileset);
-        _mapView.SetTileset(_tileset);
-        _metaTilePalette.SetTileset(_tileset);
- 
-        // ノードエディタが開いていればプレビューキャッシュを再生成する
-        _nodeEditorForm?.SyncTileset(_tileset);
-   }
+            if (loaded.Width % MapConstants.DefaultTileSize != 0 ||
+                loaded.Height % MapConstants.DefaultTileSize != 0)
+            {
+                MessageBox.Show(
+                    $"タイルセット画像のサイズが不正です。\n" +
+                    $"{MapConstants.DefaultTileSize}px単位で割り切れる画像を指定してください。\n\n" +
+                    $"画像サイズ: {loaded.Width} x {loaded.Height}",
+                    "Tileset",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
+
+            var bitmap = new Bitmap(loaded);
+
+            _tileset?.Dispose();
+            _tileset = bitmap;
+
+            _tilePalette.SetTileset(_tileset);
+            _mapView.SetTileset(_tileset);
+            _metaTilePalette.SetTileset(_tileset);
+
+            // 選択状態をリセット
+            _selectedTileId = -1;
+            _tilePalette.SetSelected(-1);
+            _mapView.PreviewTileId = -1;
+
+            // ノードエディタが開いていればプレビューキャッシュを再生成する
+            _nodeEditorForm?.SyncTileset(_tileset);
+        }
+        catch (Exception ex) when (
+            ex is ArgumentException ||
+            ex is IOException ||
+            ex is UnauthorizedAccessException)
+        {
+            MessageBox.Show(
+                $"タイル画像の読み込みに失敗しました。\n{path}\n\n{ex.Message}",
+                "Tileset",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+        }
+    }
 
     /// <summary>
     /// 現在のステージに新規ページを追加し、追加したページへ移動する。
@@ -265,8 +301,7 @@ public partial class MainForm
     }
 
     /// <summary>
-    /// プロジェクト切り替え前にマップビュー・タイルパレット・
-    /// プロパティウィンドウの表示をすべてクリアする。
+    /// プロジェクト切り替え前にマップビュー・タイルパレット・プロパティウィンドウの表示をすべてクリアする。
     /// </summary>
     private void ResetView()
     {

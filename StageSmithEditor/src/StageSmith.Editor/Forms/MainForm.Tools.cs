@@ -313,6 +313,11 @@ public partial class MainForm
             _mapView.PreviewTileId = index;
             _mapView.Invalidate();
         };
+
+        _tilePalette.TilesetImageSelectionRequested += (_, _) =>
+        {
+            OpenTilesetImage();
+        };
     }
 
     //========================
