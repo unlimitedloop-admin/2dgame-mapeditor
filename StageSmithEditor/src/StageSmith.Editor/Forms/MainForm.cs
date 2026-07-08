@@ -147,6 +147,8 @@ public partial class MainForm : Form
         // ノードエディタ側でUndo/Redoが実行された場合もここで拾える
         _commandManager.HistoryChanged += () => _mapView.Invalidate();
 
+        InitializeSearch();
+
         NewProject();
 
         UpdateTilePreviewIcon();

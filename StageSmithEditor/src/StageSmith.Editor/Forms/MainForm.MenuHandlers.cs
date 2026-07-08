@@ -166,12 +166,8 @@ public partial class MainForm
     private void SelectEmptyTile()      { /* TODO */ }
     private void InvertSelection()      { /* TODO */ }
     //private void ClearSelection() { }     // MainForm.Commands.cs で定義済み
-    private void OpenFindTileDialog()   { /* TODO */ }
-    private void FindTileOnMap()        { /* TODO */ }
-    private void FindNextTile()         { /* TODO */ }
-    private void FindPrevTile()         { /* TODO */ }
-    private void OpenReplaceTileDialog(){ /* TODO */ }
-    private void ClearSearchHighlight() { /* TODO */ }
+    // OpenFindTileDialog / FindTileOnMap / FindNextTile / FindPrevTile / ClearSearchHighlight は MainForm.Search.cs で定義済み
+    private void OpenReplaceTileDialog(){ /* TODO: Replace Tile は別タスクで実装予定 */ }
     private void ToggleShowTileNumbers(bool show) { /* TODO */ }
     private void ToggleMarkerOverlay(bool show)   { /* TODO */ }
     private void ZoomIn() => _mapView.ZoomIn();

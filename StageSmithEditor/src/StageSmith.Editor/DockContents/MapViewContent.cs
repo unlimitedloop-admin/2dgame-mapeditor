@@ -89,6 +89,48 @@ public class MapViewContent : DockContent
         Controls.Add(splitContainer);
     }
 
+    /// <summary>
+    /// 指定したタイル座標がスクロール表示範囲外の場合、表示範囲内（中央）へスクロールする。
+    /// すでに表示範囲内であれば何もしない。
+    /// </summary>
+    public void ScrollToTile(int x, int y)
+    {
+        var localRect = MapView.GetTileRect(x, y);
+
+        // MapView はスクロールパネル内の子コントロールなので、
+        // その Location を加算してパネル内座標に変換する。
+        var target = new Rectangle(
+            MapView.Location.X + localRect.X,
+            MapView.Location.Y + localRect.Y,
+            localRect.Width,
+            localRect.Height);
+
+        ScrollRectIntoView(target);
+    }
+
+    private void ScrollRectIntoView(Rectangle target)
+    {
+        var scrollPos = _mapScrollPanel.AutoScrollPosition;
+
+        var viewport = new Rectangle(
+            -scrollPos.X,
+            -scrollPos.Y,
+            _mapScrollPanel.ClientSize.Width,
+            _mapScrollPanel.ClientSize.Height);
+
+        if (viewport.Contains(target))
+            return; // 既に見えているので何もしない
+
+        // 対象タイルがパネル中央に来るようスクロール位置を算出する
+        var newX = target.X - (_mapScrollPanel.ClientSize.Width - target.Width) / 2;
+        var newY = target.Y - (_mapScrollPanel.ClientSize.Height - target.Height) / 2;
+
+        newX = Math.Max(0, newX);
+        newY = Math.Max(0, newY);
+
+        _mapScrollPanel.AutoScrollPosition = new Point(newX, newY);
+    }
+
     public void UpdateZoomTitle(float zoomScale)
     {
         Text = $"Map View ({zoomScale:0.0}x)";

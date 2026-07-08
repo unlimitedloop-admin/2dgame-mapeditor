@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
+using StageSmith.Editor.Constants;
 using StageSmith.Editor.Tools;
 
 namespace StageSmith.Editor.Controls;
@@ -122,6 +123,31 @@ public class MapViewControl : DoubleBufferedPanel
         ResizeRedraw = true;
     }
 
+    // ===== Search Highlight =====
+    private IReadOnlyList<TileSearchHit> _searchHighlights = [];
+    private TileSearchHit? _currentSearchHit;
+    private bool _showSearchHighlight = true;
+
+    /// <summary>
+    /// 検索ハイライトの表示状態を更新する。
+    /// hits は「現在表示中のページに属するヒットのみ」に絞ってから渡すこと（MainForm側の責務）。
+    /// </summary>
+    public void SetSearchHighlights(
+        IReadOnlyList<TileSearchHit> hits,
+        TileSearchHit? currentHit,
+        bool showHighlight)
+    {
+        _searchHighlights = hits;
+        _currentSearchHit = currentHit;
+        _showSearchHighlight = showHighlight;
+        Invalidate();
+    }
+
+    public void ClearSearchHighlights()
+    {
+        SetSearchHighlights([], null, true);
+    }
+
     // =========================
     // セット系
     // =========================
@@ -174,6 +200,7 @@ public class MapViewControl : DoubleBufferedPanel
             DrawGrid(g);
         }
 
+        DrawSearchHighlights(g);
         DrawPreview(g);
 
         // SelectionToolに描かせる
@@ -803,6 +830,47 @@ public class MapViewControl : DoubleBufferedPanel
         if (Dock == DockStyle.None)
         {
             Size = size;
+        }
+    }
+
+    /// <summary>
+    /// タイル座標(x, y)に対応する画面上の描画矩形を返す。
+    /// </summary>
+    public Rectangle GetTileRect(int x, int y)
+    {
+        var dstSize = CurrentTileRenderSize;
+        var margin  = ViewerConstants.MapViewMargin;
+
+        return new Rectangle(
+            margin + x * dstSize,
+            margin + y * dstSize,
+            dstSize,
+            dstSize);
+    }
+
+    private void DrawSearchHighlights(Graphics g)
+    {
+        if (_showSearchHighlight)
+        {
+            if (_searchHighlights.Count == 0) return;
+
+            using var fillBrush = new SolidBrush(SearchVisualConstants.HighlightFillColor);
+
+            foreach (var hit in _searchHighlights)
+            {
+                g.FillRectangle(fillBrush, GetTileRect(hit.X, hit.Y));
+            }
+        }
+        else
+        {
+            // マーカー表示OFF時：現在のジャンプ先タイルにのみ枠線を表示する
+            if (_currentSearchHit is not { } current) return;
+
+            using var pen = new Pen(
+                SearchVisualConstants.HighlightBorderColor,
+                SearchVisualConstants.HighlightBorderWidth);
+
+            g.DrawRectangle(pen, GetTileRect(current.X, current.Y));
         }
     }
 }
