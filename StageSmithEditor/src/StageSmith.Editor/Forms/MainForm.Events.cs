@@ -70,6 +70,10 @@ public partial class MainForm
                 if (pos.X < 0 || pos.Y < 0) return true;
                 PasteSelection(pos.X, pos.Y);
                 return true;
+
+            case Keys.Shift | Keys.Escape:
+                ClearSearchHighlight();
+                return true;
         }
 
         // ── TextBox フォーカス中の Esc でフォーカスアウト ────────────

@@ -14,8 +14,6 @@ public partial class MainForm
             _nodeEditorForm.PageSelected += pageIndex =>
             {
                 _context.SetPage(pageIndex);
-                //ApplyContextToView();
-                //_pageNavBar.UpdateDisplay(_context);
             };
 
             _nodeEditorForm.Show(this);
