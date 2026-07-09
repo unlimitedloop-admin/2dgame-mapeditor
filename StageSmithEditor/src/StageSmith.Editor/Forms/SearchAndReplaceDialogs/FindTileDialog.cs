@@ -1,5 +1,6 @@
 using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
+using StageSmith.Editor.Utilities;
 
 namespace StageSmith.Editor.Forms;
 
@@ -11,25 +12,29 @@ namespace StageSmith.Editor.Forms;
 public class FindTileDialog : Form
 {
     private readonly TileSearchState _searchState;
-    private Bitmap? _tileset;
+    private readonly SafeTilesetHolder _tilesetHolder = new();
 
     private readonly TextBox _tileIdTextBox;
     private readonly Panel _previewPanel;
     private readonly CheckBox _wrapAroundCheckBox;
     private readonly CheckBox _showHighlightCheckBox;
     private readonly Button _searchButton;
+    private readonly Button _nextButton;
+    private readonly Button _prevButton;
     private readonly Button _cancelButton;
     private readonly Label _hitCountLabel;
 
     /// <summary>
     /// 「検索」ボタンが押され、タイル番号が確定した際に発火する。
     /// </summary>
-    public event Action<int>? SearchRequested;
+    public event Action<int>? SearchRequested;  // 検索
+    public event Action? NextRequested;         // 次へ
+    public event Action? PreviousRequested;     // 前へ
 
     public FindTileDialog(TileSearchState searchState, int initialTileId, Bitmap? tileset)
     {
         _searchState = searchState;
-        _tileset = tileset;
+        _tilesetHolder.Replace(tileset);
 
         Text = "タイル検索";
         FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -37,7 +42,7 @@ public class FindTileDialog : Form
         MinimizeBox = false;
         ShowInTaskbar = false;
         StartPosition = FormStartPosition.CenterParent;
-        ClientSize = new Size(360, 140);
+        ClientSize = new Size(360, 163);
 
         var idLabel = new Label
         {
@@ -93,15 +98,33 @@ public class FindTileDialog : Form
         _searchButton = new Button
         {
             Text = "検索",
-            Location = new Point(180, 66),
-            Width = 80
+            Location = new Point(12, 120),
+            Width = 70
         };
         _searchButton.Click += OnSearchButtonClick;
+
+        _prevButton = new Button
+        {
+            Text = "前へ",
+            Location = new Point(88, 120),
+            Width = 60,
+            Enabled = false
+        };
+        _prevButton.Click += (_, _) => PreviousRequested?.Invoke();
+
+        _nextButton = new Button
+        {
+            Text = "次へ",
+            Location = new Point(152, 120),
+            Width = 60,
+            Enabled = false
+        };
+        _nextButton.Click += (_, _) => NextRequested?.Invoke();
 
         _cancelButton = new Button
         {
             Text = "キャンセル",
-            Location = new Point(268, 66),
+            Location = new Point(268, 120),
             Width = 80
         };
         _cancelButton.Click += (_, _) => Close();
@@ -109,7 +132,7 @@ public class FindTileDialog : Form
         Controls.AddRange([
             idLabel, _tileIdTextBox, _previewPanel,
             _wrapAroundCheckBox, _showHighlightCheckBox, _hitCountLabel,
-            _searchButton, _cancelButton
+            _searchButton, _prevButton, _nextButton, _cancelButton
         ]);
 
         AcceptButton = _searchButton;
@@ -123,7 +146,7 @@ public class FindTileDialog : Form
     /// </summary>
     public void SetTileset(Bitmap? tileset)
     {
-        _tileset = tileset;
+        _tilesetHolder.Replace(tileset);
         _previewPanel.Invalidate();
     }
 
@@ -135,6 +158,9 @@ public class FindTileDialog : Form
         _hitCountLabel.Text = totalCount > 0
             ? $"{currentIndex + 1}/{totalCount}件"
             : "0件";
+
+        _nextButton.Enabled = totalCount > 0;
+        _prevButton.Enabled = totalCount > 0;
     }
 
     private void OnSearchButtonClick(object? sender, EventArgs e)
@@ -169,11 +195,12 @@ public class FindTileDialog : Form
         var g = e.Graphics;
         g.Clear(_previewPanel.BackColor);
 
-        if (_tileset == null || !TryGetTileId(out var tileId))
+        var tileset = _tilesetHolder.Current;
+        if (tileset == null || !TryGetTileId(out var tileId))
             return;
 
         var srcSize = MapConstants.DefaultTileSize;
-        var tilesPerRow = _tileset.Width / srcSize;
+        var tilesPerRow = tileset.Width / srcSize;
 
         var sx = (tileId % tilesPerRow) * srcSize;
         var sy = (tileId / tilesPerRow) * srcSize;
@@ -184,6 +211,33 @@ public class FindTileDialog : Form
         g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
         g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Half;
 
-        g.DrawImage(_tileset, dstRect, srcRect, GraphicsUnit.Pixel);
+        g.DrawImage(tileset, dstRect, srcRect, GraphicsUnit.Pixel);
+    }
+
+    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+    {
+        if (keyData == Keys.F4)
+        {
+            NextRequested?.Invoke();
+            return true;
+        }
+
+        if (keyData == (Keys.Shift | Keys.F4))
+        {
+            PreviousRequested?.Invoke();
+            return true;
+        }
+
+        return base.ProcessCmdKey(ref msg, keyData);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _tilesetHolder.Dispose();
+        }
+
+        base.Dispose(disposing);
     }
 }

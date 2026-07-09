@@ -1,16 +1,16 @@
-using System.ComponentModel;
 using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
 using StageSmith.Editor.Constants;
 using StageSmith.Editor.Tools;
+using StageSmith.Editor.Utilities;
+using System.ComponentModel;
 
 namespace StageSmith.Editor.Controls;
 
 public class MapViewControl : DoubleBufferedPanel
 {
     private TileMap? _tileMap;
-    private Bitmap? _tileset;
-    private bool _ownsTileset;
+    private readonly SafeTilesetHolder _tilesetHolder = new();
 
     private bool _showGrid = true;
 
@@ -160,7 +160,7 @@ public class MapViewControl : DoubleBufferedPanel
 
     public void SetTileset(Bitmap? tileset)
     {
-        ReplaceTileset(tileset);
+        _tilesetHolder.Replace(tileset);
         Invalidate();
     }
 
@@ -399,74 +399,76 @@ public class MapViewControl : DoubleBufferedPanel
     }
 
 
-    private void ReplaceTileset(Bitmap? source)
-    {
-        DisposeOwnedTileset();
+    //private void ReplaceTileset(Bitmap? source)
+    //{
+    //    DisposeOwnedTileset();
 
-        if (source == null)
-            return;
+    //    if (source == null)
+    //        return;
 
-        try
-        {
-            _tileset = new Bitmap(source);
-            _ownsTileset = true;
-        }
-        catch (ArgumentException)
-        {
-            _tileset = null;
-            _ownsTileset = false;
-        }
-        catch (ObjectDisposedException)
-        {
-            _tileset = null;
-            _ownsTileset = false;
-        }
-    }
+    //    try
+    //    {
+    //        _tileset = new Bitmap(source);
+    //        _ownsTileset = true;
+    //    }
+    //    catch (ArgumentException)
+    //    {
+    //        _tileset = null;
+    //        _ownsTileset = false;
+    //    }
+    //    catch (ObjectDisposedException)
+    //    {
+    //        _tileset = null;
+    //        _ownsTileset = false;
+    //    }
+    //}
 
-    private Bitmap? GetUsableTileset()
-    {
-        var tileset = _tileset;
+    //private Bitmap? GetUsableTileset()
+    //{
+    //    var tileset = _tileset;
 
-        if (tileset == null)
-            return null;
+    //    if (tileset == null)
+    //        return null;
 
-        return IsBitmapUsable(tileset) ? tileset : null;
-    }
+    //    return IsBitmapUsable(tileset) ? tileset : null;
+    //}
 
-    private static bool IsBitmapUsable(Bitmap bitmap)
-    {
-        try
-        {
-            _ = bitmap.Width;
-            _ = bitmap.Height;
-            return true;
-        }
-        catch (ArgumentException)
-        {
-            return false;
-        }
-        catch (ObjectDisposedException)
-        {
-            return false;
-        }
-    }
+    private Bitmap? GetUsableTileset() => _tilesetHolder.Current;
 
-    private void DisposeOwnedTileset()
-    {
-        if (_ownsTileset)
-        {
-            _tileset?.Dispose();
-        }
+    //private static bool IsBitmapUsable(Bitmap bitmap)
+    //{
+    //    try
+    //    {
+    //        _ = bitmap.Width;
+    //        _ = bitmap.Height;
+    //        return true;
+    //    }
+    //    catch (ArgumentException)
+    //    {
+    //        return false;
+    //    }
+    //    catch (ObjectDisposedException)
+    //    {
+    //        return false;
+    //    }
+    //}
 
-        _tileset = null;
-        _ownsTileset = false;
-    }
+    //private void DisposeOwnedTileset()
+    //{
+    //    if (_ownsTileset)
+    //    {
+    //        _tileset?.Dispose();
+    //    }
+
+    //    _tileset = null;
+    //    _ownsTileset = false;
+    //}
 
     protected override void Dispose(bool disposing)
     {
         if (disposing)
         {
-            DisposeOwnedTileset();
+            _tilesetHolder.Dispose();
         }
 
         base.Dispose(disposing);
@@ -850,10 +852,9 @@ public class MapViewControl : DoubleBufferedPanel
 
     private void DrawSearchHighlights(Graphics g)
     {
-        if (_showSearchHighlight)
+        // ハイライト表示ONの場合、ヒット全件を塗りつぶし表示
+        if (_showSearchHighlight && _searchHighlights.Count > 0)
         {
-            if (_searchHighlights.Count == 0) return;
-
             using var fillBrush = new SolidBrush(SearchVisualConstants.HighlightFillColor);
 
             foreach (var hit in _searchHighlights)
@@ -861,11 +862,11 @@ public class MapViewControl : DoubleBufferedPanel
                 g.FillRectangle(fillBrush, GetTileRect(hit.X, hit.Y));
             }
         }
-        else
-        {
-            // マーカー表示OFF時：現在のジャンプ先タイルにのみ枠線を表示する
-            if (_currentSearchHit is not { } current) return;
 
+        // 現在のジャンプ先タイルには、ハイライトON/OFFに関わらず常に枠線を表示する
+        // （ヒット全件と現在位置を視覚的に区別するため）
+        if (_currentSearchHit is { } current)
+        {
             using var pen = new Pen(
                 SearchVisualConstants.HighlightBorderColor,
                 SearchVisualConstants.HighlightBorderWidth);

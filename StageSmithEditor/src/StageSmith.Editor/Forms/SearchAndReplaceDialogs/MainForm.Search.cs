@@ -44,39 +44,21 @@ public partial class MainForm
             : _searchState.TargetTileId;
 
         _findTileDialog = new FindTileDialog(_searchState, initialTileId, _tileset);
-        _findTileDialog.SearchRequested += OnFindTileDialogSearchRequested;
-        _findTileDialog.FormClosed += (_, _) => _findTileDialog = null;
+        _findTileDialog.SearchRequested   += ExecuteTileSearch;                  // 常に新規検索に単純化
+        _findTileDialog.NextRequested     += () => _searchState.MoveNext();
+        _findTileDialog.PreviousRequested += () => _searchState.MovePrevious();
+        _findTileDialog.FormClosed        += (_, _) => _findTileDialog = null;
 
         _findTileDialog.UpdateHitCount(_searchState.CurrentIndex, _searchState.Hits.Count);
         _findTileDialog.Show(this);
     }
 
-    private void OnFindTileDialogSearchRequested(int tileId)
-    {
-        // 同じタイルIDでの再検索は「次のヒットへ進む」（Findバー的動作）
-        if (_searchState.TargetTileId == tileId && _searchState.HasHits)
-        {
-            _searchState.MoveNext();
-        }
-        else
-        {
-            ExecuteTileSearch(tileId);
-        }
-    }
-
     private void FindTileOnMap()
     {
-        // F3: パレット選択中のタイルIDでダイアログを介さず即検索
+        // F3: パレット選択中のタイルIDで常に新規検索。次のヒットへ進みたい場合はF4を使う。
         if (_selectedTileId < 0) return;
 
-        if (_searchState.TargetTileId == _selectedTileId && _searchState.HasHits)
-        {
-            _searchState.MoveNext();
-        }
-        else
-        {
-            ExecuteTileSearch(_selectedTileId);
-        }
+        ExecuteTileSearch(_selectedTileId);
     }
 
     private void FindNextTile() => _searchState.MoveNext();

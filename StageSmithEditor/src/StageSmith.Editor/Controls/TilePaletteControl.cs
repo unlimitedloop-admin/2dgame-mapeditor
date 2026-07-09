@@ -1,11 +1,11 @@
 using StageSmith.Core.Constants;
+using StageSmith.Editor.Utilities;
 
 namespace StageSmith.Editor.Controls;
 
 public class TilePaletteControl : DoubleBufferedPanel
 {
-    private Bitmap? _tileset;
-    private bool _ownsTileset;
+    private readonly SafeTilesetHolder _tilesetHolder = new();
 
     public int SelectedTileIndex { get; private set; } = -1;
 
@@ -38,7 +38,7 @@ public class TilePaletteControl : DoubleBufferedPanel
 
     public void SetTileset(Bitmap? tileset)
     {
-        ReplaceTileset(tileset);
+        _tilesetHolder.Replace(tileset);
 
         var usableTileset = GetUsableTileset();
 
@@ -243,74 +243,76 @@ public class TilePaletteControl : DoubleBufferedPanel
             rows * (dstSize + TileSpacing));
     }
 
-    private void ReplaceTileset(Bitmap? source)
-    {
-        DisposeOwnedTileset();
+    //private void ReplaceTileset(Bitmap? source)
+    //{
+    //    DisposeOwnedTileset();
 
-        if (source == null)
-            return;
+    //    if (source == null)
+    //        return;
 
-        try
-        {
-            _tileset = new Bitmap(source);
-            _ownsTileset = true;
-        }
-        catch (ArgumentException)
-        {
-            _tileset = null;
-            _ownsTileset = false;
-        }
-        catch (ObjectDisposedException)
-        {
-            _tileset = null;
-            _ownsTileset = false;
-        }
-    }
+    //    try
+    //    {
+    //        _tileset = new Bitmap(source);
+    //        _ownsTileset = true;
+    //    }
+    //    catch (ArgumentException)
+    //    {
+    //        _tileset = null;
+    //        _ownsTileset = false;
+    //    }
+    //    catch (ObjectDisposedException)
+    //    {
+    //        _tileset = null;
+    //        _ownsTileset = false;
+    //    }
+    //}
 
-    private Bitmap? GetUsableTileset()
-    {
-        var tileset = _tileset;
+    //private Bitmap? GetUsableTileset()
+    //{
+    //    var tileset = _tileset;
 
-        if (tileset == null)
-            return null;
+    //    if (tileset == null)
+    //        return null;
 
-        return IsBitmapUsable(tileset) ? tileset : null;
-    }
+    //    return IsBitmapUsable(tileset) ? tileset : null;
+    //}
 
-    private static bool IsBitmapUsable(Bitmap bitmap)
-    {
-        try
-        {
-            _ = bitmap.Width;
-            _ = bitmap.Height;
-            return true;
-        }
-        catch (ArgumentException)
-        {
-            return false;
-        }
-        catch (ObjectDisposedException)
-        {
-            return false;
-        }
-    }
+    private Bitmap? GetUsableTileset() => _tilesetHolder.Current;
 
-    private void DisposeOwnedTileset()
-    {
-        if (_ownsTileset)
-        {
-            _tileset?.Dispose();
-        }
+    //private static bool IsBitmapUsable(Bitmap bitmap)
+    //{
+    //    try
+    //    {
+    //        _ = bitmap.Width;
+    //        _ = bitmap.Height;
+    //        return true;
+    //    }
+    //    catch (ArgumentException)
+    //    {
+    //        return false;
+    //    }
+    //    catch (ObjectDisposedException)
+    //    {
+    //        return false;
+    //    }
+    //}
 
-        _tileset = null;
-        _ownsTileset = false;
-    }
+    //private void DisposeOwnedTileset()
+    //{
+    //    if (_ownsTileset)
+    //    {
+    //        _tileset?.Dispose();
+    //    }
+
+    //    _tileset = null;
+    //    _ownsTileset = false;
+    //}
 
     protected override void Dispose(bool disposing)
     {
         if (disposing)
         {
-            DisposeOwnedTileset();
+            _tilesetHolder.Dispose();
 
             _selectTilesetImageMenuItem.Dispose();
             _contextMenu.Dispose();

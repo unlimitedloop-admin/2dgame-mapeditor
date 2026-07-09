@@ -12,7 +12,7 @@ public static class SearchVisualConstants
     public static readonly Color HighlightFillColor = Color.FromArgb(100, 255, 255, 0);
 
     /// <summary>
-    /// マーカー表示OFF時、現在のジャンプ先タイルに表示する枠線の色。
+    /// 現在のジャンプ先タイルに表示する枠線の色（ハイライトON/OFFどちらでも表示される）。
     /// </summary>
     public static readonly Color HighlightBorderColor = Color.FromArgb(220, 255, 165, 0);
 
