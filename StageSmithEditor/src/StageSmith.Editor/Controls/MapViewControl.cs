@@ -398,71 +398,7 @@ public class MapViewControl : DoubleBufferedPanel
         );
     }
 
-
-    //private void ReplaceTileset(Bitmap? source)
-    //{
-    //    DisposeOwnedTileset();
-
-    //    if (source == null)
-    //        return;
-
-    //    try
-    //    {
-    //        _tileset = new Bitmap(source);
-    //        _ownsTileset = true;
-    //    }
-    //    catch (ArgumentException)
-    //    {
-    //        _tileset = null;
-    //        _ownsTileset = false;
-    //    }
-    //    catch (ObjectDisposedException)
-    //    {
-    //        _tileset = null;
-    //        _ownsTileset = false;
-    //    }
-    //}
-
-    //private Bitmap? GetUsableTileset()
-    //{
-    //    var tileset = _tileset;
-
-    //    if (tileset == null)
-    //        return null;
-
-    //    return IsBitmapUsable(tileset) ? tileset : null;
-    //}
-
     private Bitmap? GetUsableTileset() => _tilesetHolder.Current;
-
-    //private static bool IsBitmapUsable(Bitmap bitmap)
-    //{
-    //    try
-    //    {
-    //        _ = bitmap.Width;
-    //        _ = bitmap.Height;
-    //        return true;
-    //    }
-    //    catch (ArgumentException)
-    //    {
-    //        return false;
-    //    }
-    //    catch (ObjectDisposedException)
-    //    {
-    //        return false;
-    //    }
-    //}
-
-    //private void DisposeOwnedTileset()
-    //{
-    //    if (_ownsTileset)
-    //    {
-    //        _tileset?.Dispose();
-    //    }
-
-    //    _tileset = null;
-    //    _ownsTileset = false;
-    //}
 
     protected override void Dispose(bool disposing)
     {

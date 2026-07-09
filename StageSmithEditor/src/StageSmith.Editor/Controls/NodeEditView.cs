@@ -1,4 +1,5 @@
 using StageSmith.Core.Models;
+using StageSmith.Editor.Utilities;
 using System.ComponentModel;
 
 namespace StageSmith.Editor;
@@ -17,7 +18,6 @@ public class NodeEditView : Panel
     //========================
     // イベント
     //========================
-
     /// <summary>ノードがクリックで選択されたとき発火する。</summary>
     public event Action<int>? PageSelected;
 
@@ -42,7 +42,6 @@ public class NodeEditView : Panel
     //========================
     // ビュー状態
     //========================
-
     /// <summary>ビューのオフセット（ドラッグ移動量）。</summary>
     private PointF _viewOffset = PointF.Empty;
 
@@ -89,9 +88,9 @@ public class NodeEditView : Panel
     //========================
     // 複製モード（コンテキストメニュー「このページを複製」）
     //========================
-    private bool  _isPasteMode         = false; // 複製モード中か
-    private int   _pasteModeSourceIndex = -1;   // 複製元ページインデックス
-    private Point? _pasteHoverGridPos  = null;  // ホバー中のグリッド座標
+    private bool _isPasteMode         = false; // 複製モード中か
+    private int _pasteModeSourceIndex = -1;   // 複製元ページインデックス
+    private Point? _pasteHoverGridPos = null;  // ホバー中のグリッド座標
 
     /// <summary>複製モードで貼り付け先が確定したとき発火する。</summary>
     /// <remarks>targetPageIndex が -1 なら候補位置への新規追加、0以上なら既存ページへの上書き。</remarks>
@@ -135,7 +134,7 @@ public class NodeEditView : Panel
     //========================
     // タイルプレビューキャッシュ
     //========================
-    private Bitmap?  _tileset;
+    private readonly SafeTilesetHolder _tilesetHolder = new();
     private readonly Dictionary<Guid, Bitmap> _previewCache = [];
 
     // プレビュー表示切り替えの閾値
@@ -151,7 +150,7 @@ public class NodeEditView : Panel
     /// </summary>
     public void SetTileset(Bitmap? tileset, IReadOnlyList<Page>? pages)
     {
-        _tileset = tileset;
+        _tilesetHolder.Replace(tileset);
         RebuildAllPreviews(pages);
     }
 
@@ -167,8 +166,9 @@ public class NodeEditView : Panel
             _previewCache.Remove(pageId);
         }
 
-        if (_tileset != null)
-            _previewCache[pageId] = BuildPreview(page, _tileset);
+        var tileset = _tilesetHolder.Current;
+        if (tileset != null)
+            _previewCache[pageId] = BuildPreview(page, tileset);
 
         Invalidate();
     }
@@ -180,10 +180,11 @@ public class NodeEditView : Panel
 
         _previewCache.Clear();
 
-        if (_tileset == null || pages == null) return;
+        var tileset = _tilesetHolder.Current;
+        if (tileset == null || pages == null) return;
 
         foreach (var page in pages)
-            _previewCache[page.Id] = BuildPreview(page, _tileset);
+            _previewCache[page.Id] = BuildPreview(page, tileset);
     }
 
     /// <summary>
@@ -250,6 +251,8 @@ public class NodeEditView : Panel
             foreach (var bmp in _previewCache.Values)
                 bmp.Dispose();
             _previewCache.Clear();
+
+            _tilesetHolder.Dispose();
         }
         base.Dispose(disposing);
     }

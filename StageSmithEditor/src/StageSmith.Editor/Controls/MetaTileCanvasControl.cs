@@ -1,13 +1,13 @@
 using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
+using StageSmith.Editor.Utilities;
 
 namespace StageSmith.Editor.Controls;
 
 public sealed class MetaTileCanvasControl : DoubleBufferedPanel
 {
     private MetaTile? _metaTile;
-    private Bitmap? _tileset;
-    private bool _ownsTileset;
+    private readonly SafeTilesetHolder _tilesetHolder = new();
     private int _selectedTileId = -1;
 
     private const int CellSize = 32;
@@ -34,7 +34,7 @@ public sealed class MetaTileCanvasControl : DoubleBufferedPanel
 
     public void SetTileset(Bitmap? tileset)
     {
-        ReplaceTileset(tileset);
+        _tilesetHolder.Replace(tileset);
         Invalidate();
     }
 
@@ -76,7 +76,7 @@ public sealed class MetaTileCanvasControl : DoubleBufferedPanel
 
     private void DrawTiles(Graphics g)
     {
-        var tileset = GetUsableTileset();
+        var tileset = _tilesetHolder.Current;
 
         if (_metaTile == null || tileset == null)
             return;
@@ -235,74 +235,13 @@ public sealed class MetaTileCanvasControl : DoubleBufferedPanel
         }
     }
 
-    private void ReplaceTileset(Bitmap? source)
-    {
-        DisposeOwnedTileset();
-
-        if (source == null)
-            return;
-
-        try
-        {
-            _tileset = new Bitmap(source);
-            _ownsTileset = true;
-        }
-        catch (ArgumentException)
-        {
-            _tileset = null;
-            _ownsTileset = false;
-        }
-        catch (ObjectDisposedException)
-        {
-            _tileset = null;
-            _ownsTileset = false;
-        }
-    }
-
-    private Bitmap? GetUsableTileset()
-    {
-        var tileset = _tileset;
-
-        if (tileset == null)
-            return null;
-
-        return IsBitmapUsable(tileset) ? tileset : null;
-    }
-
-    private static bool IsBitmapUsable(Bitmap bitmap)
-    {
-        try
-        {
-            _ = bitmap.Width;
-            _ = bitmap.Height;
-            return true;
-        }
-        catch (ArgumentException)
-        {
-            return false;
-        }
-        catch (ObjectDisposedException)
-        {
-            return false;
-        }
-    }
-
-    private void DisposeOwnedTileset()
-    {
-        if (_ownsTileset)
-        {
-            _tileset?.Dispose();
-        }
-
-        _tileset = null;
-        _ownsTileset = false;
-    }
+    private Bitmap? GetUsableTileset() => _tilesetHolder.Current;
 
     protected override void Dispose(bool disposing)
     {
         if (disposing)
         {
-            DisposeOwnedTileset();
+            _tilesetHolder.Dispose();
         }
 
         base.Dispose(disposing);

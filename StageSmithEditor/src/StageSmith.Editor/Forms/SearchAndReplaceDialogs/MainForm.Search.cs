@@ -94,7 +94,6 @@ public partial class MainForm
     // ------------------------
     // 検索状態変更時の反映処理
     // ------------------------
-
     private void OnSearchStateChanged()
     {
         JumpToCurrentHitIfNeeded();

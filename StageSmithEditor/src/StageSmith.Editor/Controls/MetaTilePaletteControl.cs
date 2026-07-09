@@ -1,5 +1,6 @@
 using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
+using StageSmith.Editor.Utilities;
 
 namespace StageSmith.Editor.Controls;
 
@@ -10,8 +11,7 @@ namespace StageSmith.Editor.Controls;
 public sealed class MetaTilePaletteControl : DoubleBufferedPanel
 {
     private Stage? _stage;
-    private Bitmap? _tileset;
-    private bool _ownsTileset;
+    private readonly SafeTilesetHolder _tilesetHolder = new();
 
     private readonly ToolTip _toolTip = new();
     private readonly List<MetaTileLayoutItem> _items = [];
@@ -53,38 +53,8 @@ public sealed class MetaTilePaletteControl : DoubleBufferedPanel
 
     public void SetTileset(Bitmap? tileset)
     {
-        ReplaceTileset(tileset);
+        _tilesetHolder.Replace(tileset);
         Invalidate();
-    }
-
-    private void ReplaceTileset(Bitmap? source)
-    {
-        if (_ownsTileset)
-        {
-            _tileset?.Dispose();
-        }
-
-        _tileset = null;
-        _ownsTileset = false;
-
-        if (source == null)
-            return;
-
-        try
-        {
-            _tileset = new Bitmap(source);
-            _ownsTileset = true;
-        }
-        catch (ArgumentException)
-        {
-            // 呼び出し元の Bitmap が既に Dispose 済みの場合。
-            // ここではフォールバック表示に切り替える。
-            _tileset = null;
-        }
-        catch (ObjectDisposedException)
-        {
-            _tileset = null;
-        }
     }
 
     public void RefreshPalette()
@@ -270,9 +240,9 @@ public sealed class MetaTilePaletteControl : DoubleBufferedPanel
     {
         var previewRect = Rectangle.Inflate(itemRect, -ItemPadding, -ItemPadding);
 
-        var tileset = _tileset;
+        var tileset = _tilesetHolder.Current;
 
-        if (tileset == null || !IsBitmapUsable(tileset))
+        if (tileset == null)
         {
             DrawFallbackLabel(g, previewRect, metaTile);
             return;
@@ -335,36 +305,12 @@ public sealed class MetaTilePaletteControl : DoubleBufferedPanel
         );
     }
 
-    private static bool IsBitmapUsable(Bitmap bitmap)
-    {
-        try
-        {
-            _ = bitmap.Width;
-            _ = bitmap.Height;
-            return true;
-        }
-        catch (ArgumentException)
-        {
-            return false;
-        }
-        catch (ObjectDisposedException)
-        {
-            return false;
-        }
-    }
-
     protected override void Dispose(bool disposing)
     {
         if (disposing)
         {
             _toolTip.Dispose();
-
-            if (_ownsTileset)
-            {
-                _tileset?.Dispose();
-                _tileset = null;
-                _ownsTileset = false;
-            }
+            _tilesetHolder.Dispose();
         }
 
         base.Dispose(disposing);
