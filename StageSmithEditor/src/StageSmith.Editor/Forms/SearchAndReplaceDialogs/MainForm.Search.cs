@@ -161,8 +161,10 @@ public partial class MainForm
         _replaceTileDialog.Show(this);
     }
 
-    private void ReplaceCurrentHit(int replaceTileId)
+    private void ReplaceCurrentHit(int searchTileId, int replaceTileId)
     {
+        EnsureSearchExecuted(searchTileId);
+
         if (_searchState.CurrentHit is not { } hit) return;
 
         var stage = _context.CurrentStage;
@@ -174,17 +176,18 @@ public partial class MainForm
         _commandManager.Execute(command);
 
         // 置換後は対象タイルが消えているはずなので、同条件で再検索して次のヒットへ進む
-        ExecuteTileSearch(_searchState.TargetTileId);
+        ExecuteTileSearch(searchTileId);
     }
 
-    private void ReplaceAllHits(int replaceTileId)
+    private void ReplaceAllHits(int searchTileId, int replaceTileId)
     {
+        EnsureSearchExecuted(searchTileId);
+
         if (!_searchState.HasHits) return;
 
         var stage = _context.CurrentStage;
         if (stage == null) return;
 
-        // ページごとにグルーピングし、TileMapごとに1つのTilePaintCommandを作る
         var commands = _searchState.Hits
             .GroupBy(h => h.PageIndex)
             .Select(g => (ICommand)new TilePaintCommand(
@@ -195,10 +198,20 @@ public partial class MainForm
 
         if (commands.Count == 0) return;
 
-        // 複数ページにまたがっても1回のUndoで戻せる
         _commandManager.Execute(new CompositeCommand(commands));
 
-        // 対象タイルはもう存在しないので検索状態をクリア
         _searchState.Clear();
+    }
+
+    /// <summary>
+    /// 現在の検索状態が指定タイルIDと一致していない、または未検索の場合、新規に検索を実行する。
+    /// 「検索」ボタンを押さずに「置換」「全て置換」を押した場合の救済用。
+    /// </summary>
+    private void EnsureSearchExecuted(int searchTileId)
+    {
+        if (_searchState.TargetTileId == searchTileId && _searchState.HasHits)
+            return;
+
+        ExecuteTileSearch(searchTileId);
     }
 }

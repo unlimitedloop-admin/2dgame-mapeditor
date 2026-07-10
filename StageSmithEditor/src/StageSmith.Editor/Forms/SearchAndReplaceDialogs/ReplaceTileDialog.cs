@@ -16,11 +16,8 @@ public sealed class ReplaceTileDialog : TileSearchDialogBase
     private readonly Button _replaceButton;
     private readonly Button _replaceAllButton;
 
-    /// <summary>「置換」ボタン押下時に発火する。現在ヒットしている1件のみを置換する。</summary>
-    public event Action<int>? ReplaceRequested;
-
-    /// <summary>「全て置換」ボタン押下時に発火する。スコープ内のヒット全件を置換する。</summary>
-    public event Action<int>? ReplaceAllRequested;
+    public event Action<int, int>? ReplaceRequested;
+    public event Action<int, int>? ReplaceAllRequested;
 
     private const int TopOffset = 60;         // 置換タイル番号行の分の余白
     private const int ButtonRowStartX = 172;  // 置換/全て置換ボタンの分の余白
@@ -84,17 +81,27 @@ public sealed class ReplaceTileDialog : TileSearchDialogBase
         };
         _replaceAllButton.Click += (_, _) => TryRaiseReplace(single: false);
 
-        Controls.AddRange(new Control[]
-        {
+        Controls.AddRange(
+        [
             replaceLabel, _replaceTileIdTextBox, _replacePreviewPanel,
             _scopeCurrentPageOnlyCheckBox, _replaceButton, _replaceAllButton
-        });
+        ]);
 
         SetTileset(tileset);
     }
 
     private void TryRaiseReplace(bool single)
     {
+        if (!TryGetTileId(_tileIdTextBox, out var searchTileId))
+        {
+            MessageBox.Show(
+                "0～255の範囲で検索するタイル番号を入力してください。",
+                Text,
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return;
+        }
+
         if (!TryGetTileId(_replaceTileIdTextBox, out var replaceTileId))
         {
             MessageBox.Show(
@@ -106,9 +113,9 @@ public sealed class ReplaceTileDialog : TileSearchDialogBase
         }
 
         if (single)
-            ReplaceRequested?.Invoke(replaceTileId);
+            ReplaceRequested?.Invoke(searchTileId, replaceTileId);
         else
-            ReplaceAllRequested?.Invoke(replaceTileId);
+            ReplaceAllRequested?.Invoke(searchTileId, replaceTileId);
     }
 
     public override void SetTileset(Bitmap? tileset)
