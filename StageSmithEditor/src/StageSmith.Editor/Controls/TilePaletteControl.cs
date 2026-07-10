@@ -16,6 +16,8 @@ public class TilePaletteControl : DoubleBufferedPanel
 
     private readonly ContextMenuStrip _contextMenu;
     private readonly ToolStripMenuItem _selectTilesetImageMenuItem;
+    private readonly ToolTip _toolTip = new();
+    private int _hoverTileIndex = -1;
 
     public TilePaletteControl()
     {
@@ -34,6 +36,45 @@ public class TilePaletteControl : DoubleBufferedPanel
         _contextMenu.Items.Add(_selectTilesetImageMenuItem);
 
         ContextMenuStrip = _contextMenu;
+    }
+
+    /// <summary>
+    /// 指定座標に対応するタイルインデックスを返す。範囲外・タイルセット未設定の場合は -1。
+    /// </summary>
+    private int HitTestTileIndex(Point location)
+    {
+        var tileset = GetUsableTileset();
+        if (tileset == null) return -1;
+
+        var srcSize = MapConstants.DefaultTileSize;   // 16: タイル枚数の計算用
+        var dstSize = ViewerConstants.TileRenderSize; // 32: クリック位置の計算用
+        var offset = AutoScrollPosition;
+
+        var rawX = location.X - offset.X;
+        var rawY = location.Y - offset.Y;
+
+        if (rawX < 0 || rawY < 0) return -1;
+
+        var cellSize = dstSize + TileSpacing;
+
+        var col = rawX / cellSize;
+        var row = rawY / cellSize;
+
+        var tilesPerRow = tileset.Width / srcSize;
+        var tilesPerCol = tileset.Height / srcSize;
+
+        if (col < 0 || col >= tilesPerRow ||
+            row < 0 || row >= tilesPerCol)
+            return -1;
+
+        // --- 余白クリック防止 ---
+        var offsetX = rawX % cellSize;
+        var offsetY = rawY % cellSize;
+
+        if (offsetX >= dstSize || offsetY >= dstSize)
+            return -1;
+
+        return row * tilesPerRow + col;
     }
 
     public void SetTileset(Bitmap? tileset)
@@ -86,43 +127,35 @@ public class TilePaletteControl : DoubleBufferedPanel
         if (e.Button != MouseButtons.Left)
             return;
 
-        var tileset = GetUsableTileset();
-        if (tileset == null) return;
-
-        var srcSize = MapConstants.DefaultTileSize;   // 16: タイル枚数の計算用
-        var dstSize = ViewerConstants.TileRenderSize; // 32: クリック位置の計算用
-        var offset = AutoScrollPosition;
-
-        var rawX = e.X - offset.X;
-        var rawY = e.Y - offset.Y;
-
-        if (rawX < 0 || rawY < 0) return;
-
-        var cellSize = dstSize + TileSpacing;
-
-        var col = rawX / cellSize;
-        var row = rawY / cellSize;
-
-        var tilesPerRow = tileset.Width / srcSize;
-        var tilesPerCol = tileset.Height / srcSize;
-
-        if (col < 0 || col >= tilesPerRow ||
-            row < 0 || row >= tilesPerCol)
-            return;
-
-        // --- 余白クリック防止 ---
-        var offsetX = rawX % cellSize;
-        var offsetY = rawY % cellSize;
-
-        if (offsetX >= dstSize || offsetY >= dstSize)
-            return;
-
-        var index = row * tilesPerRow + col;
+        var index = HitTestTileIndex(e.Location);
+        if (index < 0) return;
 
         SelectedTileIndex = index;
         TileSelected?.Invoke(index);
 
         Invalidate();
+    }
+
+    protected override void OnMouseMove(MouseEventArgs e)
+    {
+        base.OnMouseMove(e);
+
+        var index = HitTestTileIndex(e.Location);
+
+        if (_hoverTileIndex == index)
+            return;
+
+        _hoverTileIndex = index;
+
+        _toolTip.SetToolTip(this, index >= 0 ? $"タイル番号: {index}" : string.Empty);
+    }
+
+    protected override void OnMouseLeave(EventArgs e)
+    {
+        base.OnMouseLeave(e);
+
+        _hoverTileIndex = -1;
+        _toolTip.SetToolTip(this, string.Empty);
     }
 
     protected override void OnMouseWheel(MouseEventArgs e)
@@ -250,6 +283,7 @@ public class TilePaletteControl : DoubleBufferedPanel
         if (disposing)
         {
             _tilesetHolder.Dispose();
+            _toolTip.Dispose();
 
             _selectTilesetImageMenuItem.Dispose();
             _contextMenu.Dispose();
