@@ -12,16 +12,21 @@ public static class TileSearchService
     /// 指定タイルIDに一致するタイルを、ステージ内の全ページから走査して返す。
     /// ヒットの並び順はページ番号昇順 → 各ページ内は上から下・左から右（ラスタ順）。
     /// </summary>
-    public static List<TileSearchHit> Search(Stage stage, int tileId)
+    public static List<TileSearchHit> Search(Stage stage, int tileId, int? scopePageIndex = null)
     {
         var hits = new List<TileSearchHit>();
 
-        // タイルIDは byte 範囲外なら一致しようがないため、発生源で弾く
         if (tileId < byte.MinValue || tileId > byte.MaxValue)
             return hits;
 
-        for (var pageIndex = 0; pageIndex < stage.Pages.Count; pageIndex++)
+        var pageIndices = scopePageIndex.HasValue
+            ? [scopePageIndex.Value]
+            : Enumerable.Range(0, stage.Pages.Count);
+
+        foreach (var pageIndex in pageIndices)
         {
+            if (pageIndex < 0 || pageIndex >= stage.Pages.Count) continue;
+
             var tileMap = stage.Pages[pageIndex].TileMap;
 
             for (var y = 0; y < tileMap.Height; y++)
@@ -29,9 +34,7 @@ public static class TileSearchService
                 for (var x = 0; x < tileMap.Width; x++)
                 {
                     if (tileMap.GetTile(x, y) == tileId)
-                    {
                         hits.Add(new TileSearchHit(pageIndex, x, y));
-                    }
                 }
             }
         }

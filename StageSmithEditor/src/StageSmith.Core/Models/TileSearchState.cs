@@ -30,6 +30,12 @@ public sealed class TileSearchState
             ? _hits[CurrentIndex]
             : null;
 
+    // ===== 置換オプション =====
+    public int ReplaceTileId { get; set; } = -1;
+
+    /// <summary>true の場合、検索・ナビゲーション・全て置換のすべてを現在ページのみに限定する。</summary>
+    public bool ScopeCurrentPageOnly { get; set; } = false;
+
     public event Action? Changed;
 
     private void NotifyChanged()

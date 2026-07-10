@@ -1,7 +1,8 @@
-using System.Linq;
+using StageSmith.Application.Commands;
 using StageSmith.Application.Services;
 using StageSmith.Core.Models;
 using StageSmith.Editor.Forms;
+using System.Linq;
 
 namespace StageSmith.Editor;
 
@@ -12,6 +13,11 @@ public partial class MainForm
     //========================
     private readonly TileSearchState _searchState = new();
     private FindTileDialog? _findTileDialog;
+
+    //========================
+    // タイル置換
+    //========================
+    private ReplaceTileDialog? _replaceTileDialog;
 
     /// <summary>
     /// タイル検索まわりのイベント購読をまとめる初期化処理。
@@ -70,18 +76,19 @@ public partial class MainForm
     // ------------------------
     // 検索実行本体
     // ------------------------
-
     private void ExecuteTileSearch(int tileId)
     {
         var stage = _context.CurrentStage;
         if (stage == null) return;
 
-        var hits = TileSearchService.Search(stage, tileId);
+        var scopePageIndex = _searchState.ScopeCurrentPageOnly
+            ? _context.CurrentPageIndex
+            : (int?)null;
+
+        var hits = TileSearchService.Search(stage, tileId, scopePageIndex);
         _searchState.SetHits(tileId, hits);
 
-        // ダイアログが開いている場合は "0件" 表示で十分なので、
-        // ダイアログ未表示（F3実行）のときだけメッセージで通知する
-        if (!_searchState.HasHits && _findTileDialog is not { IsDisposed: false })
+        if (!_searchState.HasHits && _findTileDialog is not { IsDisposed: false } && _replaceTileDialog is not { IsDisposed: false })
         {
             MessageBox.Show(
                 $"タイル番号 {tileId} は見つかりませんでした。",
@@ -100,6 +107,7 @@ public partial class MainForm
         RefreshSearchHighlightsOnMapView();
 
         _findTileDialog?.UpdateHitCount(_searchState.CurrentIndex, _searchState.Hits.Count);
+        _replaceTileDialog?.UpdateHitCount(_searchState.CurrentIndex, _searchState.Hits.Count);
     }
 
     private void JumpToCurrentHitIfNeeded()
@@ -124,5 +132,73 @@ public partial class MainForm
             : (TileSearchHit?)null;
 
         _mapView.SetSearchHighlights(hits, currentHit, _searchState.ShowHighlight);
+    }
+
+    // ------------------------
+    // 置換ダイアログ関連
+    // ------------------------
+    private void OpenReplaceTileDialog()
+    {
+        if (_replaceTileDialog is { IsDisposed: false })
+        {
+            _replaceTileDialog.Activate();
+            return;
+        }
+
+        var initialTileId = _selectedTileId >= 0
+            ? _selectedTileId
+            : _searchState.TargetTileId;
+
+        _replaceTileDialog = new ReplaceTileDialog(_searchState, initialTileId, _tileset);
+        _replaceTileDialog.SearchRequested     += ExecuteTileSearch;
+        _replaceTileDialog.NextRequested       += () => _searchState.MoveNext();
+        _replaceTileDialog.PreviousRequested   += () => _searchState.MovePrevious();
+        _replaceTileDialog.ReplaceRequested    += ReplaceCurrentHit;
+        _replaceTileDialog.ReplaceAllRequested += ReplaceAllHits;
+        _replaceTileDialog.FormClosed += (_, _) => _replaceTileDialog = null;
+
+        _replaceTileDialog.UpdateHitCount(_searchState.CurrentIndex, _searchState.Hits.Count);
+        _replaceTileDialog.Show(this);
+    }
+
+    private void ReplaceCurrentHit(int replaceTileId)
+    {
+        if (_searchState.CurrentHit is not { } hit) return;
+
+        var stage = _context.CurrentStage;
+        if (stage == null) return;
+
+        var tileMap = stage.Pages[hit.PageIndex].TileMap;
+        var command = new TilePaintCommand(tileMap, [(hit.X, hit.Y)], (byte)replaceTileId);
+
+        _commandManager.Execute(command);
+
+        // 置換後は対象タイルが消えているはずなので、同条件で再検索して次のヒットへ進む
+        ExecuteTileSearch(_searchState.TargetTileId);
+    }
+
+    private void ReplaceAllHits(int replaceTileId)
+    {
+        if (!_searchState.HasHits) return;
+
+        var stage = _context.CurrentStage;
+        if (stage == null) return;
+
+        // ページごとにグルーピングし、TileMapごとに1つのTilePaintCommandを作る
+        var commands = _searchState.Hits
+            .GroupBy(h => h.PageIndex)
+            .Select(g => (ICommand)new TilePaintCommand(
+                stage.Pages[g.Key].TileMap,
+                g.Select(h => (h.X, h.Y)),
+                (byte)replaceTileId))
+            .ToList();
+
+        if (commands.Count == 0) return;
+
+        // 複数ページにまたがっても1回のUndoで戻せる
+        _commandManager.Execute(new CompositeCommand(commands));
+
+        // 対象タイルはもう存在しないので検索状態をクリア
+        _searchState.Clear();
     }
 }

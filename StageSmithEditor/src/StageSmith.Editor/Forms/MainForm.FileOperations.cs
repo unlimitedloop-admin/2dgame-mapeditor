@@ -252,6 +252,7 @@ public partial class MainForm
             _mapView.SetTileset(_tileset);
             _metaTilePalette.SetTileset(_tileset);
             _findTileDialog?.SetTileset(_tileset);
+            _replaceTileDialog?.SetTileset(_tileset);
 
             // 選択状態をリセット
             _selectedTileId = -1;
@@ -319,6 +320,7 @@ public partial class MainForm
         _metaTilePalette.SetStage(null);
         _metaTilePalette.SetTileset(null);
         _findTileDialog?.SetTileset(null);
+        _replaceTileDialog?.SetTileset(null);
         _context.SetSelectedMetaTile(null);
 
         _propertyWindow.RefreshProperties();
