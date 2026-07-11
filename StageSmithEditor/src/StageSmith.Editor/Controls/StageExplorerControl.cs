@@ -39,6 +39,8 @@ public class StageExplorerControl : UserControl
     private readonly TreeView _treeView;
     private readonly ContextMenuStrip _stageMenu;
     private readonly ContextMenuStrip _pageMenu;
+    private readonly Font _currentPageFont;
+    private bool _suppressSelectEvent;
 
     //========================
     // アイコンインデックス（ImageList）
@@ -55,6 +57,7 @@ public class StageExplorerControl : UserControl
         _treeView = CreateTreeView();
         _stageMenu = CreateStageContextMenu();
         _pageMenu = CreatePageContextMenu();
+        _currentPageFont = new Font(_treeView.Font, FontStyle.Bold);
 
         Controls.Add(_treeView);
     }
@@ -79,7 +82,33 @@ public class StageExplorerControl : UserControl
     {
         _currentStage = stage;
         _currentPage = page;
+
+        var node = FindPageNode(stage, page);
+        if (node != null && !ReferenceEquals(_treeView.SelectedNode, node))
+        {
+            _suppressSelectEvent = true;
+            _treeView.SelectedNode = node;
+            _suppressSelectEvent = false;
+        }
+
         RefreshHighlight();
+    }
+
+    private TreeNode? FindPageNode(Stage stage, Page page)
+    {
+        foreach (TreeNode stageNode in _treeView.Nodes)
+        {
+            foreach (TreeNode pageNode in stageNode.Nodes)
+            {
+                if (pageNode.Tag is NodeTag tag
+                    && ReferenceEquals(tag.Stage, stage)
+                    && ReferenceEquals(tag.Page, page))
+                {
+                    return pageNode;
+                }
+            }
+        }
+        return null;
     }
 
     /// <summary>
@@ -106,6 +135,19 @@ public class StageExplorerControl : UserControl
         _treeView.EndUpdate();
 
         AdjustTreeViewWidth(_treeView);
+
+        // ノード再生成でネイティブ選択状態が失われるため、現在ページに合わせて再同期する
+        if (_currentStage != null && _currentPage != null)
+        {
+            var node = FindPageNode(_currentStage, _currentPage);
+            if (node != null)
+            {
+                _suppressSelectEvent = true;
+                _treeView.SelectedNode = node;
+                _suppressSelectEvent = false;
+            }
+        }
+
         RefreshHighlight();
     }
 
@@ -162,9 +204,7 @@ public class StageExplorerControl : UserControl
                 var isCurrent = ReferenceEquals(tag.Stage, _currentStage)
                              && ReferenceEquals(tag.Page, _currentPage);
 
-                pageNode.NodeFont = isCurrent
-                    ? new Font(_treeView.Font, FontStyle.Bold)
-                    : null;
+                pageNode.NodeFont = isCurrent ? _currentPageFont : null;
 
                 pageNode.ForeColor = isCurrent
                     ? SystemColors.Highlight
@@ -178,6 +218,7 @@ public class StageExplorerControl : UserControl
         }
 
         _treeView.EndUpdate();
+        _treeView.Invalidate();
     }
 
     //========================
@@ -187,24 +228,20 @@ public class StageExplorerControl : UserControl
     {
         if (e.Button == MouseButtons.Right)
         {
-            _treeView.SelectedNode = e.Node;
             if (e.Node != null)
             {
+                // 右クリックでのノード選択はページ切り替えを伴わせたくないので抑制
+                _suppressSelectEvent = true;
+                _treeView.SelectedNode = e.Node;
+                _suppressSelectEvent = false;
+
                 ShowContextMenu(e.Node, e.Location);
             }
             return;
         }
 
-        if (e.Button == MouseButtons.Left && e.Node?.Tag is NodeTag tag)
-        {
-            if (tag.Kind == NodeKind.Page && tag.Page != null)
-            {
-                _currentStage = tag.Stage;
-                _currentPage = tag.Page;
-                RefreshHighlight();
-                PageSelected?.Invoke(tag.Stage, tag.Page);
-            }
-        }
+        // 左クリックの選択自体はTreeViewが自動でSelectedNodeを更新するため
+        // ページ切り替えロジックはOnAfterSelectに一本化する
     }
 
     private void OnBeforeLabelEdit(object? sender, NodeLabelEditEventArgs e)
@@ -217,6 +254,18 @@ public class StageExplorerControl : UserControl
             return;
         }
         e.CancelEdit = true;
+    }
+
+    private void OnAfterSelect(object? sender, TreeViewEventArgs e)
+    {
+        if (_suppressSelectEvent) return;
+        if (e.Node?.Tag is not NodeTag tag) return;
+        if (tag.Kind != NodeKind.Page || tag.Page == null) return;
+
+        _currentStage = tag.Stage;
+        _currentPage = tag.Page;
+        RefreshHighlight();
+        PageSelected?.Invoke(tag.Stage, tag.Page);
     }
 
     private void OnAfterLabelEdit(object? sender, NodeLabelEditEventArgs e)
@@ -411,6 +460,7 @@ public class StageExplorerControl : UserControl
         };
 
         tv.NodeMouseClick += OnNodeMouseClick;
+        tv.AfterSelect += OnAfterSelect;
         tv.BeforeLabelEdit += OnBeforeLabelEdit;
         tv.AfterLabelEdit += OnAfterLabelEdit;
 
@@ -515,6 +565,16 @@ public class StageExplorerControl : UserControl
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Delete",    null, OnPageDelete);
         return menu;
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _currentPageFont?.Dispose();
+        }
+
+        base.Dispose(disposing);
     }
 
     //========================
