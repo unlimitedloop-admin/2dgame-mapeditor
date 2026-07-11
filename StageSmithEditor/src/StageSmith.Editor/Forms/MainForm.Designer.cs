@@ -47,6 +47,7 @@ namespace StageSmith.Editor
             _menuFileSaveProject    = new ToolStripMenuItem("Save Project")     { ShortcutKeys = Keys.Control | Keys.Shift | Keys.S };
             _menuFileCloseProject   = new ToolStripMenuItem("Close Project");
             _menuFileNewStage       = new ToolStripMenuItem("New Stage")        { ShortcutKeys = Keys.Control | Keys.N };
+            _menuFileImportStage    = new ToolStripMenuItem("Import Stage...");
             _menuFileSaveStage      = new ToolStripMenuItem("Save Stage")       { ShortcutKeys = Keys.Control | Keys.S };
             _menuFileReloadStage    = new ToolStripMenuItem("Reload Stage");
             _menuFileDropStage      = new ToolStripMenuItem("Drop Stage");
@@ -62,6 +63,7 @@ namespace StageSmith.Editor
                 _menuFileCloseProject,
                 new ToolStripSeparator(),
                 _menuFileNewStage,
+                _menuFileImportStage,
                 _menuFileSaveStage,
                 _menuFileReloadStage,
                 _menuFileDropStage,
@@ -285,6 +287,7 @@ namespace StageSmith.Editor
         private ToolStripMenuItem _menuFileExportBin      = null!;
         private ToolStripMenuItem _menuFileExportAll      = null!;
         private ToolStripMenuItem _menuFileQuit           = null!;
+        private ToolStripMenuItem _menuFileImportStage    = null!;
 
         // Edit
         private ToolStripMenuItem _menuEdit                     = null!;

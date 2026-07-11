@@ -15,6 +15,7 @@ public partial class MainForm
         _menuFileSaveProject.Click   += (_, _) => SaveProject();
         _menuFileCloseProject.Click  += (_, _) => CloseProject();
         _menuFileNewStage.Click      += (_, _) => NewStage();
+        _menuFileImportStage.Click   += (_, _) => ImportStage();
         _menuFileSaveStage.Click     += (_, _) => SaveStage();
         _menuFileReloadStage.Click   += (_, _) => ReloadStage();
         _menuFileDropStage.Click     += (_, _) => DropStage();

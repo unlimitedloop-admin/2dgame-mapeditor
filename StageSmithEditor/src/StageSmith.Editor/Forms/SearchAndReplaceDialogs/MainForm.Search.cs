@@ -2,7 +2,6 @@ using StageSmith.Application.Commands;
 using StageSmith.Application.Services;
 using StageSmith.Core.Models;
 using StageSmith.Editor.Forms;
-using System.Linq;
 
 namespace StageSmith.Editor;
 
