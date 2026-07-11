@@ -149,6 +149,12 @@ public partial class MainForm : Form
 
         InitializeSearch();
 
+        FormClosing += (_, _) =>
+        {
+            _nodeEditorForm?.Close();
+            _metaTileEditorForm?.Close();
+        };
+
         NewProject();
 
         UpdateTilePreviewIcon();

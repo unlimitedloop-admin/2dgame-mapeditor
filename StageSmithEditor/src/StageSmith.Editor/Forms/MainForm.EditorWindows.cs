@@ -16,7 +16,7 @@ public partial class MainForm
                 _context.SetPage(pageIndex);
             };
 
-            _nodeEditorForm.Show(this);
+            _nodeEditorForm.Show();
         }
         else
         {
@@ -49,7 +49,7 @@ public partial class MainForm
 
             _metaTileEditorForm.MetaTilesChanged += RefreshMetaTilePaletteFromCurrentStage;
 
-            _metaTileEditorForm.Show(this);
+            _metaTileEditorForm.Show();
         }
         else
         {

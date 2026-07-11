@@ -82,8 +82,8 @@ public partial class PageNodeEditorForm : Form
         Text = "Page Node Editor";
         Size = new Size(800, 600);
         MinimumSize = new Size(500, 400);
-        StartPosition = FormStartPosition.Manual;
-        KeyPreview    = true; // ProcessCmdKeyで矢印キーを拾うために必要
+        StartPosition = FormStartPosition.CenterScreen;
+        KeyPreview    = true;
 
         // メインレイアウト（上：情報表示、中：ノードビュー、下：ステータスバー）
         var mainLayout = new TableLayoutPanel

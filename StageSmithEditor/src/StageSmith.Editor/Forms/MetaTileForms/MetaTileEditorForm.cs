@@ -45,7 +45,7 @@ public sealed class MetaTileEditorForm : Form
         _stage = stage ?? throw new ArgumentNullException(nameof(stage));
 
         Text = "MetaTile Editor";
-        StartPosition = FormStartPosition.CenterParent;
+        StartPosition = FormStartPosition.CenterScreen;
         Size = new Size(820, 560);
 
         InitializeLayout();
