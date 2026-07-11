@@ -151,7 +151,7 @@ public partial class MainForm
     //private void OpenProject() { }        // MainForm.FileOperations.cs で定義済み
     //private void SaveProject() { }        // MainForm.FileOperations.cs で定義済み
     private void CloseProject()         { /* TODO */ }
-    private void NewStage()             { /* TODO */ }
+    // private void NewStage() { }          // MainForm.FileOperations.cs で定義済み
     private void SaveStage() => ExportCurrentStageDefAs();
     private void ReloadStage()          { /* TODO */ }
     private void DropStage()            { /* TODO */ }

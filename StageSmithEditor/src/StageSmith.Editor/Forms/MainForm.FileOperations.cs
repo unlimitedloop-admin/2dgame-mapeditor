@@ -1,5 +1,7 @@
 using StageSmith.Application.Services;
 using StageSmith.Core.Constants;
+using StageSmith.Core.Models;
+using StageSmith.Editor.Forms;
 using StageSmith.Infrastructure;
 using StageSmith.Infrastructure.Persistence;
 
@@ -93,6 +95,58 @@ public partial class MainForm
 
         var repository = new JsonProjectRepository();
         repository.Save(_context.Project, _currentProjectPath);
+    }
+
+    private void NewStage()
+    {
+        var project = _context.Project;
+        if (project == null)
+        {
+            MessageBox.Show(
+                this,
+                "プロジェクトが開かれていません。",
+                "New Stage",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+            return;
+        }
+
+        var defaultName = GenerateDefaultStageName(project);
+
+        using var dialog = new NewStageDialog(defaultName);
+        if (dialog.ShowDialog(this) != DialogResult.OK) return;
+
+        var stage = project.AddStage(dialog.StageName);
+
+        var newIndex = project.Stages.IndexOf(stage);
+        _context.SetStage(newIndex);
+
+        _stageExplorer.RebuildTree();
+        ApplyContextToView();
+    }
+
+    /// <summary>
+    /// "Stage 001" 形式で、まだ使われていない最小の連番を割り当てた初期名を生成する。
+    /// </summary>
+    private static string GenerateDefaultStageName(EditorProject project)
+    {
+        var usedNumbers = new HashSet<int>();
+        var regex = new System.Text.RegularExpressions.Regex(@"^Stage (\d{3})$");
+
+        foreach (var stage in project.Stages)
+        {
+            var match = regex.Match(stage.Name);
+            if (match.Success && int.TryParse(match.Groups[1].Value, out var number))
+            {
+                usedNumbers.Add(number);
+            }
+        }
+
+        var candidate = 1;
+        while (usedNumbers.Contains(candidate))
+            candidate++;
+
+        return $"Stage {candidate:D3}";
     }
 
     private void ExportStageDef(string filename)
