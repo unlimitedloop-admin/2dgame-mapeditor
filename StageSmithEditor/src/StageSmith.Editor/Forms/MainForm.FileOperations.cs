@@ -241,6 +241,68 @@ public partial class MainForm
             MessageBoxIcon.Information);
     }
 
+    private void ExportAllStages()
+    {
+        var project = _context.Project;
+
+        if (project == null || !project.HasStages)
+        {
+            MessageBox.Show(
+                this,
+                "出力対象のステージがありません。",
+                "Export All Stages",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return;
+        }
+
+        using var folderDialog = new FolderBrowserDialog
+        {
+            Description = "出力先フォルダを選択",
+        };
+
+        if (folderDialog.ShowDialog(this) != DialogResult.OK) return;
+
+        var outputDir = folderDialog.SelectedPath;
+
+        // TODO: 将来的にエディタ設定で「ステージごとにサブフォルダを分ける」オプションを追加する場合は
+        //       ここで outputDir をステージ単位のサブフォルダに切り替える分岐を入れる。
+        var exportedCount = 0;
+
+        foreach (var stage in project.Stages)
+        {
+            var baseName = SanitizeFileName(stage.Name);
+
+            var binPath = Path.Combine(outputDir, $"{baseName}{FileExtensions.StageMapBinary}");
+            var defPath = Path.Combine(outputDir, $"{baseName}{FileExtensions.StageDefinition}");
+
+            var bytes = stage.ExportBin();
+            File.WriteAllBytes(binPath, bytes);
+
+            DefExporter.Export(stage, defPath);
+
+            exportedCount++;
+        }
+
+        MessageBox.Show(
+            this,
+            $"{exportedCount} 件のステージを出力しました。\n{outputDir}",
+            "Export All Stages",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Information);
+    }
+
+    /// <summary>
+    /// ファイル名として使用できない文字を "_" に置換する。
+    /// ステージ名は自由入力のため、パス区切り文字などが含まれる可能性がある。
+    /// </summary>
+    private static string SanitizeFileName(string name)
+    {
+        var invalidChars = Path.GetInvalidFileNameChars();
+        var sanitized = new string(name.Select(c => invalidChars.Contains(c) ? '_' : c).ToArray());
+        return string.IsNullOrWhiteSpace(sanitized) ? "Stage" : sanitized;
+    }
+
     private void OpenTilesetImage()
     {
         var stage = _context.CurrentStage;

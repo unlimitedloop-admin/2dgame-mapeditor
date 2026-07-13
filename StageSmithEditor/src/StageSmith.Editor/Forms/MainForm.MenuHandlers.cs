@@ -157,7 +157,7 @@ public partial class MainForm
     private void DropStage()            { /* TODO */ }
     private void ImportTileSet() => OpenTilesetImage();
     private void ExportBin() => ExportCurrentStageBin();
-    private void ExportAllStages()      { /* TODO */ }
+    //private void ExportAllStages() { }    // MainForm.FileOperations.cs で定義済み
     private void CutSelection()         { /* TODO */ }
     //private void CopySelection() { }      // MainForm.Commands.cs で定義済み
     private void PasteSelection()       { /* TODO */ }
