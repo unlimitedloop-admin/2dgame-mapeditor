@@ -98,6 +98,7 @@ public partial class MainForm
         // ========================
         // Edit / View / Navigation メニューの有効状態管理
         // ========================
+        _menuFile.DropDownOpening       += (_, _) => RefreshFileMenuState();
         _menuEdit.DropDownOpening       += (_, _) => RefreshEditMenuState();
         _menuView.DropDownOpening       += (_, _) => RefreshViewMenuState();
         _menuNavigation.DropDownOpening += (_, _) => RefreshNavigationMenuState();
@@ -106,6 +107,23 @@ public partial class MainForm
     // ========================
     // Edit メニュー有効状態
     // ========================
+    private void RefreshFileMenuState()
+    {
+        var hasProject = _context.HasProject;
+        var hasStage   = _context.HasStage;
+
+        _menuFileSaveProject.Enabled   = hasProject;
+        _menuFileCloseProject.Enabled  = hasProject;
+        _menuFileNewStage.Enabled      = hasProject;
+        _menuFileImportStage.Enabled   = hasProject;
+        _menuFileSaveStage.Enabled     = hasStage;
+        _menuFileReloadStage.Enabled   = hasStage;
+        _menuFileDropStage.Enabled     = hasStage;
+        _menuFileImportTileSet.Enabled = hasStage;
+        _menuFileExportBin.Enabled     = hasStage;
+        _menuFileExportAll.Enabled     = hasProject;
+    }
+
     private void RefreshEditMenuState()
     {
         _menuEditUndo.Enabled   = _commandManager.CanUndo;
@@ -150,8 +168,8 @@ public partial class MainForm
     // ========================
     //private void OpenProject() { }        // MainForm.FileOperations.cs で定義済み
     //private void SaveProject() { }        // MainForm.FileOperations.cs で定義済み
-    private void CloseProject()         { /* TODO */ }
-    // private void NewStage() { }          // MainForm.FileOperations.cs で定義済み
+    //private void CloseProject() { }       // MainForm.FileOperations.cs で定義済み
+    //private void NewStage() { }           // MainForm.FileOperations.cs で定義済み
     private void SaveStage() => ExportCurrentStageDefAs();
     private void ReloadStage()          { /* TODO */ }
     private void DropStage()            { /* TODO */ }

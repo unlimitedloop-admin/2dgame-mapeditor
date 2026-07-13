@@ -3,20 +3,17 @@ namespace StageSmith.Editor;
 public partial class MainForm
 {
     //========================
-    // StageExplorer バインド
+    // StageExplorer 初期化（イベント購読は起動時に一度だけ）
     //========================
-    private void BindStageExplorer()
+    private void InitializeStageExplorerEvents()
     {
-        if (_context.Project == null) return;
-
-        _stageExplorer.Bind(_context.Project);
-
         // ページ選択 → MapView に反映
         _stageExplorer.PageSelected += (stage, page) =>
         {
-            _context.SetStage(_context.Project!.Stages.IndexOf(stage));
+            if (_context.Project == null) return;
+
+            _context.SetStage(_context.Project.Stages.IndexOf(stage));
             _context.SetPage(stage.Pages.IndexOf(page));
-            //ApplyContextToView();
         };
 
         _stageExplorer.StageListChanged += () =>
@@ -32,7 +29,9 @@ public partial class MainForm
         // 現在表示中のページが削除されたとき → 直前 or 直後 or 空表示
         _stageExplorer.PageDeleted += (stage, nextPage) =>
         {
-            var stageIndex = _context.Project!.Stages.IndexOf(stage);
+            if (_context.Project == null) return;
+
+            var stageIndex = _context.Project.Stages.IndexOf(stage);
             _context.SetStage(stageIndex);
 
             if (nextPage != null)
@@ -48,10 +47,18 @@ public partial class MainForm
                 _propertyWindow.RefreshProperties();
                 _pageNavBar.UpdateDisplay(_context);
                 _mapView.Invalidate();
-                return;
             }
         };
+    }
 
+    //========================
+    // StageExplorer バインド（プロジェクト切り替えの度に呼ぶ）
+    //========================
+    private void BindStageExplorer()
+    {
+        // _context.Project が null の場合（CloseProject）は
+        // StageExplorerControl.Bind(null) 側で空表示にリセットされる
+        _stageExplorer.Bind(_context.Project);
         SyncExplorerHighlight();
     }
 

@@ -120,6 +120,7 @@ public partial class MainForm : Form
         BindTilePalette();
         BindMetaTilePalette();
         BindPageNavigationController();
+        InitializeStageExplorerEvents();
 
         // PropertyWindow のバインド
         _propertyWindow.Bind(_context);
@@ -149,13 +150,19 @@ public partial class MainForm : Form
 
         InitializeSearch();
 
-        FormClosing += (_, _) =>
+        FormClosing += (_, e) =>
         {
+            if (!ConfirmDiscardChangesIfNeeded())
+            {
+                e.Cancel = true;
+                return;
+            }
+
             _nodeEditorForm?.Close();
             _metaTileEditorForm?.Close();
         };
 
-        NewProject();
+        UpdateEditorAvailability();
 
         UpdateTilePreviewIcon();
     }

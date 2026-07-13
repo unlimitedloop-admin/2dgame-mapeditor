@@ -10,26 +10,35 @@ namespace StageSmith.Editor;
 public partial class MainForm
 {
     private string? _currentProjectPath;
+    private int _savedUndoCount = 0;
 
     private void NewProject()
     {
+        if (!ConfirmDiscardChangesIfNeeded()) return;
+
         var project = ProjectFactory.CreateNewProject();
 
         _currentProjectPath = null;
 
-        // 前のプロジェクトの表示をクリア
         ResetView();
 
         _context.Project = project;
         _context.SetStage(0);
         _context.SetPage(0);
 
+        _commandManager.Clear();
+        _savedUndoCount = 0;
+
         BindStageExplorer();
         ApplyContextToView();
+
+        UpdateEditorAvailability();
     }
 
     private void OpenProject()
     {
+        if (!ConfirmDiscardChangesIfNeeded()) return;
+
         using var dialog = new OpenFileDialog
         {
             Title = "プロジェクトを開く",
@@ -44,15 +53,37 @@ public partial class MainForm
 
         _currentProjectPath = dialog.FileName;
 
-        // 前のプロジェクトの表示をクリア
         ResetView();
 
         _context.Project = project;
         _context.SetStage(0);
         _context.SetPage(0);
 
+        _commandManager.Clear();
+        _savedUndoCount = 0;
+
         BindStageExplorer();
         ApplyContextToView();
+
+        UpdateEditorAvailability();
+    }
+
+    private void CloseProject()
+    {
+        if (_context.Project == null) return;
+
+        if (!ConfirmDiscardChangesIfNeeded()) return;
+
+        _currentProjectPath = null;
+        _context.Project = null;
+
+        ResetView();
+        BindStageExplorer();   // 内部で _stageExplorer.Bind(_context.Project) が呼ばれる想定
+
+        _commandManager.Clear();
+        _savedUndoCount = 0;
+
+        UpdateEditorAvailability();
     }
 
     private void SaveProject()
@@ -71,6 +102,8 @@ public partial class MainForm
 
         var repository = new JsonProjectRepository();
         repository.Save(_context.Project, _currentProjectPath);
+
+        _savedUndoCount = _commandManager.UndoCount;
     }
 
     private void SaveProjectAs()
@@ -95,6 +128,65 @@ public partial class MainForm
 
         var repository = new JsonProjectRepository();
         repository.Save(_context.Project, _currentProjectPath);
+
+        _savedUndoCount = _commandManager.UndoCount;
+    }
+
+    /// <summary>
+    /// 現在のプロジェクトに未保存の変更があるかどうかを判定する。
+    /// 保存時点のUndoStackの深さと現在の深さを比較する。
+    /// Undoで保存時点まで巻き戻した場合は自動的に「変更なし」に戻る。
+    /// </summary>
+    private bool IsProjectDirty()
+    {
+        return _context.Project != null && _commandManager.UndoCount != _savedUndoCount;
+    }
+
+    /// <summary>
+    /// 未保存の変更がある場合、保存するかどうかを確認する。
+    /// New/Open/Close/アプリ終了など、プロジェクトを手放す操作の直前に呼び出す。
+    /// </summary>
+    /// <returns>操作を続行してよい場合は true、中断すべき場合は false。</returns>
+    private bool ConfirmDiscardChangesIfNeeded()
+    {
+        if (!IsProjectDirty()) return true;
+
+        var result = MessageBox.Show(
+            this,
+            "編集内容が保存されていません。保存しますか？",
+            "確認",
+            MessageBoxButtons.YesNoCancel,
+            MessageBoxIcon.Warning);
+
+        switch (result)
+        {
+            case DialogResult.Yes:
+                SaveProject();
+                return !IsProjectDirty(); // SaveAsをキャンセルした場合は中断
+            case DialogResult.No:
+                return true;
+            default:
+                return false; // Cancel
+        }
+    }
+
+    /// <summary>
+    /// プロジェクトの有無に応じて、各パネルとメニューの有効/無効を切り替える。
+    /// </summary>
+    private void UpdateEditorAvailability()
+    {
+        var hasProject = _context.HasProject;
+
+        _mapView.Enabled         = hasProject;
+        _tilePalette.Enabled     = hasProject;
+        _propertyWindow.Enabled  = hasProject;
+        _metaTilePalette.Enabled = hasProject;
+        _stageExplorer.Enabled   = hasProject;
+
+        RefreshFileMenuState();
+        RefreshEditMenuState();
+        RefreshViewMenuState();
+        RefreshNavigationMenuState();
     }
 
     private void NewStage()

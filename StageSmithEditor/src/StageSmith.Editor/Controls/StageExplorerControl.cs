@@ -69,7 +69,7 @@ public class StageExplorerControl : UserControl
     /// <summary>
     /// プロジェクトをバインドしてツリーを再構築する。
     /// </summary>
-    public void Bind(EditorProject project)
+    public void Bind(EditorProject? project)
     {
         _project = project;
         RebuildTree();

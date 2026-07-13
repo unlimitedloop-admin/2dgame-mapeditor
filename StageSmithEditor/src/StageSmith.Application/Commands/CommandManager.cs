@@ -2,13 +2,9 @@ namespace StageSmith.Application.Commands;
 
 public class CommandManager
 {
-    private Stack<ICommand> _undoStack = new();
-    private Stack<ICommand> _redoStack = new();
+    private readonly Stack<ICommand> _undoStack = new();
+    private readonly Stack<ICommand> _redoStack = new();
 
-    /// <summary>
-    /// Execute・Undo・Redoが実行されたとき発火する。
-    /// 購読者（MainFormなど）はこのイベントでビューを更新する。
-    /// </summary>
     public event Action? HistoryChanged;
 
     public void Execute(ICommand command)
@@ -39,6 +35,18 @@ public class CommandManager
         HistoryChanged?.Invoke();
     }
 
+    public void Clear()
+    {
+        _undoStack.Clear();
+        _redoStack.Clear();
+        HistoryChanged?.Invoke();
+    }
+
     public bool CanUndo => _undoStack.Count > 0;
     public bool CanRedo => _redoStack.Count > 0;
+
+    /// <summary>
+    /// 現在のUndoStackの深さ。保存時点との差分比較（Dirty判定）に使用する。
+    /// </summary>
+    public int UndoCount => _undoStack.Count;
 }
