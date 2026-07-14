@@ -198,7 +198,7 @@ public sealed class Stage
         return clone;
     }
 
-    private byte GetNextAvailableRoomId()
+    public byte GetNextAvailableRoomId()
     {
         var used = Pages
             .Select(p => p.Header.RoomId)

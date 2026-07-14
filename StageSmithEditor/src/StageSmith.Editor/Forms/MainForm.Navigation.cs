@@ -99,14 +99,11 @@ public partial class MainForm
         _pageNavigationController = new PageNavigationController(
             _context,
             _pageNavBar,
-            _mapView
+            _mapView,
+            _commandManager
         );
 
-        // PageNavigationController が既に NavRequested を処理しているため、
-        // ここでの登録は不要（重複登録すると2回ナビゲーションが実行される）
-        // _pageNavBar.NavRequested += NavigatePage;
         _pageNavBar.ZRequested += NavigateToZ;
-
         _pageNavBar.UpdateDisplay(_context);
 
         _context.ContextChanged += OnEditorContextChanged;

@@ -1,3 +1,4 @@
+using StageSmith.Application.Commands;
 using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
 using StageSmith.Editor.Controls;
@@ -11,15 +12,18 @@ public sealed class PageNavigationController
     private readonly EditorContext _context;
     private readonly PageNavBarControl _pageNavBar;
     private readonly MapViewControl _mapView;
+    private readonly CommandManager _commandManager;
 
     public PageNavigationController(
         EditorContext context,
         PageNavBarControl pageNavBar,
-        MapViewControl mapView)
+        MapViewControl mapView,
+        CommandManager commandManager)
     {
         _context = context;
         _pageNavBar = pageNavBar;
         _mapView = mapView;
+        _commandManager = commandManager;
 
         _pageNavBar.NavRequested += OnPageNavRequested;
         _mapView.AdjacentNavigationRequested += OnAdjacentNavigationRequested;
@@ -51,28 +55,14 @@ public sealed class PageNavigationController
     {
         switch (action)
         {
-            case NavAction.First:
-                _context.MoveFirstPage();
-                break;
-
-            case NavAction.Prev:
-                _context.MovePrevPage();
-                break;
-
-            case NavAction.Next:
-                _context.MoveNextPage();
-                break;
-
-            case NavAction.Last:
-                _context.MoveLastPage();
-                break;
+            case NavAction.First: _context.MoveFirstPage(); break;
+            case NavAction.Prev:  _context.MovePrevPage();  break;
+            case NavAction.Next:  _context.MoveNextPage();  break;
+            case NavAction.Last:  _context.MoveLastPage();  break;
         }
     }
 
-    private void OnPageNavRequested(NavAction action)
-    {
-        Navigate(action);
-    }
+    private void OnPageNavRequested(NavAction action) => Navigate(action);
 
     private void OnAdjacentNavigationRequested(
         object? sender,
@@ -99,9 +89,7 @@ public sealed class PageNavigationController
         if (roomId == NoRoom)
             return;
 
-        var targetIndex = stage.Pages.FindIndex(
-            page => page.Header.RoomId == roomId);
-
+        var targetIndex = stage.Pages.FindIndex(page => page.Header.RoomId == roomId);
         if (targetIndex < 0)
             return;
 
@@ -128,64 +116,14 @@ public sealed class PageNavigationController
         if (result != DialogResult.Yes)
             return;
 
-        EnsureRoomIds(stage);
+        var command = new CreateAdjacentPageCommand(stage, currentPage, direction);
+        _commandManager.Execute(command);
 
-        var newRoomId = GetNextAvailableRoomId(stage);
-        var newPage = CreateAdjacentPage(stage, currentPage, direction, newRoomId);
-
-        ConnectBothWays(currentPage, newPage, direction);
-
-        var newIndex = stage.Pages.IndexOf(newPage);
+        var newIndex = stage.Pages.IndexOf(command.NewPage!);
         _context.SetPage(newIndex);
     }
 
-    private static Page CreateAdjacentPage(
-        Stage stage,
-        Page currentPage,
-        PageDirection direction,
-        byte newRoomId)
-    {
-        var newPage = new Page
-        {
-            Name = $"Page {newRoomId:D3}",
-            NodeX = currentPage.NodeX + GetDeltaX(direction),
-            NodeY = currentPage.NodeY + GetDeltaY(direction),
-            Header = PageHeader.CreateDefault(),
-        };
-
-        var header = newPage.Header;
-        header.RoomId = newRoomId;
-        header.Z = currentPage.Header.Z;
-        newPage.Header = header;
-
-        stage.Pages.Add(newPage);
-
-        return newPage;
-    }
-
-    private static void ConnectBothWays(
-        Page currentPage,
-        Page newPage,
-        PageDirection direction)
-    {
-        var currentHeader = currentPage.Header;
-        SetAdjacentRoomId(
-            ref currentHeader,
-            direction,
-            newPage.Header.RoomId);
-        currentPage.Header = currentHeader;
-
-        var newHeader = newPage.Header;
-        SetAdjacentRoomId(
-            ref newHeader,
-            GetOppositeDirection(direction),
-            currentPage.Header.RoomId);
-        newPage.Header = newHeader;
-    }
-
-    private static byte GetAdjacentRoomId(
-        PageHeader header,
-        PageDirection direction)
+    private static byte GetAdjacentRoomId(PageHeader header, PageDirection direction)
     {
         return direction switch
         {
@@ -194,63 +132,6 @@ public sealed class PageNavigationController
             PageDirection.Left => header.LeftPage,
             PageDirection.Right => header.RightPage,
             _ => NoRoom
-        };
-    }
-
-    private static void SetAdjacentRoomId(
-        ref PageHeader header,
-        PageDirection direction,
-        byte roomId)
-    {
-        switch (direction)
-        {
-            case PageDirection.Up:
-                header.UpPage = roomId;
-                break;
-
-            case PageDirection.Down:
-                header.DownPage = roomId;
-                break;
-
-            case PageDirection.Left:
-                header.LeftPage = roomId;
-                break;
-
-            case PageDirection.Right:
-                header.RightPage = roomId;
-                break;
-        }
-    }
-
-    private static PageDirection GetOppositeDirection(PageDirection direction)
-    {
-        return direction switch
-        {
-            PageDirection.Up => PageDirection.Down,
-            PageDirection.Down => PageDirection.Up,
-            PageDirection.Left => PageDirection.Right,
-            PageDirection.Right => PageDirection.Left,
-            _ => direction
-        };
-    }
-
-    private static int GetDeltaX(PageDirection direction)
-    {
-        return direction switch
-        {
-            PageDirection.Left => -1,
-            PageDirection.Right => 1,
-            _ => 0
-        };
-    }
-
-    private static int GetDeltaY(PageDirection direction)
-    {
-        return direction switch
-        {
-            PageDirection.Up => -1,
-            PageDirection.Down => 1,
-            _ => 0
         };
     }
 
@@ -264,39 +145,5 @@ public sealed class PageNavigationController
             PageDirection.Right => "右",
             _ => ""
         };
-    }
-
-    private static byte GetNextAvailableRoomId(Stage stage)
-    {
-        var used = stage.Pages
-            .Select(page => page.Header.RoomId)
-            .Where(roomId => roomId != NoRoom)
-            .ToHashSet();
-
-        for (var i = 0; i <= byte.MaxValue; i++)
-        {
-            var roomId = (byte)i;
-
-            if (roomId == NoRoom)
-                continue;
-
-            if (!used.Contains(roomId))
-                return roomId;
-        }
-
-        throw new InvalidOperationException("利用可能な RoomId がありません。");
-    }
-
-    private static void EnsureRoomIds(Stage stage)
-    {
-        foreach (var page in stage.Pages)
-        {
-            if (page.Header.RoomId != NoRoom)
-                continue;
-
-            var header = page.Header;
-            header.RoomId = GetNextAvailableRoomId(stage);
-            page.Header = header;
-        }
     }
 }

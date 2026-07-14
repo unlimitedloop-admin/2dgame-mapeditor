@@ -1,3 +1,4 @@
+using StageSmith.Application.Commands;
 using StageSmith.Application.Services;
 using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
@@ -528,13 +529,13 @@ public partial class MainForm
             return;
         }
 
-        var page = stage.AddPage();
+        var command = new AddPageCommand(stage);
+        _commandManager.Execute(command);
 
-        // 追加したページへ移動
+        var page = command.AddedPage!;
         var newIndex = stage.Pages.IndexOf(page);
         _context.SetPage(newIndex);
 
-        // ツリーと表示を更新
         _stageExplorer.RebuildTree();
         ApplyContextToView();
     }

@@ -11,20 +11,26 @@ public class StageExplorerControl : UserControl
     // イベント
     //========================
 
-    /// <summary>ページが選択されたとき発火する。</summary>
+    /// <summary>
+    /// ページが選択されたとき発火する。
+    /// </summary>
     public event Action<Stage, Page>? PageSelected;
 
-    /// <summary>ステージが追加・削除・複製されたとき発火する。</summary>
+    /// <summary>
+    /// ステージが追加・削除・複製されたとき発火する。
+    /// </summary>
     public event Action? StageListChanged;
 
-    /// <summary>ページが追加・削除・複製されたとき発火する。</summary>
+    /// <summary>
+    /// ページが追加・削除・複製されたとき発火する。
+    /// </summary>
     public event Action<Stage>? PageListChanged;
 
     /// <summary>
-    /// 現在表示中のページが削除されたとき発火する。
-    /// 第2引数は削除後に表示すべきページ（なければ null）。
+    /// ページの削除がユーザーによって確認されたとき発火する。
+    /// 実際のモデル操作（Undo対応含む）は呼び出し側が行う。
     /// </summary>
-    public event Action<Stage, Page?>? PageDeleted;
+    public event Action<Stage, Page>? PageDeleteRequested;
 
     //========================
     // 内部状態
@@ -388,37 +394,15 @@ public class StageExplorerControl : UserControl
             : tag.Page.Name;
 
         var result = MessageBox.Show(
-            $"ページ「{label}」を削除しますか？\nこの操作は元に戻せません。",
+            $"ページ「{label}」を削除しますか？",
             "ページの削除",
             MessageBoxButtons.YesNo,
             MessageBoxIcon.Warning);
 
         if (result != DialogResult.Yes) return;
 
-        // 削除後に表示すべきページを先に決定する
-        // 直前 → 直後 → null の優先順
-        var wasCurrentPage = ReferenceEquals(_currentPage, tag.Page);
-        Page? nextPage = null;
-
-        if (wasCurrentPage)
-        {
-            var pages = tag.Stage.Pages;
-            if (pageIndex > 0)
-                nextPage = pages[pageIndex - 1];
-            else if (pages.Count > 1)
-                nextPage = pages[1]; // 削除後に index 0 になるページ
-        }
-
-        tag.Stage.Pages.Remove(tag.Page);
-
-        if (wasCurrentPage)
-        {
-            _currentPage = nextPage;
-            PageDeleted?.Invoke(tag.Stage, nextPage);
-        }
-
-        RebuildTree();
-        PageListChanged?.Invoke(tag.Stage);
+        // 実際の削除・Undo登録は呼び出し側（MainForm）に委譲する
+        PageDeleteRequested?.Invoke(tag.Stage, tag.Page);
     }
 
     private void OnPageDuplicate(object? sender, EventArgs e)
