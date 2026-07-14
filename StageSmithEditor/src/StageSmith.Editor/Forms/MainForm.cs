@@ -146,7 +146,11 @@ public partial class MainForm : Form
 
         // CommandManager の変更通知 → MapView を更新
         // ノードエディタ側でUndo/Redoが実行された場合もここで拾える
-        _commandManager.HistoryChanged += () => _mapView.Invalidate();
+        _commandManager.HistoryChanged += () =>
+        {
+            _mapView.Invalidate();
+            UpdateTitle();
+        };
 
         InitializeSearch();
 
@@ -163,6 +167,7 @@ public partial class MainForm : Form
         };
 
         UpdateEditorAvailability();
+        UpdateTitle();
 
         UpdateTilePreviewIcon();
     }

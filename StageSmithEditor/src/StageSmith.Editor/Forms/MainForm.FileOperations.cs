@@ -33,6 +33,7 @@ public partial class MainForm
         ApplyContextToView();
 
         UpdateEditorAvailability();
+        UpdateTitle();
     }
 
     private void OpenProject()
@@ -66,6 +67,7 @@ public partial class MainForm
         ApplyContextToView();
 
         UpdateEditorAvailability();
+        UpdateTitle();
     }
 
     private void CloseProject()
@@ -84,6 +86,7 @@ public partial class MainForm
         _savedUndoCount = 0;
 
         UpdateEditorAvailability();
+        UpdateTitle();
     }
 
     private void SaveProject()
@@ -104,6 +107,8 @@ public partial class MainForm
         repository.Save(_context.Project, _currentProjectPath);
 
         _savedUndoCount = _commandManager.UndoCount;
+
+        UpdateTitle();
     }
 
     private void SaveProjectAs()
@@ -130,6 +135,8 @@ public partial class MainForm
         repository.Save(_context.Project, _currentProjectPath);
 
         _savedUndoCount = _commandManager.UndoCount;
+
+        UpdateTitle();
     }
 
     /// <summary>
@@ -168,6 +175,28 @@ public partial class MainForm
             default:
                 return false; // Cancel
         }
+    }
+
+    /// <summary>
+    /// メインフォームのタイトルバーを、プロジェクトの状態に合わせて更新する。
+    /// 例: "StageSmith Editor - Project Name.sseproj *"（未保存の変更あり）
+    /// </summary>
+    private void UpdateTitle()
+    {
+        if (_context.Project == null)
+        {
+            Text = "StageSmith Editor";
+            return;
+        }
+
+        // 保存済みならファイル名（拡張子つき）、未保存の新規プロジェクトならProject.Nameを表示
+        var displayName = !string.IsNullOrWhiteSpace(_currentProjectPath)
+            ? Path.GetFileName(_currentProjectPath)
+            : _context.Project.Name;
+
+        var dirtyMark = IsProjectDirty() ? " *" : "";
+
+        Text = $"StageSmith Editor - {displayName}{dirtyMark}";
     }
 
     /// <summary>
