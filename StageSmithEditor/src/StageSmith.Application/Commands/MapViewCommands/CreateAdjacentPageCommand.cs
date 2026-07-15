@@ -12,25 +12,33 @@ public sealed class CreateAdjacentPageCommand : ICommand
     private readonly Stage _stage;
     private readonly Page _currentPage;
     private readonly PageDirection _direction;
+    private readonly EditorContext _context;
 
     private Page? _newPage;
     private int _insertIndex;
     private PageHeader _previousCurrentHeader;
+    private int _selectedIndexBeforeExecute;
 
     public Page? NewPage => _newPage;
 
-    public CreateAdjacentPageCommand(Stage stage, Page currentPage, PageDirection direction)
+    public CreateAdjacentPageCommand(
+        Stage stage,
+        Page currentPage,
+        PageDirection direction,
+        EditorContext context)
     {
         _stage = stage;
         _currentPage = currentPage;
         _direction = direction;
+        _context = context;
     }
 
     public void Execute()
     {
+        _selectedIndexBeforeExecute = _context.CurrentPageIndex;
+
         if (_newPage == null)
         {
-            // 初回実行時のみ新規ページを生成する
             _previousCurrentHeader = _currentPage.Header;
 
             EnsureRoomIds(_stage);
@@ -43,12 +51,12 @@ public sealed class CreateAdjacentPageCommand : ICommand
         }
         else
         {
-            // Redo時：初回に生成した同一インスタンスを同じ位置に戻す
             _stage.Pages.Insert(_insertIndex, _newPage);
         }
 
-        // 接続は初回・Redo問わず毎回設定し直す（決定的な処理なので副作用なし）
         ConnectBothWays(_currentPage, _newPage, _direction);
+
+        _context.SetPage(_insertIndex);
     }
 
     public void Undo()
@@ -57,6 +65,11 @@ public sealed class CreateAdjacentPageCommand : ICommand
 
         _stage.Pages.Remove(_newPage);
         _currentPage.Header = _previousCurrentHeader;
+
+        if (_stage.Pages.Count == 0) return;
+
+        var restoreIndex = Math.Clamp(_selectedIndexBeforeExecute, 0, _stage.Pages.Count - 1);
+        _context.SetPage(restoreIndex);
     }
 
     private static Page BuildAdjacentPage(

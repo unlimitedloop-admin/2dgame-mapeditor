@@ -529,15 +529,7 @@ public partial class MainForm
             return;
         }
 
-        var command = new AddPageCommand(stage);
-        _commandManager.Execute(command);
-
-        var page = command.AddedPage!;
-        var newIndex = stage.Pages.IndexOf(page);
-        _context.SetPage(newIndex);
-
-        _stageExplorer.RebuildTree();
-        ApplyContextToView();
+        _commandManager.Execute(new AddPageCommand(stage, _context));
     }
 
     /// <summary>

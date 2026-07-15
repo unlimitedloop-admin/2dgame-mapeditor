@@ -150,6 +150,7 @@ public partial class MainForm : Form
         {
             _mapView.Invalidate();
             UpdateTitle();
+            _stageExplorer?.RebuildTree();
         };
 
         InitializeSearch();

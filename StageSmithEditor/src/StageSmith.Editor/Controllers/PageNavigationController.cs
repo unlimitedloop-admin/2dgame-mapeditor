@@ -116,7 +116,7 @@ public sealed class PageNavigationController
         if (result != DialogResult.Yes)
             return;
 
-        var command = new CreateAdjacentPageCommand(stage, currentPage, direction);
+        var command = new CreateAdjacentPageCommand(stage, currentPage, direction, _context);
         _commandManager.Execute(command);
 
         var newIndex = stage.Pages.IndexOf(command.NewPage!);

@@ -2,42 +2,52 @@ using StageSmith.Core.Models;
 
 namespace StageSmith.Application.Commands;
 
-/// <summary>ステージへの新規ページ追加をUndo/Redo対応にするコマンド。</summary>
 public sealed class AddPageCommand : ICommand
 {
     private readonly Stage _stage;
     private readonly string? _name;
+    private readonly EditorContext _context;
+
     private Page? _page;
     private int _insertIndex;
+    private int _selectedIndexBeforeExecute;
 
     public Page? AddedPage => _page;
 
-    public AddPageCommand(Stage stage, string? name = null)
+    public AddPageCommand(Stage stage, EditorContext context, string? name = null)
     {
         _stage = stage;
+        _context = context;
         _name = name;
     }
 
     public void Execute()
     {
+        _selectedIndexBeforeExecute = _context.CurrentPageIndex;
+
         if (_page == null)
         {
-            // 初回実行時のみ Stage.AddPage() で新規ページを生成する
-            // （RoomId自動採番などはStage側の責務のまま）
             _page = _stage.AddPage(_name);
             _insertIndex = _stage.Pages.IndexOf(_page);
         }
         else
         {
-            // Redo時は、初回に生成した同一インスタンスを同じ位置に戻す
-            // （再度AddPage()を呼ぶと別のRoomIdを持つ別ページが生成されてしまうため）
             _stage.Pages.Insert(_insertIndex, _page);
         }
+
+        // 追加したページへ表示を切り替える
+        _context.SetPage(_insertIndex);
     }
 
     public void Undo()
     {
         if (_page == null) return;
+
         _stage.Pages.Remove(_page);
+
+        if (_stage.Pages.Count == 0) return;
+
+        var restoreIndex = Math.Clamp(_selectedIndexBeforeExecute, 0, _stage.Pages.Count - 1);
+        _context.SetPage(restoreIndex);
     }
 }

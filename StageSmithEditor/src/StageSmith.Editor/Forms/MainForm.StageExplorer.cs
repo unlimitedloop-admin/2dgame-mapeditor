@@ -31,45 +31,7 @@ public partial class MainForm
 
         _stageExplorer.PageDeleteRequested += (stage, page) =>
         {
-            if (_context.Project == null) return;
-
-            var pageIndex = stage.Pages.IndexOf(page);
-            var wasCurrentPage = ReferenceEquals(_context.CurrentPage, page);
-
-            // 削除後に表示すべきページを先に決定する（直前 → 直後 → null の優先順）
-            Page? nextPage = null;
-            if (wasCurrentPage)
-            {
-                if (pageIndex > 0)
-                    nextPage = stage.Pages[pageIndex - 1];
-                else if (stage.Pages.Count > 1)
-                    nextPage = stage.Pages[1]; // 削除後に index 0 になるページ
-            }
-
-            _commandManager.Execute(new RemovePageCommand(stage, page));
-
-            var stageIndex = _context.Project.Stages.IndexOf(stage);
-            _context.SetStage(stageIndex);
-
-            if (wasCurrentPage)
-            {
-                if (nextPage != null)
-                {
-                    var newPageIndex = stage.Pages.IndexOf(nextPage);
-                    _context.SetPage(newPageIndex);
-                }
-                else
-                {
-                    // ページが0件になった場合は空表示
-                    _page = null;
-                    _mapView.SetTileMap(null);
-                    _propertyWindow.RefreshProperties();
-                    _pageNavBar.UpdateDisplay(_context);
-                    _mapView.Invalidate();
-                }
-            }
-
-            _stageExplorer.RebuildTree();
+            _commandManager.Execute(new RemovePageCommand(stage, page, _context));
         };
     }
 
