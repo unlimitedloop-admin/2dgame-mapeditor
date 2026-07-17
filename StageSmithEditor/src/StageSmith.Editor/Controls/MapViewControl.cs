@@ -12,7 +12,49 @@ public class MapViewControl : DoubleBufferedPanel
     private TileMap? _tileMap;
     private readonly SafeTilesetHolder _tilesetHolder = new();
 
+    private readonly System.Windows.Forms.Timer _modifierPollTimer = new() { Interval = 50 };
+    private bool _lastIsAlt = false;
+    private bool _lastIsShift = false;
+
     private bool _showGrid = true;
+
+    public MapViewControl()
+    {
+        DoubleBuffered = true;
+        ResizeRedraw = true;
+
+        _modifierPollTimer.Tick += (_, _) =>
+        {
+            var isAlt = (ModifierKeys & Keys.Alt) != 0;
+            var isShift = (ModifierKeys & Keys.Shift) != 0;
+
+            if (isAlt != _lastIsAlt || isShift != _lastIsShift)
+            {
+                _lastIsAlt = isAlt;
+                _lastIsShift = isShift;
+                UpdateCursor();
+            }
+        };
+
+        MouseEnter += (_, _) => _modifierPollTimer.Start();
+        MouseLeave += (_, _) =>
+        {
+            _modifierPollTimer.Stop();
+            _lastIsAlt = false;
+            _lastIsShift = false;
+        };
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _tilesetHolder.Dispose();
+            _modifierPollTimer.Dispose();
+        }
+
+        base.Dispose(disposing);
+    }
 
     // ===== Zoom =====
     private const float MinZoomScale = 0.5f;
@@ -107,6 +149,7 @@ public class MapViewControl : DoubleBufferedPanel
     }
 
     // ===== Adjacent Navigation =====
+    public event EventHandler<TileContextMenuEventArgs>? ContextMenuRequested;
     public event EventHandler<AdjacentNavigationRequestedEventArgs>? AdjacentNavigationRequested;
 
     private MapAdjacentState _adjacentState = new();
@@ -115,12 +158,6 @@ public class MapViewControl : DoubleBufferedPanel
     {
         _adjacentState = state;
         Invalidate();
-    }
-
-    public MapViewControl()
-    {
-        DoubleBuffered = true;
-        ResizeRedraw = true;
     }
 
     // ===== Search Highlight =====
@@ -400,16 +437,6 @@ public class MapViewControl : DoubleBufferedPanel
 
     private Bitmap? GetUsableTileset() => _tilesetHolder.Current;
 
-    protected override void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            _tilesetHolder.Dispose();
-        }
-
-        base.Dispose(disposing);
-    }
-
     // =========================
     // 入力
     // =========================
@@ -439,6 +466,30 @@ public class MapViewControl : DoubleBufferedPanel
         var isAlt = (ModifierKeys & Keys.Alt) != 0;
         var isShift = (ModifierKeys & Keys.Shift) != 0;
 
+        // ========================
+        // 右クリック系（修飾キーで分岐）
+        // ========================
+        if (e.Button == MouseButtons.Right)
+        {
+            // Alt+右クリック：スポイト
+            if (isAlt)
+            {
+                PickerTool?.OnMouseDown(x, y);
+                return;
+            }
+
+            // Shift+右クリック：フィル
+            if (isShift)
+            {
+                FillTool?.OnMouseDown(x, y);
+                Invalidate();
+                return;
+            }
+
+            // 修飾キーなし（Ctrlのみ含む）：MouseUp側でコンテキストメニューを出すため、ここでは何もしない
+            return;
+        }
+
         // MetaTileなど、外部側で左クリックを処理する特殊ブラシの場合、
         // MapViewControl内部のTool処理へ入力を渡さない。
         if (e.Button == MouseButtons.Left &&
@@ -448,16 +499,7 @@ public class MapViewControl : DoubleBufferedPanel
         }
 
         // ========================
-        // ① スポイト（最優先）
-        // ========================
-        if (e.Button == MouseButtons.Right || isAlt)
-        {
-            PickerTool?.OnMouseDown(x, y);
-            return;
-        }
-
-        // ========================
-        // ② 塗りつぶし
+        // 塗りつぶし（左クリック + Shift、従来通り）
         // ========================
         if (isShift)
         {
@@ -467,9 +509,52 @@ public class MapViewControl : DoubleBufferedPanel
         }
 
         // ========================
-        // ③ 通常ツール
+        // 通常ツール
         // ========================
         _toolManager?.CurrentTool?.OnMouseDown(x, y);
+    }
+
+    protected override void OnMouseUp(MouseEventArgs e)
+    {
+        base.OnMouseUp(e);
+
+        if (_tileMap == null) return;
+
+        var (x, y) = ScreenToTile(e.X, e.Y);
+
+        var isAlt = (ModifierKeys & Keys.Alt) != 0;
+
+        if (e.Button == MouseButtons.Right)
+        {
+            if (isAlt)
+            {
+                PickerTool?.OnMouseUp(x, y);
+                return;
+            }
+
+            // Shift+右クリックはOnMouseDownで完結（FillToolのOnMouseUpは元々no-op）なのでここでは何もしない
+
+            // 修飾キーなし（Ctrlのみ含む）：コンテキストメニュー要求を発火
+            if (IsInside(x, y))
+            {
+                ContextMenuRequested?.Invoke(
+                    this,
+                    new TileContextMenuEventArgs(x, y, PointToScreen(e.Location))
+                );
+            }
+            return;
+        }
+
+        // 範囲外ドロップを許可するため、ここではチェックしない
+        //if (!IsInside(x, y)) return;
+
+        if (e.Button == MouseButtons.Left &&
+            ShouldSuppressToolInput?.Invoke() == true)
+        {
+            return;
+        }
+
+        _toolManager?.CurrentTool?.OnMouseUp(x, y);
     }
 
     protected override void OnMouseMove(MouseEventArgs e)
@@ -504,34 +589,6 @@ public class MapViewControl : DoubleBufferedPanel
             }
         }
         Invalidate();
-    }
-
-    protected override void OnMouseUp(MouseEventArgs e)
-    {
-        base.OnMouseUp(e);
-
-        if (_tileMap == null) return;
-
-        var (x, y) = ScreenToTile(e.X, e.Y);
-
-        var isAlt = (ModifierKeys & Keys.Alt) != 0;
-
-        // 範囲外ドロップを許可するため、ここではチェックしない
-        //if (!IsInside(x, y)) return;
-
-        if (e.Button == MouseButtons.Right || isAlt)
-        {
-            PickerTool?.OnMouseUp(x, y);
-            return;
-        }
-
-        if (e.Button == MouseButtons.Left &&
-            ShouldSuppressToolInput?.Invoke() == true)
-        {
-            return;
-        }
-
-        _toolManager?.CurrentTool?.OnMouseUp(x, y);
     }
 
     // =========================
@@ -573,6 +630,7 @@ public class MapViewControl : DoubleBufferedPanel
     public void UpdateCursor()
     {
         var isShift = (ModifierKeys & Keys.Shift) != 0;
+        var isAlt = (ModifierKeys & Keys.Alt) != 0;
 
         var (x, y) = _hoverTile.X >= 0 ? (_hoverTile.X, _hoverTile.Y) : (-1, -1);
 
@@ -583,6 +641,13 @@ public class MapViewControl : DoubleBufferedPanel
         }
 
         var currentTool = _toolManager?.CurrentTool;
+
+        // スポイト（Alt併用、右クリックの有無に関わらずカーソルで予告）
+        if (isAlt)
+        {
+            Cursor = PickerTool?.GetCursor(x, y) ?? Cursors.Hand;
+            return;
+        }
 
         // バケツ（Pen限定）
         if (isShift && currentTool is PenTool)
@@ -809,6 +874,20 @@ public class MapViewControl : DoubleBufferedPanel
 
             g.DrawRectangle(pen, GetTileRect(current.X, current.Y));
         }
+    }
+}
+
+public sealed class TileContextMenuEventArgs : EventArgs
+{
+    public int TileX { get; }
+    public int TileY { get; }
+    public Point ScreenLocation { get; }
+
+    public TileContextMenuEventArgs(int tileX, int tileY, Point screenLocation)
+    {
+        TileX = tileX;
+        TileY = tileY;
+        ScreenLocation = screenLocation;
     }
 }
 

@@ -1,9 +1,13 @@
+using StageSmith.Editor.Utilities;
+
 namespace StageSmith.Editor.Tools;
 
 public class PickerTool : ITool
 {
     private readonly Func<int, int, int> _pick;
     private readonly Action<int> _onPicked;
+
+    private static Cursor? _pickerCursor;
 
     public PickerTool(Func<int, int, int> pick, Action<int> onPicked)
     {
@@ -22,6 +26,8 @@ public class PickerTool : ITool
 
     public Cursor GetCursor(int x, int y)
     {
-        return Cursors.Hand;
+        _pickerCursor ??= CursorFactory.FromPng(@"resource/cur/icons8-色スポイト-30.png", 3, 25);
+        
+        return _pickerCursor;
     }
 }
