@@ -118,8 +118,7 @@ public partial class MainForm
                 return true;
 
             case Keys.G:
-                ShowMapViewGrid();
-                _menuViewGridLines.Checked = _showGrid;
+                _menuViewGridLines.Checked = !_menuViewGridLines.Checked;
                 return true;
 
             case Keys.T:

@@ -96,6 +96,7 @@ namespace StageSmith.Editor
             _menuEditFindPrevTile       = new ToolStripMenuItem("Find Previous Tile")       { ShortcutKeys = Keys.Shift | Keys.F4 };
             _menuEditReplaceTile        = new ToolStripMenuItem("Replace Tile...")          { ShortcutKeys = Keys.Control | Keys.H };
             _menuEditClearSearchHighlight = new ToolStripMenuItem("Clear Search Highlight") { ShortcutKeyDisplayString = "Shift+Esc" };
+            _menuEditToggleBookmark = new ToolStripMenuItem("Add Bookmark")                 { ShortcutKeyDisplayString = "Ctrl+B" };
 
             _menuEdit.DropDownItems.AddRange([
                 _menuEditUndo,
@@ -119,13 +120,15 @@ namespace StageSmith.Editor
                 _menuEditFindPrevTile,
                 _menuEditReplaceTile,
                 _menuEditClearSearchHighlight,
+                new ToolStripSeparator(),
+                _menuEditToggleBookmark
             ]);
 
             // ========================
             // View
             // ========================
             _menuView                   = new ToolStripMenuItem("View");
-            _menuViewGridLines          = new ToolStripMenuItem("Grid Lines")           { ShortcutKeyDisplayString = "G", CheckOnClick = true };
+            _menuViewGridLines          = new ToolStripMenuItem("Grid Lines")           { ShortcutKeyDisplayString = "G", CheckOnClick = true, Checked = true };
             _menuViewTilePreview        = new ToolStripMenuItem("Tile Preview")         { ShortcutKeyDisplayString = "T", CheckOnClick = true };
             _menuViewShowTileNumbers    = new ToolStripMenuItem("Show Tile Numbers")    { ShortcutKeyDisplayString = "L", CheckOnClick = true };
             _menuViewRowNumbers         = new ToolStripMenuItem("Row Numbers")          { ShortcutKeyDisplayString = "R", CheckOnClick = true };
@@ -310,6 +313,7 @@ namespace StageSmith.Editor
         private ToolStripMenuItem _menuEditFindPrevTile         = null!;
         private ToolStripMenuItem _menuEditReplaceTile          = null!;
         private ToolStripMenuItem _menuEditClearSearchHighlight = null!;
+        private ToolStripMenuItem _menuEditToggleBookmark       = null!;
 
         // View
         private ToolStripMenuItem _menuView                = null!;

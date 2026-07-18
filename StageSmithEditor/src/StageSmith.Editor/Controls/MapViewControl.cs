@@ -451,57 +451,41 @@ public class MapViewControl : DoubleBufferedPanel
             TryHitAdjacentNavigationButton(e.Location, out var direction))
         {
             var hasAdjacent = _adjacentState.HasAdjacent(direction);
-
             AdjacentNavigationRequested?.Invoke(
                 this,
                 new AdjacentNavigationRequestedEventArgs(direction, hasAdjacent)
             );
-
             return;
         }
 
         var (x, y) = ScreenToTile(e.X, e.Y);
-
         if (!IsInside(x, y)) return;
 
-        var isAlt = (ModifierKeys & Keys.Alt) != 0;
-        var isShift = (ModifierKeys & Keys.Shift) != 0;
-
-        // ========================
-        // 右クリック系（修飾キーで分岐）
-        // ========================
         if (e.Button == MouseButtons.Right)
         {
-            // Alt+右クリック：スポイト
-            if (isAlt)
-            {
-                PickerTool?.OnMouseDown(x, y);
-                return;
-            }
+            return;
+        }
 
-            // Shift+右クリック：フィル
-            if (isShift)
-            {
-                FillTool?.OnMouseDown(x, y);
-                Invalidate();
-                return;
-            }
+        var isAlt = (ModifierKeys & Keys.Alt) != 0;
 
-            // 修飾キーなし（Ctrlのみ含む）：MouseUp側でコンテキストメニューを出すため、ここでは何もしない
+        // Alt+左クリックのスポイトは、MetaTileブラシ中でも常に機能させる。
+        // （ShouldSuppressToolInputより前に判定することで迂回させる）
+        if (e.Button == MouseButtons.Left && isAlt)
+        {
+            PickerTool?.OnMouseDown(x, y);
             return;
         }
 
         // MetaTileなど、外部側で左クリックを処理する特殊ブラシの場合、
-        // MapViewControl内部のTool処理へ入力を渡さない。
+        // MapViewControl内部のTool処理へ入力を渡さない（Alt+クリックは上で処理済みなのでここには来ない）。
         if (e.Button == MouseButtons.Left &&
             ShouldSuppressToolInput?.Invoke() == true)
         {
             return;
         }
 
-        // ========================
-        // 塗りつぶし（左クリック + Shift、従来通り）
-        // ========================
+        var isShift = (ModifierKeys & Keys.Shift) != 0;
+
         if (isShift)
         {
             FillTool?.OnMouseDown(x, y);
@@ -509,9 +493,6 @@ public class MapViewControl : DoubleBufferedPanel
             return;
         }
 
-        // ========================
-        // 通常ツール
-        // ========================
         _toolManager?.CurrentTool?.OnMouseDown(x, y);
     }
 
@@ -523,19 +504,11 @@ public class MapViewControl : DoubleBufferedPanel
 
         var (x, y) = ScreenToTile(e.X, e.Y);
 
-        var isAlt = (ModifierKeys & Keys.Alt) != 0;
-
+        // ========================
+        // 右クリック：コンテキストメニュー要求を発火
+        // ========================
         if (e.Button == MouseButtons.Right)
         {
-            if (isAlt)
-            {
-                PickerTool?.OnMouseUp(x, y);
-                return;
-            }
-
-            // Shift+右クリックはOnMouseDownで完結（FillToolのOnMouseUpは元々no-op）なのでここでは何もしない
-
-            // 修飾キーなし（Ctrlのみ含む）：コンテキストメニュー要求を発火
             if (IsInside(x, y))
             {
                 ContextMenuRequested?.Invoke(
@@ -546,12 +519,20 @@ public class MapViewControl : DoubleBufferedPanel
             return;
         }
 
-        // 範囲外ドロップを許可するため、ここではチェックしない
-        //if (!IsInside(x, y)) return;
+        // NOTE: 範囲外ドロップを許可するため、ここではIsInsideチェックしない
+
 
         if (e.Button == MouseButtons.Left &&
             ShouldSuppressToolInput?.Invoke() == true)
         {
+            return;
+        }
+
+        var isAlt = (ModifierKeys & Keys.Alt) != 0;
+
+        if (isAlt)
+        {
+            PickerTool?.OnMouseUp(x, y);
             return;
         }
 

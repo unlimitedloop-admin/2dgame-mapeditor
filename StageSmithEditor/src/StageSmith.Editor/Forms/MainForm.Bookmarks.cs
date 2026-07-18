@@ -83,4 +83,10 @@ public partial class MainForm
 
         _commandManager.Execute(new AddBookmarkCommand(_context.Project, bookmark));
     }
+
+    private void ToggleBookmarkForCurrentPage()
+    {
+        if (_context.CurrentStage is { } stage && _context.CurrentPage is { } page)
+            ToggleBookmark(stage, page);
+    }
 }

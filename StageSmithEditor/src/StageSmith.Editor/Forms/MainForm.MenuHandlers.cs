@@ -44,12 +44,13 @@ public partial class MainForm
         _menuEditFindPrevTile.Click         += (_, _) => FindPrevTile();
         _menuEditReplaceTile.Click          += (_, _) => OpenReplaceTileDialog();
         _menuEditClearSearchHighlight.Click += (_, _) => ClearSearchHighlight();
+        _menuEditToggleBookmark.Click       += (_, _) => ToggleBookmarkForCurrentPage();
 
         // ========================
         // View
         // ========================
-        _menuViewGridLines.CheckedChanged       += (_, _) => ShowMapViewGrid();
-        _menuViewTilePreview.CheckedChanged     += (_, _) => ApplyTilePreviewState(_menuViewTilePreview.Checked);  // ← 追加
+        _menuViewGridLines.CheckedChanged       += (_, _) => ApplyGridState(_menuViewGridLines.Checked);
+        _menuViewTilePreview.CheckedChanged     += (_, _) => ApplyTilePreviewState(_menuViewTilePreview.Checked);
         _menuViewShowTileNumbers.CheckedChanged += (_, _) => ToggleShowTileNumbers(_menuViewShowTileNumbers.Checked);
         _menuViewMarkerOverlay.CheckedChanged   += (_, _) => ToggleMarkerOverlay(_menuViewMarkerOverlay.Checked);
         _menuViewZoomIn.Click                   += (_, _) => ZoomIn();
@@ -136,6 +137,15 @@ public partial class MainForm
         _menuEditPaste.Enabled  = _context.HasPage;
         _menuEditDelete.Enabled = _context.HasPage;
         _menuEditFill.Enabled   = _context.HasPage;
+        _menuEditToggleBookmark.Enabled = _context.HasPage;
+
+        // NOTE: ブックマークの有無に応じてメニューのテキストを切り替える
+        if (_context.CurrentStage is { } stage && _context.CurrentPage is { } page && _context.Project != null)
+        {
+            var isBookmarked = _context.Project.Bookmarks
+                .Any(b => b.StageId == stage.Id && b.PageId == page.Id);
+            _menuEditToggleBookmark.Text = isBookmarked ? "Remove Bookmark" : "Add Bookmark";
+        }
     }
 
     // ========================

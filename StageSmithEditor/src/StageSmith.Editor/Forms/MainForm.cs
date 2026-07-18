@@ -178,6 +178,7 @@ public partial class MainForm : Form
         UpdateTitle();
 
         UpdateTilePreviewIcon();
+        ApplyGridState(_showGrid);
     }
 
     // REVIEW: 未使用?
