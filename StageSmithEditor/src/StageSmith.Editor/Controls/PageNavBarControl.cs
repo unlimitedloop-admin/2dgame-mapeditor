@@ -20,6 +20,9 @@ public class PageNavBarControl : UserControl
     //========================
     // Controls
     //========================
+    private readonly FlowLayoutPanel _pageInfoPanel;
+    private readonly PictureBox _bookmarkIcon;
+    private readonly ToolTip _toolTip = new();
     private readonly Button _firstButton;
     private readonly Button _prevButton;
     private readonly Label _pageLabel;
@@ -78,6 +81,32 @@ public class PageNavBarControl : UserControl
         leftPanel.Controls.Add(_nextButton);
         leftPanel.Controls.Add(_lastButton);
 
+        // ========================
+        // ページ情報アイコン群（将来タグなども追加予定の拡張エリア）
+        // ========================
+        _bookmarkIcon = new PictureBox
+        {
+            Width = 22,
+            Height = 22,
+            SizeMode = PictureBoxSizeMode.Zoom,
+            Image = StageSmithEditor.Properties.Resources.icons8_ブックマーク_32,
+            Visible = false,   // ブックマーク済みページのときのみ表示
+            Margin = new Padding(4, 1, 2, 1)
+        };
+        _toolTip.SetToolTip(_bookmarkIcon, "このページはブックマークされています");
+
+        _pageInfoPanel = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Left,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            AutoSize = true,
+            BackColor = Color.Transparent,
+            Padding = new Padding(0, 2, 0, 2)
+        };
+
+        _pageInfoPanel.Controls.Add(_bookmarkIcon);
+
         var zLabel = new Label
         {
             Text = "Z",
@@ -121,6 +150,7 @@ public class PageNavBarControl : UserControl
         rightPanel.Controls.Add(zLabel);
         rightPanel.Controls.Add(_zNumeric);
 
+        Controls.Add(_pageInfoPanel);
         Controls.Add(leftPanel);
         Controls.Add(rightPanel);
     }
@@ -137,20 +167,22 @@ public class PageNavBarControl : UserControl
         var total = context.PageCount;
         var current = total > 0 ? context.CurrentPageIndex + 1 : 0;
 
-        _pageLabel.Text = total > 0
-            ? $"{current} / {total}"
-            : "- / -";
+        _pageLabel.Text = total > 0 ? $"{current} / {total}" : "- / -";
 
         _firstButton.Enabled = current > 1;
         _prevButton.Enabled = current > 1;
         _nextButton.Enabled = current < total;
         _lastButton.Enabled = current < total;
 
+        // ── ブックマークアイコン ──
+        var stage = context.CurrentStage;
+        var page = context.CurrentPage;
+        _bookmarkIcon.Visible = stage != null && page != null && context.Project != null
+            && context.Project.Bookmarks.Any(b => b.StageId == stage.Id && b.PageId == page.Id);
+
         _updating = true;
         try
         {
-            var page = context.CurrentPage;
-
             if (page == null)
             {
                 _zNumeric.Enabled = false;

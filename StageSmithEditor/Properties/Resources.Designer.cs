@@ -103,9 +103,9 @@ namespace StageSmithEditor.Properties {
         /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
-        internal static System.Drawing.Bitmap icons8_ブックマーク_24 {
+        internal static System.Drawing.Bitmap icons8_ブックマーク_32 {
             get {
-                object obj = ResourceManager.GetObject("icons8-ブックマーク-24", resourceCulture);
+                object obj = ResourceManager.GetObject("icons8-ブックマーク-32", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

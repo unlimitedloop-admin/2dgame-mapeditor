@@ -118,6 +118,7 @@ public partial class MainForm : Form
 
         InitializeTools();
         InitializeDockLayout();
+        _stageExplorerContent.Activate();
         BindToolManager();
         BindTilePalette();
         BindMetaTilePalette();
@@ -156,6 +157,7 @@ public partial class MainForm : Form
             UpdateTitle();
             _stageExplorer?.RebuildTree();
             _bookmarkList?.RefreshList();
+            _pageNavBar?.UpdateDisplay(_context);
         };
 
         InitializeSearch();
