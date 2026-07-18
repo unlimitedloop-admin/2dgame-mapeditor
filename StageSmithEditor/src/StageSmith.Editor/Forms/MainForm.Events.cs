@@ -123,8 +123,7 @@ public partial class MainForm
                 return true;
 
             case Keys.T:
-                _mapView.ShowPreview = !_mapView.ShowPreview;
-                UpdateTilePreviewIcon();
+                _menuViewTilePreview.Checked = !_menuViewTilePreview.Checked;
                 return true;
 
             case Keys.F:
@@ -177,6 +176,13 @@ public partial class MainForm
         {
             _tilePreviewButton.Image = StageSmithEditor.Properties.Resources.icons8_目に見えない_24;
         }
+    }
+
+    private void ApplyTilePreviewState(bool visible)
+    {
+        _mapView.ShowPreview = visible;
+        _tilePreviewButton.Checked = visible;
+        UpdateTilePreviewIcon();
     }
 
     private void CancelDrag()

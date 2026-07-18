@@ -49,11 +49,14 @@ public partial class MainForm
         // View
         // ========================
         _menuViewGridLines.CheckedChanged       += (_, _) => ShowMapViewGrid();
+        _menuViewTilePreview.CheckedChanged     += (_, _) => ApplyTilePreviewState(_menuViewTilePreview.Checked);  // ← 追加
         _menuViewShowTileNumbers.CheckedChanged += (_, _) => ToggleShowTileNumbers(_menuViewShowTileNumbers.Checked);
         _menuViewMarkerOverlay.CheckedChanged   += (_, _) => ToggleMarkerOverlay(_menuViewMarkerOverlay.Checked);
         _menuViewZoomIn.Click                   += (_, _) => ZoomIn();
         _menuViewZoomOut.Click                  += (_, _) => ZoomOut();
         _menuViewResetZoom.Click                += (_, _) => ResetZoom();
+
+        _menuViewToolBar.CheckedChanged         += (_, _) => _editorToolStrip.Visible = _menuViewToolBar.Checked;
 
         // ========================
         // Navigation

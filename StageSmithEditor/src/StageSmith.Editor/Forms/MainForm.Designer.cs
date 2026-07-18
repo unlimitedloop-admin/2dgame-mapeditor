@@ -126,6 +126,7 @@ namespace StageSmith.Editor
             // ========================
             _menuView                   = new ToolStripMenuItem("View");
             _menuViewGridLines          = new ToolStripMenuItem("Grid Lines")           { ShortcutKeyDisplayString = "G", CheckOnClick = true };
+            _menuViewTilePreview        = new ToolStripMenuItem("Tile Preview")         { ShortcutKeyDisplayString = "T", CheckOnClick = true };
             _menuViewShowTileNumbers    = new ToolStripMenuItem("Show Tile Numbers")    { ShortcutKeyDisplayString = "L", CheckOnClick = true };
             _menuViewRowNumbers         = new ToolStripMenuItem("Row Numbers")          { ShortcutKeyDisplayString = "R", CheckOnClick = true };
             _menuViewColumnNumbers      = new ToolStripMenuItem("Column Numbers")       { ShortcutKeyDisplayString = "C", CheckOnClick = true };
@@ -136,11 +137,12 @@ namespace StageSmith.Editor
             _menuViewResetZoom          = new ToolStripMenuItem("Reset Zoom")           { ShortcutKeys = Keys.Control | Keys.D0 };
             _menuViewRuler              = new ToolStripMenuItem("Ruler")                { ShortcutKeyDisplayString = "U", CheckOnClick = true };
             _menuViewPageBoundary       = new ToolStripMenuItem("Page Boundary")        { ShortcutKeyDisplayString = "B", CheckOnClick = true };
-            _menuViewToolBar            = new ToolStripMenuItem("Tool Bar")             { ShortcutKeyDisplayString = "T", CheckOnClick = true, Checked = true };
-            _menuViewStatusBar          = new ToolStripMenuItem("Status Bar")           { ShortcutKeyDisplayString = "S", CheckOnClick = true, Checked = true };
+            _menuViewToolBar            = new ToolStripMenuItem("Tool Bar")             { CheckOnClick = true, Checked = true };
+            _menuViewStatusBar          = new ToolStripMenuItem("Status Bar")           { CheckOnClick = true, Checked = true };
 
             _menuView.DropDownItems.AddRange([
                 _menuViewGridLines,
+                _menuViewTilePreview,
                 _menuViewShowTileNumbers,
                 _menuViewRowNumbers,
                 _menuViewColumnNumbers,
@@ -312,6 +314,7 @@ namespace StageSmith.Editor
         // View
         private ToolStripMenuItem _menuView                = null!;
         private ToolStripMenuItem _menuViewGridLines       = null!;
+        private ToolStripMenuItem _menuViewTilePreview     = null!;
         private ToolStripMenuItem _menuViewShowTileNumbers = null!;
         private ToolStripMenuItem _menuViewRowNumbers      = null!;
         private ToolStripMenuItem _menuViewColumnNumbers   = null!;

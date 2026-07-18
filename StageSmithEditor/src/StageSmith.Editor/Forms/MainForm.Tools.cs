@@ -118,8 +118,7 @@ public partial class MainForm
 
         _tilePreviewButton.Click += (_, _) =>
         {
-            _mapView.ShowPreview = !_mapView.ShowPreview;
-            UpdateTilePreviewIcon();
+            _menuViewTilePreview.Checked = !_menuViewTilePreview.Checked;
         };
 
         _addPageButton.Click += (_, _) =>
