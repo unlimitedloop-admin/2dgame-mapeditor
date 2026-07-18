@@ -12,6 +12,11 @@ public class StageExplorerControl : UserControl
     //========================
 
     /// <summary>
+    /// ステージ（のみ）が選択されたとき発火する。
+    /// </summary>
+    public event Action<Stage>? StageSelected;
+
+    /// <summary>
     /// ページが選択されたとき発火する。
     /// </summary>
     public event Action<Stage, Page>? PageSelected;
@@ -280,6 +285,13 @@ public class StageExplorerControl : UserControl
     {
         if (_suppressSelectEvent) return;
         if (e.Node?.Tag is not NodeTag tag) return;
+
+        if (tag.Kind == NodeKind.Stage)
+        {
+            StageSelected?.Invoke(tag.Stage);
+            return;
+        }
+
         if (tag.Kind != NodeKind.Page || tag.Page == null) return;
 
         _currentStage = tag.Stage;

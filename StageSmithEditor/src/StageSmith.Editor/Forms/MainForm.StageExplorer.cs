@@ -10,6 +10,12 @@ public partial class MainForm
     //========================
     private void InitializeStageExplorerEvents()
     {
+        _stageExplorer.StageSelected += stage =>
+        {
+            if (_context.Project == null) return;
+            _context.SetStage(_context.Project.Stages.IndexOf(stage));
+        };
+
         // ページ選択 → MapView に反映
         _stageExplorer.PageSelected += (stage, page) =>
         {
