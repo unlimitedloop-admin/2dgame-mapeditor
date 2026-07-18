@@ -169,7 +169,7 @@ public class StageExplorerControl : UserControl
     //========================
     // ツリー構築
     //========================
-    private static TreeNode CreateStageNode(Stage stage)
+    private TreeNode CreateStageNode(Stage stage)
     {
         var node = new TreeNode(stage.Name)
         {
@@ -188,11 +188,16 @@ public class StageExplorerControl : UserControl
         return node;
     }
 
-    private static TreeNode CreatePageNode(Stage stage, Page page, int index)
+    private TreeNode CreatePageNode(Stage stage, Page page, int index)
     {
-        var label = string.IsNullOrWhiteSpace(page.Name)
+        var baseLabel = string.IsNullOrWhiteSpace(page.Name)
             ? $"Page {index:D2}"
             : $"Page {index:D2}  {page.Name}";
+
+        var isBookmarked = _project?.Bookmarks
+            .Any(b => b.StageId == stage.Id && b.PageId == page.Id) ?? false;
+
+        var label = isBookmarked ? $"{baseLabel}  ★" : baseLabel;
 
         return new TreeNode(label)
         {

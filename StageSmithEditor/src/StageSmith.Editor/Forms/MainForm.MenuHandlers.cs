@@ -76,7 +76,7 @@ public partial class MainForm
         _menuWindowMapView.Click        += (_, _) => ShowMapViewContent();
         _menuWindowStageExplorer.Click  += (_, _) => ShowDockContent(_stageExplorerContent, DockState.DockLeft);
         _menuWindowProperties.Click     += (_, _) => ShowDockContent(_propertyWindowContent, DockState.DockRight);
-        _menuWindowBookmarkList.Click   += (_, _) => { /* TODO: BookmarkList */ };
+        _menuWindowBookmarkList.Click   += (_, _) => ShowDockContent(_bookmarkListContent, DockState.DockLeft);
         _menuWindowTagManager.Click     += (_, _) => { /* TODO: TagManager */ };
         _menuWindowMarkerManager.Click  += (_, _) => { /* TODO: MarkerManager */ };
         _menuWindowStageMapViewer.Click += (_, _) => { /* TODO: StageMapViewer */ };

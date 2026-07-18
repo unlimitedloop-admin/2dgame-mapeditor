@@ -14,15 +14,18 @@ public partial class MainForm
             _stageExplorerContent.Show(_dockPanel, DockState.DockLeft);
         }
 
+        if (!_bookmarkListContent.IsDisposed &&
+            !_stageExplorerContent.IsDisposed &&
+            _stageExplorerContent.Pane != null)
+        {
+            _bookmarkListContent.Show(_stageExplorerContent.Pane, null);
+        }
+
         if (!_metaTilePaletteContent.IsDisposed &&
             !_stageExplorerContent.IsDisposed &&
             _stageExplorerContent.Pane != null)
         {
-            _metaTilePaletteContent.Show(
-                _stageExplorerContent.Pane,
-                DockAlignment.Bottom,
-                0.35
-            );
+            _metaTilePaletteContent.Show(_stageExplorerContent.Pane, DockAlignment.Bottom, 0.35);
         }
 
         if (!_propertyWindowContent.IsDisposed)
@@ -75,6 +78,7 @@ public partial class MainForm
         {
             HideDockContent(_mapViewContent);
             HideDockContent(_stageExplorerContent);
+            HideDockContent(_bookmarkListContent);
             HideDockContent(_propertyWindowContent);
             HideDockContent(_metaTilePaletteContent);
 

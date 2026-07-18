@@ -10,6 +10,29 @@ public partial class MainForm
     {
         _stageExplorer.BookmarkToggleRequested += ToggleBookmark;
         _mapView.ContextMenuRequested += OnMapViewContextMenuRequested;
+
+        _bookmarkList.PageJumpRequested += (stage, page) =>
+        {
+            if (_context.Project == null) return;
+            _context.SetStage(_context.Project.Stages.IndexOf(stage));
+            _context.SetPage(stage.Pages.IndexOf(page));
+        };
+
+        _bookmarkList.BookmarkDeleteRequested += bookmark =>
+        {
+            if (_context.Project == null) return;
+            _commandManager.Execute(new RemoveBookmarkCommand(_context.Project, bookmark));
+        };
+
+        _bookmarkList.BookmarkEditRequested += (bookmark, label, description) =>
+        {
+            _commandManager.Execute(new EditBookmarkCommand(bookmark, label, description));
+        };
+    }
+
+    private void BindBookmarkList()
+    {
+        _bookmarkList.Bind(_context.Project);
     }
 
     private void OnMapViewContextMenuRequested(object? sender, TileContextMenuEventArgs e)

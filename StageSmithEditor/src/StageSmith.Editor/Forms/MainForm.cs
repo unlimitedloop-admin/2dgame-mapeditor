@@ -38,6 +38,7 @@ public partial class MainForm : Form
     private readonly StageExplorerContent _stageExplorerContent;
     private readonly PropertyWindowContent _propertyWindowContent;
     private readonly MetaTilePaletteContent _metaTilePaletteContent;
+    private readonly BookmarkListContent _bookmarkListContent;
 
     //========================
     // EditorForms
@@ -54,6 +55,7 @@ public partial class MainForm : Form
     private StageExplorerControl _stageExplorer => _stageExplorerContent.StageExplorer;
     private MetaTilePaletteControl _metaTilePalette => _metaTilePaletteContent.MetaTilePalette;
     private PageNavBarControl _pageNavBar => _mapViewContent.PageNavBar;
+    private BookmarkListControl _bookmarkList => _bookmarkListContent.BookmarkList;
 
     //========================
     // Tools
@@ -99,7 +101,7 @@ public partial class MainForm : Form
         _stageExplorerContent = new StageExplorerContent();
         _propertyWindowContent = new PropertyWindowContent();
         _metaTilePaletteContent = new MetaTilePaletteContent();
-
+        _bookmarkListContent = new BookmarkListContent();
         _mapView.ZoomChanged += (_, _) =>
         {
             _mapViewContent.UpdateZoomTitle(_mapView.ZoomScale);
@@ -122,6 +124,7 @@ public partial class MainForm : Form
         BindPageNavigationController();
         InitializeStageExplorerEvents();
         InitializeBookmarkEvents();
+        BindBookmarkList();
 
         // PropertyWindow のバインド
         _propertyWindow.Bind(_context);
@@ -152,6 +155,7 @@ public partial class MainForm : Form
             _mapView.Invalidate();
             UpdateTitle();
             _stageExplorer?.RebuildTree();
+            _bookmarkList?.RefreshList();
         };
 
         InitializeSearch();

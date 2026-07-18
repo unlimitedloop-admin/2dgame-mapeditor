@@ -31,6 +31,7 @@ public partial class MainForm
         _savedUndoCount = 0;
 
         BindStageExplorer();
+        BindBookmarkList();
         ApplyContextToView();
 
         UpdateEditorAvailability();
@@ -65,6 +66,7 @@ public partial class MainForm
         _savedUndoCount = 0;
 
         BindStageExplorer();
+        BindBookmarkList();
         ApplyContextToView();
 
         UpdateEditorAvailability();
@@ -81,7 +83,8 @@ public partial class MainForm
         _context.Project = null;
 
         ResetView();
-        BindStageExplorer();   // 内部で _stageExplorer.Bind(_context.Project) が呼ばれる想定
+        BindStageExplorer();
+        BindBookmarkList();
 
         _commandManager.Clear();
         _savedUndoCount = 0;
