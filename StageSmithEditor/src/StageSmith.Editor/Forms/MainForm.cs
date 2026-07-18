@@ -121,6 +121,7 @@ public partial class MainForm : Form
         BindMetaTilePalette();
         BindPageNavigationController();
         InitializeStageExplorerEvents();
+        InitializeBookmarkEvents();
 
         // PropertyWindow のバインド
         _propertyWindow.Bind(_context);

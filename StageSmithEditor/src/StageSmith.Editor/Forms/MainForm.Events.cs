@@ -22,6 +22,11 @@ public partial class MainForm
                 _commandManager.Redo();
                 return true;
 
+            case Keys.Control | Keys.B:
+                if (_context.CurrentStage is { } stage && _context.CurrentPage is { } page)
+                    ToggleBookmark(stage, page);
+                return true;
+
             // 隣接Room移動
             case Keys.Control | Keys.Left:
                 NavigateAdjacentRoom(Direction.Left);

@@ -12,6 +12,7 @@ public class MapViewControl : DoubleBufferedPanel
     private TileMap? _tileMap;
     private readonly SafeTilesetHolder _tilesetHolder = new();
 
+    // ModifierKeysの状態をポーリングして、スポイト/バケツのカーソルを更新するためのタイマー
     private readonly System.Windows.Forms.Timer _modifierPollTimer = new() { Interval = 50 };
     private bool _lastIsAlt = false;
     private bool _lastIsShift = false;

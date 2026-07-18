@@ -12,8 +12,8 @@ public sealed class EditorProject
     /// ステージ定義ファイル保存先ルートなど、将来拡張用
     /// </summary>
     public string BaseDirectory { get; set; } = string.Empty;
-
-    public List<Stage> Stages { get; set; } = new();
+    public List<Stage> Stages { get; set; } = [];
+    public List<Bookmark> Bookmarks { get; set; } = [];
 
     [JsonIgnore]
     public bool HasStages => Stages.Count > 0;
@@ -27,10 +27,16 @@ public sealed class EditorProject
         Name ??= "New Project";
         BaseDirectory ??= string.Empty;
         Stages ??= [];
+        Bookmarks ??= [];
 
         foreach (var stage in Stages)
         {
             stage.Normalize();
+        }
+
+        foreach (var bookmark in Bookmarks)
+        {
+            // HACK: 将来の拡張用にブックマークの正規化処理を追加する場合はここに記述
         }
     }
 

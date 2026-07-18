@@ -32,6 +32,12 @@ public class StageExplorerControl : UserControl
     /// </summary>
     public event Action<Stage, Page>? PageDeleteRequested;
 
+    /// <summary>
+    /// ブックマークの切り替えがユーザーによって要求されたとき発火する。
+    /// 実際のモデル操作（Undo対応含む）は呼び出し側が行う。
+    /// </summary>
+    public event Action<Stage, Page>? BookmarkToggleRequested;
+
     //========================
     // 内部状態
     //========================
@@ -45,6 +51,7 @@ public class StageExplorerControl : UserControl
     private readonly TreeView _treeView;
     private readonly ContextMenuStrip _stageMenu;
     private readonly ContextMenuStrip _pageMenu;
+    private readonly ToolStripMenuItem _pageBookmarkMenuItem = new("Add Bookmark");
     private readonly Font _currentPageFont;
     private bool _suppressSelectEvent;
 
@@ -64,6 +71,8 @@ public class StageExplorerControl : UserControl
         _stageMenu = CreateStageContextMenu();
         _pageMenu = CreatePageContextMenu();
         _currentPageFont = new Font(_treeView.Font, FontStyle.Bold);
+
+        _pageBookmarkMenuItem.Click += OnPageBookmarkToggle;
 
         Controls.Add(_treeView);
     }
@@ -160,7 +169,7 @@ public class StageExplorerControl : UserControl
     //========================
     // ツリー構築
     //========================
-    private TreeNode CreateStageNode(Stage stage)
+    private static TreeNode CreateStageNode(Stage stage)
     {
         var node = new TreeNode(stage.Name)
         {
@@ -316,11 +325,20 @@ public class StageExplorerControl : UserControl
             _stageMenu.Tag = tag;
             _stageMenu.Show(_treeView, location);
         }
-        else if (tag.Kind == NodeKind.Page)
+        else if (tag.Kind == NodeKind.Page && tag.Page != null)
         {
             _pageMenu.Tag = tag;
+            UpdateBookmarkMenuItemText(tag.Stage, tag.Page);   // ← 追加
             _pageMenu.Show(_treeView, location);
         }
+    }
+
+    private void UpdateBookmarkMenuItemText(Stage stage, Page page)
+    {
+        var isBookmarked = _project?.Bookmarks
+            .Any(b => b.StageId == stage.Id && b.PageId == page.Id) ?? false;
+
+        _pageBookmarkMenuItem.Text = isBookmarked ? "Remove Bookmark" : "Add Bookmark";
     }
 
     //========================
@@ -546,9 +564,17 @@ public class StageExplorerControl : UserControl
         menu.Items.Add("Rename",    null, OnPageRename);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Duplicate", null, OnPageDuplicate);
-        menu.Items.Add(new ToolStripSeparator());
+         menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add((ToolStripItem)_pageBookmarkMenuItem);
+       menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Delete",    null, OnPageDelete);
         return menu;
+    }
+
+    private void OnPageBookmarkToggle(object? sender, EventArgs e)
+    {
+        if (_pageMenu.Tag is not NodeTag tag || tag.Page == null) return;
+        BookmarkToggleRequested?.Invoke(tag.Stage, tag.Page);
     }
 
     protected override void Dispose(bool disposing)

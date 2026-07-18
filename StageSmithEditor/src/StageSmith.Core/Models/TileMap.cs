@@ -63,7 +63,7 @@ public sealed class TileMap
         Fill(0);
     }
 
-    // TODO: もし頻繁にアクセスするなら、座標からインデックスへの変換をメソッド化してもいいかも
+    // HACK: もし頻繁にアクセスするなら、座標からインデックスへの変換をメソッド化してもいいかも
     private int ToIndex(int x, int y)
     {
         return y * Width + x;
