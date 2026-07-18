@@ -122,6 +122,11 @@ public partial class MainForm
                 _menuViewGridLines.Checked = _showGrid;
                 return true;
 
+            case Keys.T:
+                _mapView.ShowPreview = !_mapView.ShowPreview;
+                UpdateTilePreviewIcon();
+                return true;
+
             case Keys.F:
                 FillSelection();
                 return true;
@@ -160,18 +165,6 @@ public partial class MainForm
         }
 
         return base.ProcessCmdKey(ref msg, keyData);
-    }
-
-    private void btnGrid_Click(object? sender, EventArgs e)
-    {
-        _showGrid = !_showGrid;
-        _mapView.SetShowGrid(_showGrid);
-    }
-
-    private void btnTilePreview_Click(object sender, EventArgs e)
-    {
-        _mapView.ShowPreview = !_mapView.ShowPreview;
-        UpdateTilePreviewIcon();
     }
 
     private void UpdateTilePreviewIcon()

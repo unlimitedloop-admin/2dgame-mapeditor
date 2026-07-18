@@ -161,15 +161,12 @@ public partial class MainForm
         {
             _mapView.PreviewTileId = -1;
             _mapView.PreviewMetaTile = _context.SelectedMetaTile;
-            _mapView.ShowPreview = true;
             _mapView.Invalidate();
             return;
         }
 
         _mapView.PreviewMetaTile = null;
         _mapView.PreviewTileId = _selectedTileId;
-
-        _mapView.ShowPreview = _selectedTileId >= 0;
         _mapView.Invalidate();
     }
 
