@@ -45,6 +45,7 @@ public partial class MainForm : Form
     //========================
     private PageNodeEditorForm? _nodeEditorForm;
     private MetaTileEditorForm? _metaTileEditorForm;
+    private StageMapViewerForm? _stageMapViewerForm;
 
     //========================
     // Controls（DockContent 経由で参照）
@@ -178,6 +179,7 @@ public partial class MainForm : Form
 
             _nodeEditorForm?.Close();
             _metaTileEditorForm?.Close();
+            _stageMapViewerForm?.Close();
         };
 
         UpdateEditorAvailability();

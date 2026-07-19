@@ -84,7 +84,7 @@ public partial class MainForm
         _menuWindowBookmarkList.Click   += (_, _) => ShowDockContent(_bookmarkListContent, DockState.DockLeft);
         _menuWindowTagManager.Click     += (_, _) => { /* TODO: TagManager */ };
         _menuWindowMarkerManager.Click  += (_, _) => { /* TODO: MarkerManager */ };
-        _menuWindowStageMapViewer.Click += (_, _) => { /* TODO: StageMapViewer */ };
+        _menuWindowStageMapViewer.Click += (_, _) => OpenStageMapViewer();
         _menuWindowPageNodeEditor.Click += (_, _) => OpenNodeEditor();
         _menuWindowMetaTileEditor.Click += (_, _) => OpenMetaTileEditor();
         _menuWindowResetLayout.Click    += (_, _) => ResetDockLayout();
@@ -94,7 +94,7 @@ public partial class MainForm
         // ========================
         _menuHelpAbout.Click += (_, _) =>
             MessageBox.Show(
-                "StageSmith Editor\nVersion 0.6",
+                "StageSmith Editor\nVersion 0.9",
                 "About",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information

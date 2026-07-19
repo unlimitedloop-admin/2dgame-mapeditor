@@ -56,4 +56,20 @@ public partial class MainForm
             _metaTileEditorForm.BringToFront();
         }
     }
+
+    /// <summary>
+    /// ステージマップビューアーを開く。既に開いていれば前面に出す。
+    /// </summary>
+    private void OpenStageMapViewer()
+    {
+        if (_stageMapViewerForm == null || _stageMapViewerForm.IsDisposed)
+        {
+            _stageMapViewerForm = new StageMapViewerForm(_context, () => _tileset);
+            _stageMapViewerForm.Show();
+        }
+        else
+        {
+            _stageMapViewerForm.BringToFront();
+        }
+    }
 }
