@@ -1,4 +1,4 @@
-namespace StageSmith.Editor.Controls;
+namespace StageSmith.Editor;
 
 public class BookmarkEditDialog : Form
 {
