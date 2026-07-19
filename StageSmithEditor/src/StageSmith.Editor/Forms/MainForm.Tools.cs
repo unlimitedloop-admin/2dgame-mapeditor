@@ -277,9 +277,7 @@ public partial class MainForm
     {
         if (tool == null) return;
 
-        _commandManager.Execute(
-            new ChangeToolCommand(_toolManager, tool)
-        );
+        _toolManager.SetTool(tool);
     }
 
     //========================
