@@ -58,6 +58,7 @@ public partial class MainForm
         _menuViewResetZoom.Click                += (_, _) => ResetZoom();
 
         _menuViewToolBar.CheckedChanged         += (_, _) => _editorToolStrip.Visible = _menuViewToolBar.Checked;
+        _menuViewStatusBar.CheckedChanged       += (_, _) => _statusStrip.Visible = _menuViewStatusBar.Checked;
 
         // ========================
         // Navigation

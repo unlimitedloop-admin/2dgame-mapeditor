@@ -71,6 +71,8 @@ public partial class MainForm
 
         UpdateEditorAvailability();
         UpdateTitle();
+
+        ShowStatusMessage($"{TruncatePathForStatus(_currentProjectPath)} からプロジェクトファイル(.sseproj)を読み込みました");
     }
 
     private void CloseProject()
@@ -111,6 +113,8 @@ public partial class MainForm
         repository.Save(_context.Project, _currentProjectPath);
 
         _savedUndoCount = _commandManager.UndoCount;
+
+        ShowStatusMessage($"{TruncatePathForStatus(_currentProjectPath)} へプロジェクトを新規保存しました");
 
         UpdateTitle();
     }
@@ -307,7 +311,9 @@ public partial class MainForm
         if (dialog.ShowDialog(this) != DialogResult.OK)
             return;
 
-        ExportStageDef(dialog.FileName);    
+        ExportStageDef(dialog.FileName);
+
+        ShowStatusMessage($"{TruncatePathForStatus(dialog.FileName)} へDEFファイルを出力しました");
 
         MessageBox.Show(
             $"DEF出力しました。\n{dialog.FileName}",
@@ -358,6 +364,8 @@ public partial class MainForm
 
         // 4. defファイルも同じ場所に出力 (基本的にbinだけ出力する事はない想定のため)
         ExportStageDef(Path.ChangeExtension(dialog.FileName, FileExtensions.StageDefinition));
+
+        ShowStatusMessage($"{TruncatePathForStatus(dialog.FileName)} へBINファイルを出力しました（{bytes.Length} bytes）");
 
         MessageBox.Show(
             $"BIN出力しました。\n{dialog.FileName}\n{bytes.Length} bytes",
@@ -415,6 +423,8 @@ public partial class MainForm
             "Export All Stages",
             MessageBoxButtons.OK,
             MessageBoxIcon.Information);
+
+        ShowStatusMessage($"{exportedCount} 件のステージを {TruncatePathForStatus(outputDir)} へ出力しました");
     }
 
     /// <summary>
@@ -502,6 +512,8 @@ public partial class MainForm
 
             // ノードエディタが開いていればプレビューキャッシュを再生成する
             _nodeEditorForm?.SyncTileset(_tileset);
+
+            ShowStatusMessage($"{TruncatePathForStatus(path)} からタイルセット画像を読み込みました");
         }
         catch (Exception ex) when (
             ex is ArgumentException ||

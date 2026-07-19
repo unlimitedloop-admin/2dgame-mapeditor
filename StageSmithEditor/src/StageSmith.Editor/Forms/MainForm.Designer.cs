@@ -96,7 +96,7 @@ namespace StageSmith.Editor
             _menuEditFindPrevTile       = new ToolStripMenuItem("Find Previous Tile")       { ShortcutKeys = Keys.Shift | Keys.F4 };
             _menuEditReplaceTile        = new ToolStripMenuItem("Replace Tile...")          { ShortcutKeys = Keys.Control | Keys.H };
             _menuEditClearSearchHighlight = new ToolStripMenuItem("Clear Search Highlight") { ShortcutKeyDisplayString = "Shift+Esc" };
-            _menuEditToggleBookmark = new ToolStripMenuItem("Add Bookmark")                 { ShortcutKeyDisplayString = "Ctrl+B" };
+            _menuEditToggleBookmark     = new ToolStripMenuItem("Add Bookmark")             { ShortcutKeyDisplayString = "Ctrl+B" };
 
             _menuEdit.DropDownItems.AddRange([
                 _menuEditUndo,

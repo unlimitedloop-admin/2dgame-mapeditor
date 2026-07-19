@@ -94,6 +94,7 @@ public partial class MainForm : Form
 
         Controls.Add(_dockPanel);   // DockPanel をその下に配置
         InitializeToolStrip();
+        InitializeStatusBar();
         Controls.Add(_menuStrip);   // メニューバーを最前面に
 
         // DockContent を生成
@@ -118,13 +119,18 @@ public partial class MainForm : Form
 
         InitializeTools();
         InitializeDockLayout();
+
         _stageExplorerContent.Activate();
+
         BindToolManager();
         BindTilePalette();
         BindMetaTilePalette();
+        
         BindPageNavigationController();
+        
         InitializeStageExplorerEvents();
         InitializeBookmarkEvents();
+        
         BindBookmarkList();
 
         // PropertyWindow のバインド
