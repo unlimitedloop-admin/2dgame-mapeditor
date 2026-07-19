@@ -82,6 +82,10 @@ public partial class MainForm
 
     private bool CanPlaceMetaTile()
     {
+        // NOTE: Altキーを押している間は、MetaTile配置を無効化する。スポイトツールのため。
+        if ((ModifierKeys & Keys.Alt) != 0)
+            return false;
+
         return _page?.TileMap != null
             && _context.CurrentBrushKind == EditorBrushKind.MetaTile
             && _context.SelectedMetaTile != null;

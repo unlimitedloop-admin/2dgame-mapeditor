@@ -177,8 +177,9 @@ public partial class MainForm
                 if (tileId < 0) return;
 
                 _selectedTileId = tileId;
-                _context.SetSelectedTile(tileId);   // ← 追加：MetaTileブラシを解除し、通常タイルブラシへ切り替える
+                _context.SetSelectedTile(tileId);
                 _tilePalette.SetSelected(tileId);
+                _metaTilePalette.SetSelected(null);
                 _mapView.PreviewTileId = tileId;
             }
         );
