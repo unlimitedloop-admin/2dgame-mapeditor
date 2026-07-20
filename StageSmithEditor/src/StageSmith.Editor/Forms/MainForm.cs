@@ -136,6 +136,7 @@ public partial class MainForm : Form
 
         // PropertyWindow のバインド
         _propertyWindow.Bind(_context);
+        _propertyWindow.CommandRequested += cmd => _commandManager.Execute(cmd);
 
         // プロパティ変更 → エクスプローラー即時更新
         _propertyWindow.DataChanged += () =>
@@ -165,6 +166,8 @@ public partial class MainForm : Form
             _stageExplorer?.RebuildTree();
             _bookmarkList?.RefreshList();
             _pageNavBar?.UpdateDisplay(_context);
+            _propertyWindow?.RefreshProperties();
+            _nodeEditorForm?.SyncPageSelection(_context.CurrentPageIndex);
         };
 
         InitializeSearch();
