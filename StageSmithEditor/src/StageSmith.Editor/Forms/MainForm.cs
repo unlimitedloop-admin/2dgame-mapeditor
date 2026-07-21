@@ -72,6 +72,9 @@ public partial class MainForm : Form
     //========================
     // その他
     //========================
+    private bool _showRowNumbers = false;
+    private bool _showColumnNumbers = false;
+
     private bool _showGrid = true;
     private ClipboardData? _clipboard;
 
@@ -93,10 +96,10 @@ public partial class MainForm : Form
             Theme = new VS2015BlueTheme()
         };
 
-        Controls.Add(_dockPanel);   // DockPanel をその下に配置
+        Controls.Add(_dockPanel);
         InitializeToolStrip();
         InitializeStatusBar();
-        Controls.Add(_menuStrip);   // メニューバーを最前面に
+        Controls.Add(_menuStrip);
 
         // DockContent を生成
         _mapViewContent = new MapViewContent();
@@ -157,8 +160,6 @@ public partial class MainForm : Form
                 _mapView.UpdateCursor();
         };
 
-        // CommandManager の変更通知 → MapView を更新
-        // ノードエディタ側でUndo/Redoが実行された場合もここで拾える
         _commandManager.HistoryChanged += () =>
         {
             _mapView.Invalidate();

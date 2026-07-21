@@ -139,6 +139,14 @@ public partial class MainForm
                 ToggleShowTileNumbers(_menuViewShowTileNumbers.Checked);
                 return true;
 
+            case Keys.R:
+                _menuViewRowNumbers.Checked = !_menuViewRowNumbers.Checked;
+                return true;
+
+            case Keys.C:
+                _menuViewColumnNumbers.Checked = !_menuViewColumnNumbers.Checked;
+                return true;
+
             case Keys.Insert:
                 ApplySelectionFill();
                 return true;
@@ -182,6 +190,27 @@ public partial class MainForm
         _mapView.ShowPreview = visible;
         _tilePreviewButton.Checked = visible;
         UpdateTilePreviewIcon();
+    }
+
+    private void ApplyGridState(bool visible)
+    {
+        _showGrid = visible;
+        _mapView.SetShowGrid(_showGrid);
+        _showGridButton.Checked = visible;
+    }
+
+    private void ApplyRowNumberState(bool show)
+    {
+        _showRowNumbers = show;
+        _mapView.SetShowRowNumbers(show);
+        // menuItemRowNumbers.Checked = show;
+    }
+
+    private void ApplyColumnNumberState(bool show)
+    {
+        _showColumnNumbers = show;
+        _mapView.SetShowColumnNumbers(show);
+        // menuItemColumnNumbers.Checked = show;
     }
 
     private void CancelDrag()

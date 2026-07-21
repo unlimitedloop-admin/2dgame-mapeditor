@@ -52,6 +52,8 @@ public partial class MainForm
         _menuViewGridLines.CheckedChanged       += (_, _) => ApplyGridState(_menuViewGridLines.Checked);
         _menuViewTilePreview.CheckedChanged     += (_, _) => ApplyTilePreviewState(_menuViewTilePreview.Checked);
         _menuViewShowTileNumbers.CheckedChanged += (_, _) => ToggleShowTileNumbers(_menuViewShowTileNumbers.Checked);
+        _menuViewRowNumbers.CheckedChanged      += (_, _) => ApplyRowNumberState(_menuViewRowNumbers.Checked);
+        _menuViewColumnNumbers.CheckedChanged   += (_, _) => ApplyColumnNumberState(_menuViewColumnNumbers.Checked);
         _menuViewMarkerOverlay.CheckedChanged   += (_, _) => ToggleMarkerOverlay(_menuViewMarkerOverlay.Checked);
         _menuViewZoomIn.Click                   += (_, _) => ZoomIn();
         _menuViewZoomOut.Click                  += (_, _) => ZoomOut();

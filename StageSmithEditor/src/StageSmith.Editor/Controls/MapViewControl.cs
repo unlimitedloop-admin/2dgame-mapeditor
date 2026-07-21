@@ -57,6 +57,33 @@ public class MapViewControl : DoubleBufferedPanel
         base.Dispose(disposing);
     }
 
+    // ===== Toggle Grid =====
+    private bool _showRowNumbers = false;
+    private bool _showColumnNumbers = false;
+
+    public bool ShowRowNumbers => _showRowNumbers;
+    public bool ShowColumnNumbers => _showColumnNumbers;
+
+    public void SetShowRowNumbers(bool show)
+    {
+        _showRowNumbers = show;
+        UpdatePreferredControlSize();
+        Invalidate();
+    }
+
+    public void SetShowColumnNumbers(bool show)
+    {
+        _showColumnNumbers = show;
+        UpdatePreferredControlSize();
+        Invalidate();
+    }
+
+    private int OffsetX =>
+        ViewerConstants.MapViewMargin + (_showRowNumbers ? ViewerConstants.RowNumberBandWidth : 0);
+
+    private int OffsetY =>
+        ViewerConstants.MapViewMargin + (_showColumnNumbers ? ViewerConstants.ColumnNumberBandHeight : 0);
+
     // ===== Zoom =====
     private const float MinZoomScale = 0.5f;
     private const float DefaultZoomScale = 1.0f;
@@ -238,6 +265,9 @@ public class MapViewControl : DoubleBufferedPanel
             DrawGrid(g);
         }
 
+        DrawColumnNumbers(g);
+        DrawRowNumbers(g);
+
         DrawSearchHighlights(g);
         DrawPreview(g);
 
@@ -261,7 +291,8 @@ public class MapViewControl : DoubleBufferedPanel
 
         var srcSize = MapConstants.DefaultTileSize;   // 16: 画像の切り出しサイズ
         var dstSize = CurrentTileRenderSize; // 32: 画面上の描画サイズ
-        var margin  = ViewerConstants.MapViewMargin;  // 32: 上下左右マージン
+        var offsetX = OffsetX;
+        var offsetY = OffsetY;
         var tilesPerRow = tileset.Width / srcSize;
 
         for (var y = 0; y < _tileMap.Height; y++)
@@ -275,8 +306,8 @@ public class MapViewControl : DoubleBufferedPanel
 
                 var srcRect = new Rectangle(sx, sy, srcSize, srcSize);
                 var dstRect = new Rectangle(
-                    margin + x * dstSize,
-                    margin + y * dstSize,
+                    offsetX + x * dstSize,
+                    offsetY + y * dstSize,
                     dstSize,
                     dstSize);
 
@@ -290,20 +321,21 @@ public class MapViewControl : DoubleBufferedPanel
         if (_tileMap == null) return;
 
         var dstSize = CurrentTileRenderSize;
-        var margin  = ViewerConstants.MapViewMargin;
+        var offsetX = OffsetX;
+        var offsetY = OffsetY;
 
         using var pen = new Pen(Color.FromArgb(80, Color.White));
 
         for (var x = 0; x <= _tileMap.Width; x++)
         {
-            var px = margin + x * dstSize;
-            g.DrawLine(pen, px, margin, px, margin + _tileMap.Height * dstSize);
+            var px = offsetX + x * dstSize;
+            g.DrawLine(pen, px, offsetY, px, offsetY + _tileMap.Height * dstSize);
         }
 
         for (var y = 0; y <= _tileMap.Height; y++)
         {
-            var py = margin + y * dstSize;
-            g.DrawLine(pen, margin, py, margin + _tileMap.Width * dstSize, py);
+            var py = offsetY + y * dstSize;
+            g.DrawLine(pen, offsetX, py, offsetX + _tileMap.Width * dstSize, py);
         }
     }
 
@@ -329,7 +361,6 @@ public class MapViewControl : DoubleBufferedPanel
 
         var srcSize = MapConstants.DefaultTileSize;   // 16: 画像の切り出しサイズ
         var dstSize = CurrentTileRenderSize; // 32: 画面上の描画サイズ
-        var margin  = ViewerConstants.MapViewMargin;
         var tilesPerRow = tileset.Width / srcSize;
 
         var sx = (PreviewTileId % tilesPerRow) * srcSize;
@@ -337,8 +368,8 @@ public class MapViewControl : DoubleBufferedPanel
 
         var srcRect = new Rectangle(sx, sy, srcSize, srcSize);
         var dstRect = new Rectangle(
-            margin + _hoverTile.X * dstSize,
-            margin + _hoverTile.Y * dstSize,
+            OffsetX + _hoverTile.X * dstSize,
+            OffsetY + _hoverTile.Y * dstSize,
             dstSize,
             dstSize
         );
@@ -356,7 +387,6 @@ public class MapViewControl : DoubleBufferedPanel
 
         var srcSize = MapConstants.DefaultTileSize;
         var dstSize = CurrentTileRenderSize;
-        var margin = ViewerConstants.MapViewMargin;
         var tilesPerRow = Math.Max(1, tileset.Width / srcSize);
 
         var minX = int.MaxValue;
@@ -385,8 +415,8 @@ public class MapViewControl : DoubleBufferedPanel
 
                 var srcRect = new Rectangle(sx, sy, srcSize, srcSize);
                 var dstRect = new Rectangle(
-                    margin + mapX * dstSize,
-                    margin + mapY * dstSize,
+                    OffsetX + mapX * dstSize,
+                    OffsetY + mapY * dstSize,
                     dstSize,
                     dstSize
                 );
@@ -579,8 +609,7 @@ public class MapViewControl : DoubleBufferedPanel
     private (int x, int y) ScreenToTile(int px, int py)
     {
         var dstSize = CurrentTileRenderSize;
-        var margin  = ViewerConstants.MapViewMargin;
-        return ((px - margin) / dstSize, (py - margin) / dstSize);
+        return ((px - OffsetX) / dstSize, (py - OffsetY) / dstSize);
     }
 
     public bool TryScreenToTile(int px, int py, out int x, out int y)
@@ -704,11 +733,10 @@ public class MapViewControl : DoubleBufferedPanel
         var margin = ViewerConstants.MapViewMargin;
         var tileSize = CurrentTileRenderSize;
 
+        var mapLeft = OffsetX;
+        var mapTop = OffsetY;
         var mapWidth = _tileMap.Width * tileSize;
         var mapHeight = _tileMap.Height * tileSize;
-
-        var mapLeft = margin;
-        var mapTop = margin;
         var mapRight = mapLeft + mapWidth;
         var mapBottom = mapTop + mapHeight;
 
@@ -716,6 +744,7 @@ public class MapViewControl : DoubleBufferedPanel
 
         return direction switch
         {
+            // Up / Left は「番号帯より外側」の固定マージン帯（コントロール端基準）に配置する
             PageDirection.Up => new Rectangle(
                 mapLeft + mapWidth / 2 - buttonSize / 2,
                 (margin - buttonSize) / 2,
@@ -801,8 +830,8 @@ public class MapViewControl : DoubleBufferedPanel
         var height = (_tileMap?.Height ?? MapConstants.PageTileHeight) * CurrentTileRenderSize;
 
         return new Size(
-            width + ViewerConstants.MapViewMargin * 2,
-            height + ViewerConstants.MapViewMargin * 2
+            width + OffsetX + ViewerConstants.MapViewMargin,
+            height + OffsetY + ViewerConstants.MapViewMargin
         );
     }
 
@@ -824,11 +853,10 @@ public class MapViewControl : DoubleBufferedPanel
     public Rectangle GetTileRect(int x, int y)
     {
         var dstSize = CurrentTileRenderSize;
-        var margin  = ViewerConstants.MapViewMargin;
 
         return new Rectangle(
-            margin + x * dstSize,
-            margin + y * dstSize,
+            OffsetX + x * dstSize,
+            OffsetY + y * dstSize,
             dstSize,
             dstSize);
     }
@@ -855,6 +883,62 @@ public class MapViewControl : DoubleBufferedPanel
                 SearchVisualConstants.HighlightBorderWidth);
 
             g.DrawRectangle(pen, GetTileRect(current.X, current.Y));
+        }
+    }
+
+    private void DrawColumnNumbers(Graphics g)
+    {
+        if (!_showColumnNumbers || _tileMap == null) return;
+
+        var dstSize = CurrentTileRenderSize;
+        var offsetX = OffsetX;
+        var bandTop = OffsetY - ViewerConstants.ColumnNumberBandHeight;
+
+        using var font = new Font("Yu Gothic UI", 7f);
+        using var brush = new SolidBrush(Color.Gainsboro);
+        var format = new StringFormat
+        {
+            Alignment = StringAlignment.Center,
+            LineAlignment = StringAlignment.Center
+        };
+
+        for (var x = 0; x < _tileMap.Width; x++)
+        {
+            var rect = new Rectangle(
+                offsetX + x * dstSize,
+                bandTop,
+                dstSize,
+                ViewerConstants.ColumnNumberBandHeight);
+
+            g.DrawString(x.ToString(), font, brush, rect, format);
+        }
+    }
+
+    private void DrawRowNumbers(Graphics g)
+    {
+        if (!_showRowNumbers || _tileMap == null) return;
+
+        var dstSize = CurrentTileRenderSize;
+        var offsetY = OffsetY;
+        var bandLeft = OffsetX - ViewerConstants.RowNumberBandWidth;
+
+        using var font = new Font("Yu Gothic UI", 7f);
+        using var brush = new SolidBrush(Color.Gainsboro);
+        var format = new StringFormat
+        {
+            Alignment = StringAlignment.Center,
+            LineAlignment = StringAlignment.Center
+        };
+
+        for (var y = 0; y < _tileMap.Height; y++)
+        {
+            var rect = new Rectangle(
+                bandLeft,
+                offsetY + y * dstSize,
+                ViewerConstants.RowNumberBandWidth,
+                dstSize);
+
+            g.DrawString(y.ToString(), font, brush, rect, format);
         }
     }
 }
@@ -903,9 +987,7 @@ public sealed class AdjacentNavigationRequestedEventArgs : EventArgs
     public PageDirection Direction { get; }
     public bool HasAdjacentPage { get; }
 
-    public AdjacentNavigationRequestedEventArgs(
-        PageDirection direction,
-        bool hasAdjacentPage)
+    public AdjacentNavigationRequestedEventArgs(PageDirection direction, bool hasAdjacentPage)
     {
         Direction = direction;
         HasAdjacentPage = hasAdjacentPage;

@@ -48,4 +48,14 @@ public static class ViewerConstants
         MapViewRenderSize.Width  + MapViewMargin * 2,   // 512 + 64 = 576
         MapViewRenderSize.Height + MapViewMargin * 2    // 480 + 64 = 544
     );
+
+    /// <summary>
+    /// 行番号用の帯幅（px）。
+    /// </summary>
+    public const int RowNumberBandWidth = 16;       // 左側：行番号用の帯幅
+
+    /// <summary>
+    /// 列番号用の帯高さ（px）。
+    /// </summary>
+    public const int ColumnNumberBandHeight = 16;   // 上側：列番号用の帯高さ
 }

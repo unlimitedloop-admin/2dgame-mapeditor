@@ -176,11 +176,4 @@ public partial class MainForm
 
         _mapView.Invalidate();
     }
-
-    private void ApplyGridState(bool visible)
-    {
-        _showGrid = visible;
-        _mapView.SetShowGrid(_showGrid);
-        _showGridButton.Checked = visible;
-    }
 }
