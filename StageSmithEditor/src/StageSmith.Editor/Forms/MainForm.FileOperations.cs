@@ -254,6 +254,88 @@ public partial class MainForm
         ApplyContextToView();
     }
 
+    private void SaveStage()
+    {
+        var project = _context.Project;
+        var stage = _context.CurrentStage;
+
+        if (project == null || stage == null)
+        {
+            MessageBox.Show(
+                "保存対象のステージがありません。",
+                "Save Stage",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return;
+        }
+
+        var repository = new JsonProjectRepository();
+        var stageDir = project.ResolveStageStorageDirectory();
+        Directory.CreateDirectory(stageDir);
+
+        var path = !string.IsNullOrWhiteSpace(stage.FilePath)
+            ? stage.FilePath
+            : JsonProjectRepository.ResolveStageFilePath(stage, stageDir);
+
+        repository.SaveStage(stage, path);
+
+        _stageExplorer.RebuildTree();
+        ShowStatusMessage($"{TruncatePathForStatus(path)} へステージを保存しました");
+    }
+
+    private void DropStage()
+    {
+        var stage = _context.CurrentStage;
+        if (stage == null) return;
+
+        var confirm = MessageBox.Show(
+            this,
+            $"ステージ「{stage.Name}」を削除します。\nこの操作は元に戻せません。よろしいですか？",
+            "Drop Stage",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Warning);
+
+        if (confirm != DialogResult.Yes) return;
+
+        DeleteStage(stage);
+    }
+
+    /// <summary>
+    /// 指定したステージをプロジェクトから削除する。
+    /// NOTE: 破壊的・不可逆操作（.ssestage の物理削除まで行う）。Undo対象外。
+    /// 呼び出しは「File > Drop Stage」と「Stage Explorer の Delete」の
+    /// 確認ダイアログ通過後のみに限定すること。それ以外から直接呼び出さないこと。
+    /// </summary>
+    private void DeleteStage(Stage stage)
+    {
+        var project = _context.Project;
+        if (project == null) return;
+
+        var filePath = stage.FilePath;
+        var stageName = stage.Name;
+        var wasCurrent = ReferenceEquals(_context.CurrentStage, stage);
+
+        project.RemoveStage(stage.Id); // 紐づくブックマークも合わせて削除される（EditorProject.RemoveStage内）
+
+        if (!string.IsNullOrWhiteSpace(filePath))
+        {
+            var repository = new JsonProjectRepository();
+            repository.DeleteStageFile(filePath); // NOTE: 物理削除
+        }
+
+        if (wasCurrent)
+        {
+            _context.SetStage(0);
+            ResetView();
+            ApplyContextToView();
+        }
+
+        _stageExplorer.RebuildTree();
+        _bookmarkList.RefreshList();
+
+        ShowStatusMessage($"ステージ「{stageName}」を削除しました");
+    }
+
     /// <summary>
     /// "Stage 001" 形式で、まだ使われていない最小の連番を割り当てた初期名を生成する。
     /// </summary>
@@ -285,41 +367,6 @@ public partial class MainForm
 
         var path = filename;
         DefExporter.Export(stage, path);
-    }
-
-    private void ExportCurrentStageDefAs()
-    {
-        var stage = _context.CurrentStage;
-
-        if (stage == null)
-        {
-            MessageBox.Show(
-                "出力対象のステージがありません。",
-                "Export DEF",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Warning);
-            return;
-        }
-
-        using var dialog = new SaveFileDialog
-        {
-            Title = "DEFファイルを出力",
-            Filter = FileExtensions.StageDefinition + "|*" + FileExtensions.StageDefinition + "|All files (*.*)|*.*",
-            FileName = $"{stage.Name}{FileExtensions.StageDefinition}"
-        };
-
-        if (dialog.ShowDialog(this) != DialogResult.OK)
-            return;
-
-        ExportStageDef(dialog.FileName);
-
-        ShowStatusMessage($"{TruncatePathForStatus(dialog.FileName)} へDEFファイルを出力しました");
-
-        MessageBox.Show(
-            $"DEF出力しました。\n{dialog.FileName}",
-            "Export DEF",
-            MessageBoxButtons.OK,
-            MessageBoxIcon.Information);
     }
 
     private void ExportCurrentStageBin()

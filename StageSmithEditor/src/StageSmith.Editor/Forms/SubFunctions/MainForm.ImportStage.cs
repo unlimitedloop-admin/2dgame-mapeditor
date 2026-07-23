@@ -1,6 +1,5 @@
 using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
-using StageSmith.Editor.Forms;
 using StageSmith.Infrastructure.Persistence;
 
 namespace StageSmith.Editor;
@@ -8,11 +7,14 @@ namespace StageSmith.Editor;
 public partial class MainForm
 {
     /// <summary>
-    /// 他プロジェクト（.sseproj）からステージを1件選んでインポートする。
+    /// .ssestage ファイルを選択してステージをインポートする。
+    /// 選択したファイルはプロジェクトの BaseDirectory 配下へコピーしてから登録する。
     /// </summary>
     private void ImportStage()
     {
-        if (_context.Project == null)
+        var project = _context.Project;
+
+        if (project == null)
         {
             MessageBox.Show(
                 this,
@@ -25,59 +27,60 @@ public partial class MainForm
 
         using var openDialog = new OpenFileDialog
         {
-            Filter = FileExtensions.ProjectFilter,
-            Title  = "インポート元プロジェクトを選択",
+            Filter = FileExtensions.StageFileFilter,
+            Title  = "インポートするステージファイルを選択",
+            Multiselect = true,
         };
 
         if (openDialog.ShowDialog(this) != DialogResult.OK) return;
 
-        EditorProject sourceProject;
+        var repository = new JsonProjectRepository();
+        var stageDir = project.ResolveStageStorageDirectory();
+        Directory.CreateDirectory(stageDir);
 
-        try
+        var importedNames = new List<string>();
+
+        foreach (var sourceFilePath in openDialog.FileNames)
         {
-            var repository = new JsonProjectRepository();
-            sourceProject = repository.Load(openDialog.FileName);
+            Stage sourceStage;
+
+            try
+            {
+                sourceStage = repository.LoadStage(sourceFilePath);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    this,
+                    $"ステージファイルの読み込みに失敗しました。\n{sourceFilePath}\n{ex.Message}",
+                    "Import Stage",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                continue;
+            }
+
+            // Clone() で FilePath=null / IsDirty=true にリセットされる
+            // （インポート元ファイルを誤って上書きしないため）
+            var importedStage = sourceStage.Clone();
+
+            if (!ResolveStageConflicts(importedStage))
+                continue; // このステージだけスキップして次へ
+
+            // BaseDirectory 配下へ物理コピーする
+            var destPath = JsonProjectRepository.ResolveStageFilePath(importedStage, stageDir);
+            repository.SaveStage(importedStage, destPath);
+
+            project.Stages.Add(importedStage);
+            importedNames.Add(importedStage.Name);
         }
-        catch (Exception ex)
-        {
-            MessageBox.Show(
-                this,
-                $"プロジェクトの読み込みに失敗しました。\n{ex.Message}",
-                "Import Stage",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Error);
-            return;
-        }
 
-        if (!sourceProject.HasStages)
-        {
-            MessageBox.Show(
-                this,
-                "選択したプロジェクトにはステージがありません。",
-                "Import Stage",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
-            return;
-        }
-
-        using var selectDialog = new ImportStageDialog(sourceProject.Stages);
-        if (selectDialog.ShowDialog(this) != DialogResult.OK) return;
-
-        var sourceStage = selectDialog.SelectedStage;
-        if (sourceStage == null) return;
-
-        var importedStage = sourceStage.Clone();
-
-        if (!ResolveStageConflicts(importedStage))
-            return; // ユーザーがキャンセルした場合はインポート自体を中止
-
-        _context.Project.Stages.Add(importedStage);
+        if (importedNames.Count == 0) return;
 
         _stageExplorer.RebuildTree();
 
         MessageBox.Show(
             this,
-            $"ステージ「{importedStage.Name}」をインポートしました。",
+            $"{importedNames.Count} 件のステージをインポートしました。\n{string.Join("\n", importedNames)}",
             "Import Stage",
             MessageBoxButtons.OK,
             MessageBoxIcon.Information);

@@ -38,6 +38,12 @@ public class StageExplorerControl : UserControl
     public event Action<Stage, Page>? PageDeleteRequested;
 
     /// <summary>
+    /// ステージの削除がユーザーによって確認されたとき発火する。
+    /// 実際のモデル操作（ファイル削除・ブックマーク連動削除含む）は呼び出し側（MainForm）が行う。
+    /// </summary>
+    public event Action<Stage>? StageDeleteRequested;
+
+    /// <summary>
     /// ブックマークの切り替えがユーザーによって要求されたとき発火する。
     /// 実際のモデル操作（Undo対応含む）は呼び出し側が行う。
     /// </summary>
@@ -381,17 +387,8 @@ public class StageExplorerControl : UserControl
 
         if (result != DialogResult.Yes) return;
 
-        _project.Stages.Remove(tag.Stage);
-
-        // 削除したステージが選択中だった場合はリセット
-        if (ReferenceEquals(_currentStage, tag.Stage))
-        {
-            _currentStage = null;
-            _currentPage = null;
-        }
-
-        RebuildTree();
-        StageListChanged?.Invoke();
+        // 実際の削除（ファイル削除・ブックマーク連動削除含む）は呼び出し側（MainForm）に委譲する
+        StageDeleteRequested?.Invoke(tag.Stage);
     }
 
     private void OnStageClone(object? sender, EventArgs e)

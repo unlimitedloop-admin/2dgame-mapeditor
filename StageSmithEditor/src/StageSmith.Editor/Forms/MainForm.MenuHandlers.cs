@@ -186,9 +186,9 @@ public partial class MainForm
     //private void SaveProject() { }        // MainForm.FileOperations.cs で定義済み
     //private void CloseProject() { }       // MainForm.FileOperations.cs で定義済み
     //private void NewStage() { }           // MainForm.FileOperations.cs で定義済み
-    private void SaveStage() => ExportCurrentStageDefAs();
+    //private void SaveStage() { }  // MainForm.FileOperations.cs で定義済み
     private void ReloadStage()          { /* TODO */ }
-    private void DropStage()            { /* TODO */ }
+    //private void DropStage() { }  // MainForm.FileOperations.cs で定義済み
     private void ImportTileSet() => OpenTilesetImage();
     private void ExportBin() => ExportCurrentStageBin();
     //private void ExportAllStages() { }    // MainForm.FileOperations.cs で定義済み

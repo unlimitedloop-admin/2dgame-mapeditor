@@ -31,6 +31,7 @@ public sealed class EditorProject
     /// 実行時に読み込まれた Stage 一覧。
     /// 正規データは各 .ssestage ファイルなので、.sseproj には直接シリアライズしない。
     /// </summary>
+    [JsonIgnore]
     public List<Stage> Stages { get; set; } = [];
 
     /// <summary>
@@ -58,6 +59,7 @@ public sealed class EditorProject
         BaseDirectory ??= string.Empty;
         StageStorageDirectory ??= string.Empty;
         Stages ??= [];
+        StageFilePaths ??= [];
         Bookmarks ??= [];
 
         foreach (var stage in Stages)
@@ -86,7 +88,14 @@ public sealed class EditorProject
     public bool RemoveStage(Guid stageId)
     {
         var target = Stages.FirstOrDefault(x => x.Id == stageId);
-        if (target is null) return false;
+        if (target is null)
+        {
+            return false;
+        }
+
+        // ステージ削除時、そのステージを参照するブックマークも道連れで削除する。
+        // 孤立ブックマーク（存在しないStageIdを指す）を残さないための不変条件。
+        Bookmarks.RemoveAll(b => b.StageId == stageId);
 
         return Stages.Remove(target);
     }

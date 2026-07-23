@@ -1,5 +1,6 @@
 using System.Text.Json;
 using StageSmith.Application.Services;
+using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
 
 namespace StageSmith.Infrastructure.Persistence;
@@ -141,22 +142,24 @@ public sealed class JsonProjectRepository : IProjectRepository
     // Utilities
     // ===================================================
 
-    private static string ResolveStageFilePath(Stage stage, string stageDir)
+    public static string ResolveStageFilePath(Stage stage, string stageDir)
     {
         if (!string.IsNullOrWhiteSpace(stage.FilePath))
             return stage.FilePath;
+
+        var extension = FileExtensions.StageFile;
 
         var baseName = !string.IsNullOrWhiteSpace(stage.Name) ? stage.Name : stage.Key;
         if (string.IsNullOrWhiteSpace(baseName))
             baseName = "Stage";
 
         var safeName = SanitizeFileName(baseName);
-        var candidate = Path.Combine(stageDir, $"{safeName}.ssestage");
+        var candidate = Path.Combine(stageDir, $"{safeName}{extension}");
 
         var suffix = 2;
         while (File.Exists(candidate))
         {
-            candidate = Path.Combine(stageDir, $"{safeName}_{suffix}.ssestage");
+            candidate = Path.Combine(stageDir, $"{safeName}_{suffix}{extension}");
             suffix++;
         }
 

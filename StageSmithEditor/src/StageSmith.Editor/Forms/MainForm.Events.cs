@@ -61,8 +61,12 @@ public partial class MainForm
                 OpenProject();
                 return true;
 
-            case Keys.Control | Keys.N:
+            case Keys.Control | Keys.P:
                 NewProject();
+                return true;
+
+            case Keys.Control | Keys.N:
+                NewStage();
                 return true;
 
             case Keys.Control | Keys.C:

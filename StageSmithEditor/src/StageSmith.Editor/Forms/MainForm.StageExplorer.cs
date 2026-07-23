@@ -1,5 +1,4 @@
 using StageSmith.Application.Commands;
-using StageSmith.Core.Models;
 
 namespace StageSmith.Editor;
 
@@ -39,6 +38,8 @@ public partial class MainForm
         {
             _commandManager.Execute(new RemovePageCommand(stage, page, _context));
         };
+
+        _stageExplorer.StageDeleteRequested += DeleteStage;
     }
 
     //========================
