@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace StageSmith.Core.Models;
 
 public sealed class Stage
@@ -31,6 +33,25 @@ public sealed class Stage
     /// .sseproj の保存対象にする想定。
     /// </summary>
     public List<MetaTile> MetaTiles { get; set; } = [];
+
+    /// <summary>
+    /// このステージが保存されている .ssestage ファイルの絶対パス。
+    /// 新規作成直後でまだ一度も保存されていない場合は null。
+    /// ファイル自身への自己参照になるため、.ssestage の保存対象には含めない。
+    /// </summary>
+    [JsonIgnore]
+    public string? FilePath { get; set; }
+
+    /// <summary>
+    /// 前回保存以降に変更があるかどうか。
+    /// Save Stage / Save Project の対象判定に使う。
+    /// </summary>
+    [JsonIgnore]
+    public bool IsDirty { get; set; }
+
+    public void MarkDirty() => IsDirty = true;
+
+    public void ClearDirty() => IsDirty = false;
 
     public Page AddPage(string? name = null)
     {
@@ -172,7 +193,6 @@ public sealed class Stage
 
     /// <summary>
     /// このステージの複製を生成する。
-    /// Id は新規発行、Pages / MetaTiles はディープコピーされる。
     /// </summary>
     public Stage Clone()
     {
@@ -182,18 +202,16 @@ public sealed class Stage
             StageNumber = StageNumber,
             Description = Description,
             Key = Key,
-            TilesetImagePath = TilesetImagePath
+            TilesetImagePath = TilesetImagePath,
+            FilePath = null,   // 複製は未保存扱い
+            IsDirty = true      // 保存されるまでダーティ扱い
         };
 
         foreach (var page in Pages)
-        {
             clone.Pages.Add(page.Clone());
-        }
 
         foreach (var metaTile in MetaTiles)
-        {
             clone.MetaTiles.Add(metaTile.Clone(keepId: true));
-        }
 
         return clone;
     }
