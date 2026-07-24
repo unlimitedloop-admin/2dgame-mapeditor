@@ -83,9 +83,11 @@ public sealed class JsonProjectRepository : IProjectRepository
 
             if (!File.Exists(stageFilePath))
             {
-                // BD-004「ファイル未存在→再指定要求」に対応する余地を残し、
-                // ここではプロジェクト全体のロードを止めず読み飛ばす。
-                // TODO: UI側で「見つからないステージがあります」警告を出す
+                // 仕様: ファイルが見つからないステージ参照は意図的に読み飛ばす。
+                // 次回 Save Project 時、StageFilePaths は現在の Stages から再構築されるため、
+                // 見つからなかった参照は自動的に .sseproj から除去される。
+                // ファイル整理などでステージファイルを移動・削除した場合の責任はユーザー側にあるものとし、
+                // エディタ側からの復旧導線（再指定ダイアログ等）はあえて設けない。
                 continue;
             }
 

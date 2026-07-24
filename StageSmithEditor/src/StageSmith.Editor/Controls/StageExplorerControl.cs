@@ -182,7 +182,9 @@ public class StageExplorerControl : UserControl
     //========================
     private TreeNode CreateStageNode(Stage stage)
     {
-        var node = new TreeNode(stage.Name)
+        var label = stage.IsDirty ? $"{stage.Name} *" : stage.Name;
+
+        var node = new TreeNode(label)
         {
             ImageIndex = IconStage,
             SelectedImageIndex = IconStage,
@@ -324,11 +326,16 @@ public class StageExplorerControl : UserControl
         if (tag.Kind == NodeKind.Stage)
         {
             tag.Stage.Name = newName;
+            tag.Stage.MarkDirty();
             StageListChanged?.Invoke();
+
+            e.CancelEdit = true;
+            RebuildTree();
         }
         else if (tag.Kind == NodeKind.Page && tag.Page != null)
         {
             tag.Page.Name = newName;
+            tag.Stage.MarkDirty();  // REVIEW: ページ名変更はステージの変更として扱う？
             PageListChanged?.Invoke(tag.Stage);
             // ページノードのテキストをラベル形式に合わせて更新
             e.CancelEdit = true;
@@ -445,6 +452,7 @@ public class StageExplorerControl : UserControl
 
         var insertIndex = tag.Stage.Pages.IndexOf(tag.Page) + 1;
         tag.Stage.Pages.Insert(insertIndex, clone);
+        tag.Stage.MarkDirty();
 
         RebuildTree();
         PageListChanged?.Invoke(tag.Stage);

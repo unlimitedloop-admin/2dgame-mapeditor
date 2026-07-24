@@ -162,6 +162,8 @@ public partial class MainForm : Form
 
         _commandManager.HistoryChanged += () =>
         {
+            _context.CurrentStage?.MarkDirty();
+
             _mapView.Invalidate();
             UpdateTitle();
             _stageExplorer?.RebuildTree();

@@ -114,8 +114,9 @@ public partial class MainForm
 
         _savedUndoCount = _commandManager.UndoCount;
 
-        ShowStatusMessage($"{TruncatePathForStatus(_currentProjectPath)} へプロジェクトを新規保存しました");
+        _stageExplorer.RebuildTree();
 
+        ShowStatusMessage($"{TruncatePathForStatus(_currentProjectPath)} へプロジェクトを新規保存しました");
         UpdateTitle();
     }
 
@@ -144,6 +145,7 @@ public partial class MainForm
 
         _savedUndoCount = _commandManager.UndoCount;
 
+        _stageExplorer.RebuildTree();
         UpdateTitle();
     }
 
