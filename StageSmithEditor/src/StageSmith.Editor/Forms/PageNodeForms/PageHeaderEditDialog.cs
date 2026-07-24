@@ -21,6 +21,12 @@ public class PageHeaderEditDialog : Form
     /// <summary>OKで確定したPageHeader。キャンセル時は元の値のまま。</summary>
     public PageHeader ResultHeader { get; private set; }
 
+    /// <summary>OKで確定した有効フラグ。キャンセル時は元の値のまま。</summary>
+    public bool ResultEnable { get; private set; }
+
+    /// <summary>OKで確定した備考。キャンセル時は元の値のまま。</summary>
+    public string ResultRemarks { get; private set; } = string.Empty;
+
     //========================
     // 接続先TextBox
     //========================
@@ -236,7 +242,7 @@ public class PageHeaderEditDialog : Form
     //========================
     private void OnOkClick(object? sender, EventArgs e)
     {
-        // 接続先バリデーション
+        // 接続先バリデーション（変更なし）
         if (!TryParseRoomId(_txtLeft.Text,  out var left)  ||
             !TryParseRoomId(_txtRight.Text, out var right) ||
             !TryParseRoomId(_txtUp.Text,    out var up)    ||
@@ -249,12 +255,11 @@ public class PageHeaderEditDialog : Form
             return;
         }
 
-        // フラグ
         var flags = PageFlags.None;
         if (_chkWater.Checked) flags |= PageFlags.IsWater;
         if (_chkWind.Checked)  flags |= PageFlags.IsWind;
 
-        // PageHeader更新
+        // 元のHeaderをベースに、変更点だけ組み立てる（_page.Headerには触れない）
         var h = _page.Header;
         h.LeftPage  = left;
         h.RightPage = right;
@@ -270,11 +275,9 @@ public class PageHeaderEditDialog : Form
 
         h.Flags = flags;
 
-        ResultHeader   = h;
-        _page.Header   = h;
-        _page.Enable   = _chkEnable.Checked;
-        _page.Remarks  = _txtRemarks.Text;
-
+        ResultHeader  = h;
+        ResultEnable  = _chkEnable.Checked;
+        ResultRemarks = _txtRemarks.Text;
         DialogResult = DialogResult.OK;
         Close();
     }

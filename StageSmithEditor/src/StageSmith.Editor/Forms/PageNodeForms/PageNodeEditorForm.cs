@@ -403,7 +403,36 @@ public partial class PageNodeEditorForm : Form
         using var dialog = new PageHeaderEditDialog(page);
         if (dialog.ShowDialog(this) != DialogResult.OK) return;
 
-        // ダイアログ内でPageに直接反映済みなのでビュー更新だけ
+        var oldHeader  = page.Header;
+        var oldEnable  = page.Enable;
+        var oldRemarks = page.Remarks;
+
+        var newHeader  = dialog.ResultHeader;
+        var newEnable  = dialog.ResultEnable;
+        var newRemarks = dialog.ResultRemarks;
+
+        var noChange = oldHeader.ToBytes().SequenceEqual(newHeader.ToBytes())
+                    && oldEnable == newEnable
+                    && oldRemarks == newRemarks;
+
+        if (!noChange)
+        {
+            _commandManager.Execute(new ActionCommand(
+                () =>
+                {
+                    page.Header  = newHeader;
+                    page.Enable  = newEnable;
+                    page.Remarks = newRemarks;
+                },
+                () =>
+                {
+                    page.Header  = oldHeader;
+                    page.Enable  = oldEnable;
+                    page.Remarks = oldRemarks;
+                }
+            ));
+        }
+
         _nodeEditView.Invalidate();
         UpdateInfoDisplay(pageIndex);
     }
