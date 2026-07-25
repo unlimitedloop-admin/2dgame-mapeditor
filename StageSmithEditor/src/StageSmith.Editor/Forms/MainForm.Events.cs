@@ -27,6 +27,10 @@ public partial class MainForm
                     ToggleBookmark(stage, page);
                 return true;
 
+            case Keys.Control | Keys.J:
+                OpenJumpPageDialog();
+                return true;
+
             // 隣接Room移動
             case Keys.Control | Keys.Left:
                 NavigateAdjacentRoom(Direction.Left);

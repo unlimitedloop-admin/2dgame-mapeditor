@@ -17,6 +17,9 @@ public class PageNavBarControl : UserControl
     /// <summary>Z座標変更（直接指定）が要求されたとき発火する。</summary>
     public event Action<int>? ZRequested;
 
+    /// <summary>ページラベルのダブルクリックでジャンプダイアログが要求されたとき発火する。</summary>
+    public event Action? JumpRequested;
+
     //========================
     // Controls
     //========================
@@ -54,8 +57,12 @@ public class PageNavBarControl : UserControl
             ForeColor = Color.White,
             Font = new Font("Yu Gothic UI", 9f),
             AutoSize = false,
-            Width = 80
+            Width = 80,
+            Cursor = Cursors.Hand
         };
+
+        _pageLabel.DoubleClick += (_, _) => JumpRequested?.Invoke();
+        _toolTip.SetToolTip(_pageLabel, "ダブルクリックでページ指定ジャンプ (Ctrl+J)");
         _nextButton = CreateNavButton("▶", "次のページ");
         _lastButton = CreateNavButton("▶|", "最後のページ");
 

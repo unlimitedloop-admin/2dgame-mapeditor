@@ -1,5 +1,6 @@
 using StageSmith.Editor.Controllers;
 using StageSmith.Editor.Controls;
+using StageSmith.Editor.Forms;
 
 namespace StageSmith.Editor;
 
@@ -104,11 +105,29 @@ public partial class MainForm
         );
 
         _pageNavBar.ZRequested += NavigateToZ;
+        _pageNavBar.JumpRequested += OpenJumpPageDialog;
         _pageNavBar.UpdateDisplay(_context);
 
         _context.ContextChanged += OnEditorContextChanged;
 
         _pageNavigationController.Refresh();
+    }
+
+    private void OpenJumpPageDialog()
+    {
+        var stage = _context.CurrentStage;
+        if (stage == null || stage.Pages.Count == 0) return;
+
+        var currentPageNumber = _context.CurrentPageIndex + 1;
+        var maxPageNumber = stage.Pages.Count;
+
+        using var dialog = new JumpPageDialog(currentPageNumber, maxPageNumber);
+        if (dialog.ShowDialog(this) != DialogResult.OK) return;
+
+        var targetIndex = dialog.SelectedPageNumber - 1;
+        if (targetIndex < 0 || targetIndex >= stage.Pages.Count) return;
+
+        MoveToPageIndex(targetIndex);
     }
 
     private void NavigateToZ(int targetZ)
