@@ -244,6 +244,7 @@ public partial class MainForm
         _mapView.SelectionTool = _selectionTool;
         _mapView.FillTool = _fillTool;
         _mapView.MarkerTool = _markerTool;
+        _mapView.MarkerState = _markerState;
         _toolManager.SetTool(_penTool);
 
         // Drag Command

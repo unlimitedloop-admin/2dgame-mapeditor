@@ -19,6 +19,8 @@ public class MapViewControl : DoubleBufferedPanel
 
     private bool _showGrid = true;
 
+    private int _currentPageIndex = -1;
+
     public MapViewControl()
     {
         DoubleBuffered = true;
@@ -148,6 +150,22 @@ public class MapViewControl : DoubleBufferedPanel
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public MarkerTool? MarkerTool { get; set; }
 
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public MarkerState? MarkerState { get; set; }
+
+    private Color _markerColor = Color.Red;
+
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public Color MarkerColor => _markerColor;
+
+    public void SetMarkerColor(Color color)
+    {
+        _markerColor = color;
+        Invalidate();
+    }
+
     // ===== Preview =====
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -239,6 +257,13 @@ public class MapViewControl : DoubleBufferedPanel
         Invalidate();
     }
 
+    public void SetCurrentPageIndex(int pageIndex)
+    {
+        if (_currentPageIndex == pageIndex) return;
+        _currentPageIndex = pageIndex;
+        Invalidate();
+    }
+
     public Point GetHoverTile() => _hoverTile;
 
     // =========================
@@ -273,6 +298,7 @@ public class MapViewControl : DoubleBufferedPanel
         DrawRowNumbers(g);
 
         DrawSearchHighlights(g);
+        DrawMarkers(g);
         DrawPreview(g);
 
         // SelectionToolに描かせる
@@ -921,6 +947,25 @@ public class MapViewControl : DoubleBufferedPanel
                 SearchVisualConstants.HighlightBorderColor,
                 SearchVisualConstants.HighlightBorderWidth);
 
+            g.DrawRectangle(pen, GetTileRect(current.X, current.Y));
+        }
+    }
+
+    private void DrawMarkers(Graphics g)
+    {
+        if (_tileMap == null) return;
+        if (MarkerState == null || !MarkerState.ShowOverlay) return;
+
+        using var brush = new SolidBrush(Color.FromArgb(128, _markerColor));
+
+        foreach (var marker in MarkerState.GetMarkersForPage(_currentPageIndex))
+        {
+            g.FillRectangle(brush, GetTileRect(marker.X, marker.Y));
+        }
+
+        if (MarkerState.CurrentMarker is { } current && current.PageIndex == _currentPageIndex)
+        {
+            using var pen = new Pen(_markerColor, 2);
             g.DrawRectangle(pen, GetTileRect(current.X, current.Y));
         }
     }

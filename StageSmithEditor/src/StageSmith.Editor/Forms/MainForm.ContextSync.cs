@@ -13,6 +13,7 @@ public partial class MainForm
         _page = page;
 
         _mapView.SetTileMap(page?.TileMap);
+        _mapView.SetCurrentPageIndex(_context.CurrentPageIndex);
         _metaTilePalette.SetStage(stage);
 
         if (!string.IsNullOrWhiteSpace(stage?.TilesetImagePath))

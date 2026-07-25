@@ -18,7 +18,7 @@ public sealed class MarkerState
     /// <summary>Next/Previousで末尾/先頭から折り返すかどうか。タイル検索と挙動を揃えて既定 true。</summary>
     public bool WrapAround { get; set; } = true;
 
-    public bool ShowOverlay { get; set; } = true;
+    public bool ShowOverlay { get; set; } = false;
 
     public Marker? CurrentMarker =>
         CurrentIndex >= 0 && CurrentIndex < _markers.Count

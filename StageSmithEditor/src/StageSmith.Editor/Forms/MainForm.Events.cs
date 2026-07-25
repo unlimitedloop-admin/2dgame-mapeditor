@@ -229,6 +229,12 @@ public partial class MainForm
         _mapView.SetShowColumnNumbers(show);
     }
 
+    private void ToggleMarkerOverlay(bool show)
+    {
+        _markerState.ShowOverlay = show;
+        _mapView.Invalidate();
+    }
+
     private void CancelDrag()
     {
         _currentDragCommand = null;

@@ -197,6 +197,7 @@ public partial class MainForm : Form
 
         UpdateTilePreviewIcon();
         ApplyGridState(_showGrid);
+        ToggleMarkerOverlay(_menuViewMarkerOverlay.Checked);
     }
 
     // REVIEW: 未使用?
