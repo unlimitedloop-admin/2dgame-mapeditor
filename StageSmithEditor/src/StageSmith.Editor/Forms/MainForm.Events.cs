@@ -78,10 +78,7 @@ public partial class MainForm
                 return true;
 
             case Keys.Control | Keys.V:
-                if (_clipboard == null) return true;
-                var pos = _mapView.GetHoverTile();
-                if (pos.X < 0 || pos.Y < 0) return true;
-                PasteSelection(pos.X, pos.Y);
+                PasteSelection();
                 return true;
 
             case Keys.Shift | Keys.Escape:

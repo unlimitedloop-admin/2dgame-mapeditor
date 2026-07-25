@@ -194,7 +194,7 @@ public partial class MainForm
     //private void ExportAllStages() { }        // MainForm.FileOperations.cs で定義済み
     private void CutSelection()         { /* TODO */ }
     //private void CopySelection() { }          // MainForm.Commands.cs で定義済み
-    private void PasteSelection()       { /* TODO */ }
+    //private void PasteSelection() { }         // MainForm.Commands.cs で定義済み
     //private void DeleteSelection() { }        // MainForm.Commands.cs で定義済み
     private void FillSelection()        { /* TODO */ }
     private void SelectAllSameTile()    { /* TODO */ }

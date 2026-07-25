@@ -97,6 +97,16 @@ public partial class MainForm
         }
     }
 
+    private void PasteSelection()
+    {
+        if (_clipboard == null) return;
+        // TODO: 選択範囲の左上にペーストするようにしたい（貼り付け先のタイル位置を選択し直す必要がある）
+        var pos = _mapView.GetHoverTile();
+        if (pos.X < 0 || pos.Y < 0) return;
+        PasteSelection(pos.X, pos.Y);
+    }
+
+
     private void ClearSelection()
     {
         _selectionTool?.ClearSelection();
