@@ -34,22 +34,29 @@ public partial class MainForm
         if (_page == null || _selectionTool == null)
             return;
 
-        var rect = _selectionTool.SelectionRect;
-        if (rect == null) return;
+        var rects = _selectionTool.SelectionRects;
+        if (rects.Count == 0) return;
+
+        var minX = rects.Min(r => r.Left);
+        var minY = rects.Min(r => r.Top);
+        var maxX = rects.Max(r => r.Right);
+        var maxY = rects.Max(r => r.Bottom);
+
+        var width = maxX - minX;
+        var height = maxY - minY;
+        var tiles = new byte?[width, height];
 
         var tileMap = _page.TileMap;
 
-        var width = rect.Value.Width;
-        var height = rect.Value.Height;
-        var tiles = new byte[width, height];
-
-        for (var y = 0; y < height; y++)
+        // 各矩形の範囲だけ値を埋める。矩形間の隙間は null のまま（＝データなし）。
+        foreach (var rect in rects)
         {
-            for (var x = 0; x < width; x++)
+            for (var y = rect.Top; y < rect.Bottom; y++)
             {
-                var mapX = rect.Value.X + x;
-                var mapY = rect.Value.Y + y;
-                tiles[x, y] = tileMap.GetTile(mapX, mapY);
+                for (var x = rect.Left; x < rect.Right; x++)
+                {
+                    tiles[x - minX, y - minY] = tileMap.GetTile(x, y);
+                }
             }
         }
 
@@ -68,14 +75,17 @@ public partial class MainForm
         {
             for (var x = 0; x < _clipboard.Width; x++)
             {
+                var tile = _clipboard.Tiles[x, y];
+                if (tile == null) continue; // 隙間はスキップ＝ペースト先の既存タイルを保持
+
                 var mapX = startX + x;
                 var mapY = startY + y;
 
                 if (mapX < 0 || mapX >= tileMap.Width ||
                     mapY < 0 || mapY >= tileMap.Height)
-                    continue;
+                    continue; // 範囲外は切り捨て
 
-                command.Add(mapX, mapY, _clipboard.Tiles[x, y]);
+                command.Add(mapX, mapY, tile.Value);
             }
         }
 

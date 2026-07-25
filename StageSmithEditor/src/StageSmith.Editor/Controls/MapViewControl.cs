@@ -272,8 +272,8 @@ public class MapViewControl : DoubleBufferedPanel
         DrawPreview(g);
 
         // SelectionToolに描かせる
-        SelectionTool?.DrawOverlay(g, CurrentTileRenderSize, ViewerConstants.MapViewMargin);
-        SelectionTool?.DrawMovingOverlay(g, CurrentTileRenderSize, GetUsableTileset(), ViewerConstants.MapViewMargin);
+        SelectionTool?.DrawOverlay(g, CurrentTileRenderSize, OffsetX, OffsetY);
+        SelectionTool?.DrawMovingOverlay(g, CurrentTileRenderSize, GetUsableTileset(), OffsetX, OffsetY);
 
         DrawAdjacentNavigationButtons(g);
 

@@ -7,10 +7,20 @@ namespace StageSmith.Editor.Tools;
 public class SelectionTool : ITool, IDisposable
 {
     // ===== 選択状態 =====
-    private Point? _selectionStart;
-    private Point? _selectionEnd;
+    private Point? _dragStart;
+    private Point? _dragEnd;
+    private Rectangle? _draggingRect;   // ドラッグ中・未確定のプレビュー矩形
 
-    public Rectangle? SelectionRect { get; private set; }
+    private readonly List<Rectangle> _selectionRects = [];
+
+    /// <summary>確定済みの選択矩形一覧。</summary>
+    public IReadOnlyList<Rectangle> SelectionRects => _selectionRects;
+
+    /// <summary>
+    /// 後方互換用：単一選択時のみ値を返す。
+    /// 複数選択中（2個以上）は null になる。
+    /// </summary>
+    public Rectangle? SelectionRect => _selectionRects.Count == 1 ? _selectionRects[0] : null;
 
     // ===== 移動状態 =====
     private bool _isMoving = false;
@@ -67,37 +77,56 @@ public class SelectionTool : ITool, IDisposable
     // =========================
     public void OnMouseDown(int x, int y)
     {
-        if (SelectionRect.HasValue && SelectionRect.Value.Contains(x, y))
+        var isCtrl = Control.ModifierKeys.HasFlag(Keys.Control);
+
+        // 単一選択の「内側」：Ctrlの有無に関わらず移動/コピー開始（従来通り）
+        if (_selectionRects.Count == 1 && _selectionRects[0].Contains(x, y))
         {
-            _isMoving = true;
-            _moveStart = new Point(x, y);
-            _currentOffset = Point.Empty;
-
-            // 初期状態を設定してタイマー開始
-            _isCopyMode = Control.ModifierKeys.HasFlag(Keys.Control);
-            _lastCopyMode = _isCopyMode;
-            _keyCheckTimer.Start();
-
-            var rect = SelectionRect.Value;
-            _moveBuffer = new byte[rect.Width, rect.Height];
-
-            for (var yy = 0; yy < rect.Height; yy++)
-                for (var xx = 0; xx < rect.Width; xx++)
-                    _moveBuffer[xx, yy] = _getTile(rect.X + xx, rect.Y + yy);
-
+            BeginMove(x, y);
             return;
         }
 
-        StopMarching();
+        if (isCtrl)
+        {
+            // Ctrl+外側ドラッグ：既存の選択を残したまま新しい矩形を追加する
+            // （既存矩形と被っても気にせず継続する）
+            BeginNewRectDrag(x, y);
+            return;
+        }
 
+        // Ctrlなしの外側クリック：既存の選択（複数含む）を全てクリアして新規選択を開始する
+        StopMarching();
+        _selectionRects.Clear();
+        BeginNewRectDrag(x, y);
+    }
+
+    private void BeginMove(int x, int y)
+    {
+        _isMoving = true;
+        _moveStart = new Point(x, y);
+        _currentOffset = Point.Empty;
+
+        _isCopyMode = Control.ModifierKeys.HasFlag(Keys.Control);
+        _lastCopyMode = _isCopyMode;
+        _keyCheckTimer.Start();
+
+        var rect = _selectionRects[0];
+        _moveBuffer = new byte[rect.Width, rect.Height];
+
+        for (var yy = 0; yy < rect.Height; yy++)
+            for (var xx = 0; xx < rect.Width; xx++)
+                _moveBuffer[xx, yy] = _getTile(rect.X + xx, rect.Y + yy);
+    }
+
+    private void BeginNewRectDrag(int x, int y)
+    {
         var (mapW, mapH) = _getMapSize();
         var cx = Math.Clamp(x, 0, mapW - 1);
         var cy = Math.Clamp(y, 0, mapH - 1);
 
-        _selectionStart = new Point(cx, cy);
-        _selectionEnd = _selectionStart;
-
-        UpdateSelectionRect();
+        _dragStart = new Point(cx, cy);
+        _dragEnd = _dragStart;
+        UpdateDraggingRect();
         SelectionChanged?.Invoke();
     }
 
@@ -110,15 +139,15 @@ public class SelectionTool : ITool, IDisposable
             return;
         }
 
-        if (!_selectionStart.HasValue)
+        if (!_dragStart.HasValue)
             return;
 
         var (mapW, mapH) = _getMapSize();
         var cx = Math.Clamp(x, 0, mapW - 1);
         var cy = Math.Clamp(y, 0, mapH - 1);
 
-        _selectionEnd = new Point(cx, cy);
-        UpdateSelectionRect();
+        _dragEnd = new Point(cx, cy);
+        UpdateDraggingRect();
 
         SelectionChanged?.Invoke();
     }
@@ -127,11 +156,10 @@ public class SelectionTool : ITool, IDisposable
     {
         var (mapW, mapH) = _getMapSize();
 
-        if (_isMoving && SelectionRect.HasValue)
+        if (_isMoving && _selectionRects.Count == 1)
         {
             if (_currentOffset == Point.Empty)
             {
-                // 選択範囲をクリア
                 _isMoving = false;
                 _moveBuffer = null;
                 _keyCheckTimer.Stop();
@@ -139,7 +167,7 @@ public class SelectionTool : ITool, IDisposable
                 return;
             }
 
-            var src = SelectionRect.Value;
+            var src = _selectionRects[0];
             var dst = new Rectangle(
                 src.X + _currentOffset.X,
                 src.Y + _currentOffset.Y,
@@ -147,7 +175,6 @@ public class SelectionTool : ITool, IDisposable
                 src.Height
             );
 
-            // 移動先がマップ外に完全に出ていたらキャンセル
             var mapRect = new Rectangle(0, 0, mapW, mapH);
             if (!dst.IntersectsWith(mapRect))
             {
@@ -162,28 +189,32 @@ public class SelectionTool : ITool, IDisposable
 
             MoveRequested?.Invoke(src, _currentOffset, _isCopyMode);
 
-            SelectionRect = dst;       // 自分で移動先に更新
+            _selectionRects[0] = dst;   // 移動先へ更新
             _isMoving = false;
             _currentOffset = Point.Empty;
             _moveBuffer = null;
-            _keyCheckTimer.Stop();     // キーチェック停止
-            _marchTimer.Start();       // 移動確定後も継続
+            _keyCheckTimer.Stop();
+            _marchTimer.Start();
             SelectionChanged?.Invoke();
             return;
         }
 
-        if (!_selectionStart.HasValue) return;
+        if (!_dragStart.HasValue) return;
 
         var cx = Math.Clamp(x, 0, mapW - 1);
         var cy = Math.Clamp(y, 0, mapH - 1);
 
-        _selectionEnd = new Point(cx, cy);
-        UpdateSelectionRect();
+        _dragEnd = new Point(cx, cy);
+        UpdateDraggingRect();
 
-        _selectionStart = null;
-        _selectionEnd = null;
+        if (_draggingRect.HasValue)
+            _selectionRects.Add(_draggingRect.Value);
 
-        _marchTimer.Start();           // 選択確定で常に開始
+        _dragStart = null;
+        _dragEnd = null;
+        _draggingRect = null;
+
+        _marchTimer.Start();
         SelectionChanged?.Invoke();
     }
 
@@ -192,7 +223,7 @@ public class SelectionTool : ITool, IDisposable
         if (_isMoving)
             return Cursors.SizeAll;
 
-        if (SelectionRect.HasValue && SelectionRect.Value.Contains(x, y))
+        if (_selectionRects.Count == 1 && _selectionRects[0].Contains(x, y))
             return Cursors.SizeAll;
 
         return Cursors.Default;
@@ -201,30 +232,25 @@ public class SelectionTool : ITool, IDisposable
     // =========================
     // 外部操作
     // =========================
-
-    /// <summary>
-    /// 選択範囲の確定操作（Enter キーなど）を通知する。
-    /// 選択範囲がある場合に Confirmed イベントを発火し、呼び出し元が処理を行う。
-    /// 選択範囲がなければ何もしない。
-    /// </summary>
-    public void OnConfirm()
-    {
-        if (SelectionRect == null) return;
-        Confirmed?.Invoke();
-        ClearSelection();
-    }
-
     /// <summary>
     /// OnConfirm() が呼ばれたとき（選択範囲がある場合のみ）に発火する。
     /// 塗りつぶしやその他の確定処理はこのイベントを購読して実装する。
     /// </summary>
     public event Action? Confirmed;
 
+    public void OnConfirm()
+    {
+        if (_selectionRects.Count == 0) return;
+        Confirmed?.Invoke();
+        ClearSelection();
+    }
+
     public void ClearSelection()
     {
-        SelectionRect = null;
-        _selectionStart = null;
-        _selectionEnd = null;
+        _selectionRects.Clear();
+        _dragStart = null;
+        _dragEnd = null;
+        _draggingRect = null;
         _isMoving = false;
         _moveBuffer = null;
         _currentOffset = Point.Empty;
@@ -239,23 +265,23 @@ public class SelectionTool : ITool, IDisposable
     // =========================
     // 内部処理
     // =========================
-    private void UpdateSelectionRect()
+    private void UpdateDraggingRect()
     {
-        if (!_selectionStart.HasValue)
+        if (!_dragStart.HasValue)
         {
-            SelectionRect = null;
+            _draggingRect = null;
             return;
         }
 
-        var start = _selectionStart.Value;
-        var end = _selectionEnd ?? start;
+        var start = _dragStart.Value;
+        var end = _dragEnd ?? start;
 
         var left = Math.Min(start.X, end.X);
         var top = Math.Min(start.Y, end.Y);
         var right = Math.Max(start.X, end.X);
         var bottom = Math.Max(start.Y, end.Y);
 
-        SelectionRect = new Rectangle(left, top, right - left + 1, bottom - top + 1);
+        _draggingRect = new Rectangle(left, top, right - left + 1, bottom - top + 1);
     }
 
     private void StopMarching()
@@ -269,47 +295,36 @@ public class SelectionTool : ITool, IDisposable
     // =========================
     public IEnumerable<(int x, int y)> GetSelectedPositions()
     {
-        var rect = SelectionRect;
+        var seen = new HashSet<(int x, int y)>();
 
-        if (rect == null)
-            yield break;
-
-        for (var y = rect.Value.Top; y < rect.Value.Bottom; y++)
+        foreach (var rect in _selectionRects)
         {
-            for (var x = rect.Value.Left; x < rect.Value.Right; x++)
+            for (var y = rect.Top; y < rect.Bottom; y++)
             {
-                yield return (x, y);
+                for (var x = rect.Left; x < rect.Right; x++)
+                {
+                    if (seen.Add((x, y)))
+                        yield return (x, y);
+                }
             }
         }
     }
 
-    public void DrawOverlay(Graphics g, int tileSize, int margin = 0)
+    public void DrawOverlay(Graphics g, int tileSize, int marginX, int marginY)
     {
-        if (SelectionRect is not Rectangle rect) return;
+        foreach (var rect in _selectionRects)
+            DrawRectOverlay(g, rect, tileSize, marginX, marginY);
 
-        var pxRect = new Rectangle(
-            margin + rect.X * tileSize,
-            margin + rect.Y * tileSize,
-            rect.Width * tileSize,
-            rect.Height * tileSize
-        );
-
-        using var bgPen = new Pen(Color.Black, 2f);
-        g.DrawRectangle(bgPen, pxRect);
-
-        using var pen = new Pen(Color.LimeGreen, 2f);
-        pen.DashStyle = DashStyle.Custom;
-        pen.DashPattern = [4f, 4f];
-        pen.DashOffset = _dashOffset;
-        g.DrawRectangle(pen, pxRect);
+        if (_draggingRect is { } dragging)
+            DrawRectOverlay(g, dragging, tileSize, marginX, marginY);
     }
 
-    public void DrawMovingOverlay(Graphics g, int tileSize, Bitmap? tileset, int margin = 0)
+    public void DrawMovingOverlay(Graphics g, int tileSize, Bitmap? tileset, int marginX, int marginY)
     {
-        if (!_isMoving || SelectionRect == null || _moveBuffer == null || tileset == null)
+        if (!_isMoving || _selectionRects.Count == 1 || _moveBuffer == null || tileset == null)
             return;
 
-        var rect = SelectionRect.Value;
+        var rect = _selectionRects[0];
 
         // srcSize: タイル画像の論理サイズ（切り出し用 = 16px）
         // tileSize: 画面上の描画サイズ（表示用 = 32px）
@@ -332,14 +347,33 @@ public class SelectionTool : ITool, IDisposable
 
                 // 描画位置は tileSize（32px）基準で拡大表示、マージン考慮
                 var dst = new Rectangle(
-                    margin + (rect.X + _currentOffset.X + x) * tileSize,
-                    margin + (rect.Y + _currentOffset.Y + y) * tileSize,
+                    marginX + (rect.X + _currentOffset.X + x) * tileSize,
+                    marginY + (rect.Y + _currentOffset.Y + y) * tileSize,
                     tileSize, tileSize);
 
                 g.DrawImage(tileset, dst, sx, sy, srcSize, srcSize,
                     GraphicsUnit.Pixel, attr);
             }
         }
+    }
+
+    private void DrawRectOverlay(Graphics g, Rectangle rect, int tileSize, int marginX, int marginY)
+    {
+        var pxRect = new Rectangle(
+            marginX + rect.X * tileSize,
+            marginY + rect.Y * tileSize,
+            rect.Width * tileSize,
+            rect.Height * tileSize
+        );
+
+        using var bgPen = new Pen(Color.Black, 2f);
+        g.DrawRectangle(bgPen, pxRect);
+
+        using var pen = new Pen(Color.LimeGreen, 2f);
+        pen.DashStyle = DashStyle.Custom;
+        pen.DashPattern = [4f, 4f];
+        pen.DashOffset = _dashOffset;
+        g.DrawRectangle(pen, pxRect);
     }
 
     public void Dispose()
