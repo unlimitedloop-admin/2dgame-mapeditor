@@ -65,6 +65,7 @@ public partial class MainForm : Form
     private PickerTool? _pickerTool;
     private SelectionTool? _selectionTool;
     private FillTool? _fillTool;
+    private MarkerTool? _markerTool;
 
     private DragPaintCommand? _currentDragCommand;
     private EditorToolMode _currentMode = EditorToolMode.Pen;
@@ -77,6 +78,9 @@ public partial class MainForm : Form
 
     private bool _showGrid = true;
     private ClipboardData? _clipboard;
+
+    // TODO: マーカーの色設定パネル用、仮置き
+    private readonly MarkerState _markerState = new();
 
     //========================
     // 初期化

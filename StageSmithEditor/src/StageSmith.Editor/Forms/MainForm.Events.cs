@@ -126,10 +126,9 @@ public partial class MainForm
                 SetToolMode(EditorToolMode.Selection);
                 return true;
 
-            // TODO: マーカー機能が未実装のため、コメントアウト
-            //case Keys.K:
-            //    SetToolMode(EditorToolMode.Marker);
-            //    return true;
+            case Keys.K:
+                SetToolMode(EditorToolMode.Marker);
+                return true;
 
             case Keys.G:
                 _menuViewGridLines.Checked = !_menuViewGridLines.Checked;
@@ -183,11 +182,10 @@ public partial class MainForm
                 SetToolMode(EditorToolMode.Selection);
                 return true;
 
-            // TODO: マーカー機能が未実装のため、コメントアウト
-            //case Keys.Control | Keys.D3:
-            //case Keys.Control | Keys.NumPad3:
-            //    SetToolMode(EditorToolMode.Marker);
-            //    return true;
+            case Keys.Control | Keys.D3:
+            case Keys.Control | Keys.NumPad3:
+                SetToolMode(EditorToolMode.Marker);
+                return true;
         }
 
         return base.ProcessCmdKey(ref msg, keyData);
@@ -223,14 +221,12 @@ public partial class MainForm
     {
         _showRowNumbers = show;
         _mapView.SetShowRowNumbers(show);
-        // menuItemRowNumbers.Checked = show;
     }
 
     private void ApplyColumnNumberState(bool show)
     {
         _showColumnNumbers = show;
         _mapView.SetShowColumnNumbers(show);
-        // menuItemColumnNumbers.Checked = show;
     }
 
     private void CancelDrag()

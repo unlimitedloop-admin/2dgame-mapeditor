@@ -144,6 +144,10 @@ public class MapViewControl : DoubleBufferedPanel
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public SelectionTool? SelectionTool { get; set; }
 
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public MarkerTool? MarkerTool { get; set; }
+
     // ===== Preview =====
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -493,6 +497,10 @@ public class MapViewControl : DoubleBufferedPanel
 
         if (e.Button == MouseButtons.Right)
         {
+            if (ReferenceEquals(_toolManager?.CurrentTool, MarkerTool))
+            {
+                MarkerTool?.OnRightMouseDown(x, y);
+            }
             return;
         }
 
@@ -548,6 +556,11 @@ public class MapViewControl : DoubleBufferedPanel
         // ========================
         if (e.Button == MouseButtons.Right)
         {
+            if (ReferenceEquals(_toolManager?.CurrentTool, MarkerTool))
+            {
+                return; // 削除はMouseDown側で処理済み。コンテキストメニューは抑止する。
+            }
+
             if (IsInside(x, y))
             {
                 ContextMenuRequested?.Invoke(

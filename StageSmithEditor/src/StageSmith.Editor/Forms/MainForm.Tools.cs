@@ -109,6 +109,12 @@ public partial class MainForm
                 ChangeTool(_selectionTool);
         };
 
+        _markerButton.Click += (_, _) =>
+        {
+            if (_markerTool != null)
+                ChangeTool(_markerTool);
+        };
+
         _openTileSetButton.Click += (_, _) =>
         {
             OpenTilesetImage();
@@ -223,15 +229,21 @@ public partial class MainForm
             _selectedTileId
         );
 
-        // TODO: Marker
-        //_markerTool = new MarkerTool( ... );
+        // Marker
+        _markerTool = new MarkerTool(
+            _markerState,
+            () => _context.CurrentPageIndex,
+            () => _mapView.Invalidate()
+        );
+
+        _markerState.Changed += () => _mapView.Invalidate();
 
         // MapView接続（DockContent 生成後なので直接参照可能）
         _mapView.ToolManager = _toolManager;
         _mapView.PickerTool = _pickerTool;
         _mapView.SelectionTool = _selectionTool;
         _mapView.FillTool = _fillTool;
-
+        _mapView.MarkerTool = _markerTool;
         _toolManager.SetTool(_penTool);
 
         // Drag Command
@@ -272,6 +284,8 @@ public partial class MainForm
                 _currentMode = EditorToolMode.Pen;
             else if (ReferenceEquals(tool, _selectionTool))
                 _currentMode = EditorToolMode.Selection;
+            else if (ReferenceEquals(tool, _markerTool))
+                _currentMode = EditorToolMode.Marker;
 
             UpdateToolbarCheckedState();
             _mapView.Invalidate();
@@ -300,6 +314,7 @@ public partial class MainForm
         {
             EditorToolMode.Pen => _penTool,
             EditorToolMode.Selection => _selectionTool,
+            EditorToolMode.Marker => _markerTool,
             _ => null
         };
 
@@ -350,11 +365,12 @@ public partial class MainForm
     //========================
     private void UpdateToolbarCheckedState()
     {
-        if (_penButton == null || _selectionButton == null)
+        if (_penButton == null || _selectionButton == null || _markerButton == null)
             return;
 
         _penButton.Checked = _currentMode == EditorToolMode.Pen;
         _selectionButton.Checked = _currentMode == EditorToolMode.Selection;
+        _markerButton.Checked = _currentMode == EditorToolMode.Marker;
     }
 
     //========================
