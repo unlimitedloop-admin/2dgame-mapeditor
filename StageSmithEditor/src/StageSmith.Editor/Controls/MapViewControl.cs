@@ -618,7 +618,24 @@ public class MapViewControl : DoubleBufferedPanel
     private (int x, int y) ScreenToTile(int px, int py)
     {
         var dstSize = CurrentTileRenderSize;
-        return ((px - OffsetX) / dstSize, (py - OffsetY) / dstSize);
+
+        return (
+            FloorDiv(px - OffsetX, dstSize),
+            FloorDiv(py - OffsetY, dstSize)
+        );
+    }
+
+    /// <summary>
+    /// 負数を正しく負の無限大方向へ切り捨てる整数除算。
+    /// C#標準の `/` 演算子は0方向へ切り捨てるため、
+    /// マイナス側の座標（マージン領域クリック時など）で誤った結果になるのを防ぐ。
+    /// </summary>
+    private static int FloorDiv(int a, int b)
+    {
+        var q = a / b;
+        if (a % b != 0 && (a < 0) != (b < 0))
+            q--;
+        return q;
     }
 
     public bool TryScreenToTile(int px, int py, out int x, out int y)
