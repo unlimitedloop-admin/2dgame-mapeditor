@@ -21,6 +21,7 @@ public partial class MainForm
     private ToolStripButton _redoButton = null!;
     private ToolStripButton _penButton = null!;
     private ToolStripButton _selectionButton = null!;
+    private ToolStripButton _markerButton = null!;
     private ToolStripButton _showGridButton = null!;
     private ToolStripButton _tilePreviewButton = null!;
     private ToolStripButton _addPageButton = null!;
@@ -50,6 +51,8 @@ public partial class MainForm
 
         _penButton = CreateButton("Pen", "ペン (P)", StageSmithEditor.Properties.Resources.icons8_鉛筆_24, true);
         _selectionButton = CreateButton("Selection", "選択 (S)", StageSmithEditor.Properties.Resources.icons8_選択_24, true);
+        _markerButton = CreateButton("Marker", "マーカー (K)", StageSmithEditor.Properties.Resources.icons8_マーカー_24, true);
+
         _showGridButton = CreateButton("ShowGrid", "グリッド表示切替 (G)", StageSmithEditor.Properties.Resources.icons8_グリッド_24, true);
         _tilePreviewButton = CreateButton("TilePreview", "タイルプレビュー切替 (T)", StageSmithEditor.Properties.Resources.icons8_目に見える_24, true);
         _addPageButton = CreateButton("AddPage", "ページを追加 (Ctrl+T)", StageSmithEditor.Properties.Resources.icons8_ファイル追加_30, true);
@@ -145,6 +148,8 @@ public partial class MainForm
             new ToolStripSeparator(),
             _penButton,
             _selectionButton,
+            _markerButton,
+            new ToolStripSeparator(),
             _showGridButton,
             _tilePreviewButton,
             new ToolStripSeparator(),
@@ -217,6 +222,9 @@ public partial class MainForm
             },
             _selectedTileId
         );
+
+        // TODO: Marker
+        //_markerTool = new MarkerTool( ... );
 
         // MapView接続（DockContent 生成後なので直接参照可能）
         _mapView.ToolManager = _toolManager;

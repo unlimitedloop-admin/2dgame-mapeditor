@@ -118,13 +118,18 @@ public partial class MainForm
                 NavigatePage(NavAction.Prev);
                 return true;
 
-           case Keys.P:
+            case Keys.P:
                 SetToolMode(EditorToolMode.Pen);
                 return true;
 
             case Keys.S:
                 SetToolMode(EditorToolMode.Selection);
                 return true;
+
+            // TODO: マーカー機能が未実装のため、コメントアウト
+            //case Keys.K:
+            //    SetToolMode(EditorToolMode.Marker);
+            //    return true;
 
             case Keys.G:
                 _menuViewGridLines.Checked = !_menuViewGridLines.Checked;
@@ -177,6 +182,12 @@ public partial class MainForm
             case Keys.Control | Keys.NumPad2:
                 SetToolMode(EditorToolMode.Selection);
                 return true;
+
+            // TODO: マーカー機能が未実装のため、コメントアウト
+            //case Keys.Control | Keys.D3:
+            //case Keys.Control | Keys.NumPad3:
+            //    SetToolMode(EditorToolMode.Marker);
+            //    return true;
         }
 
         return base.ProcessCmdKey(ref msg, keyData);
