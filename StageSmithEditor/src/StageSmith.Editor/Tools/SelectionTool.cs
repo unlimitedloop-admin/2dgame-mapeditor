@@ -9,6 +9,7 @@ public class SelectionTool : ITool, IDisposable
     // ===== 選択状態 =====
     private Point? _dragStart;
     private Point? _dragEnd;
+    private Point? _anchorPoint;        // Shift+クリック拡張の基準点（＝最初にドラッグを始めた角）
     private Rectangle? _draggingRect;   // ドラッグ中・未確定のプレビュー矩形
 
     private readonly List<Rectangle> _selectionRects = [];
@@ -126,6 +127,7 @@ public class SelectionTool : ITool, IDisposable
 
         _dragStart = new Point(cx, cy);
         _dragEnd = _dragStart;
+        _anchorPoint = _dragStart;   // Shift+クリック拡張用の基準点
         UpdateDraggingRect();
         SelectionChanged?.Invoke();
     }
@@ -189,7 +191,14 @@ public class SelectionTool : ITool, IDisposable
 
             MoveRequested?.Invoke(src, _currentOffset, _isCopyMode);
 
-            _selectionRects[0] = dst;   // 移動先へ更新
+            if (_anchorPoint.HasValue)
+            {
+                _anchorPoint = new Point(
+                    _anchorPoint.Value.X + _currentOffset.X,
+                    _anchorPoint.Value.Y + _currentOffset.Y);
+            }
+
+            _selectionRects[0] = dst;
             _isMoving = false;
             _currentOffset = Point.Empty;
             _moveBuffer = null;
@@ -248,6 +257,7 @@ public class SelectionTool : ITool, IDisposable
     public void ClearSelection()
     {
         _selectionRects.Clear();
+        _anchorPoint = null;
         _dragStart = null;
         _dragEnd = null;
         _draggingRect = null;
@@ -374,6 +384,54 @@ public class SelectionTool : ITool, IDisposable
         pen.DashPattern = [4f, 4f];
         pen.DashOffset = _dashOffset;
         g.DrawRectangle(pen, pxRect);
+    }
+
+    /// <summary>
+    /// Shift+クリックによる選択範囲の対角拡張。
+    /// 単一選択（矩形が1個）の場合のみ有効。0個・2個以上のときは何もしない。
+    /// </summary>
+    public void ExtendSelection(int x, int y)
+    {
+        if (_selectionRects.Count != 1 || !_anchorPoint.HasValue)
+            return;
+
+        var (mapW, mapH) = _getMapSize();
+        var cx = Math.Clamp(x, 0, mapW - 1);
+        var cy = Math.Clamp(y, 0, mapH - 1);
+
+        var anchor = _anchorPoint.Value;
+
+        var left = Math.Min(anchor.X, cx);
+        var top = Math.Min(anchor.Y, cy);
+        var right = Math.Max(anchor.X, cx);
+        var bottom = Math.Max(anchor.Y, cy);
+
+        _selectionRects[0] = new Rectangle(left, top, right - left + 1, bottom - top + 1);
+
+        SelectionChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// ページ全体を単一の選択範囲として設定する（Ctrl+A）。
+    /// </summary>
+    public void SelectAll(int width, int height)
+    {
+        _selectionRects.Clear();
+        _dragStart = null;
+        _dragEnd = null;
+        _draggingRect = null;
+        _isMoving = false;
+        _moveBuffer = null;
+        _currentOffset = Point.Empty;
+        _keyCheckTimer.Stop();
+
+        var rect = new Rectangle(0, 0, width, height);
+        _selectionRects.Add(rect);
+        _anchorPoint = new Point(0, 0);   // 後述：Shift+クリック拡張用の基準点
+
+        StopMarching();
+        _marchTimer.Start();
+        SelectionChanged?.Invoke();
     }
 
     public void Dispose()

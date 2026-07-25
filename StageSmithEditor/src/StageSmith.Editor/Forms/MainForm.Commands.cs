@@ -1,4 +1,5 @@
 using StageSmith.Application.Commands;
+using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
 
 namespace StageSmith.Editor;
@@ -123,6 +124,15 @@ public partial class MainForm
 
         _commandManager.Execute(command);
 
+        _mapView.Invalidate();
+    }
+
+    private void SelectAllTiles()
+    {
+        if (_page == null || _selectionTool == null) return;
+
+        SetToolMode(EditorToolMode.Selection);
+        _selectionTool.SelectAll(_page.TileMap.Width, _page.TileMap.Height);
         _mapView.Invalidate();
     }
 

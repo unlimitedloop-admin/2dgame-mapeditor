@@ -518,6 +518,15 @@ public class MapViewControl : DoubleBufferedPanel
 
         if (isShift)
         {
+            // Selectionツール使用中は Shift+クリック＝選択範囲の対角拡張
+            if (ReferenceEquals(_toolManager?.CurrentTool, SelectionTool))
+            {
+                SelectionTool?.ExtendSelection(x, y);
+                Invalidate();
+                return;
+            }
+
+            // それ以外（Penツールなど）は従来通りフィル
             FillTool?.OnMouseDown(x, y);
             Invalidate();
             return;

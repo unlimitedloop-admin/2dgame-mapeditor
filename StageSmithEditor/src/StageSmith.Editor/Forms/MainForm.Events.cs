@@ -105,6 +105,10 @@ public partial class MainForm
                 _mapView.Invalidate();
                 return true;
 
+            case Keys.Control | Keys.A:
+                SelectAllTiles();
+                return true;
+
             case Keys.PageDown:
                 NavigatePage(NavAction.Next);
                 return true;
