@@ -89,4 +89,25 @@ public partial class MainForm
         if (_context.CurrentStage is { } stage && _context.CurrentPage is { } page)
             ToggleBookmark(stage, page);
     }
+
+    private void ClearAllBookmarks()
+    {
+        var project = _context.Project;
+        if (project == null || project.Bookmarks.Count == 0) return;
+
+        var confirm = MessageBox.Show(
+            this,
+            $"全てのブックマーク（{project.Bookmarks.Count}件）を削除します。よろしいですか？",
+            "Clear All Bookmarks",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Warning);
+
+        if (confirm != DialogResult.Yes) return;
+
+        var commands = project.Bookmarks
+            .Select(b => (ICommand)new RemoveBookmarkCommand(project, b))
+            .ToList();
+
+        _commandManager.Execute(new CompositeCommand(commands));
+    }
 }

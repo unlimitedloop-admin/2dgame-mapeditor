@@ -45,6 +45,7 @@ public partial class MainForm
         _menuEditReplaceTile.Click          += (_, _) => OpenReplaceTileDialog();
         _menuEditClearSearchHighlight.Click += (_, _) => ClearSearchHighlight();
         _menuEditToggleBookmark.Click       += (_, _) => ToggleBookmarkForCurrentPage();
+        _menuEditClearAllBookmarks.Click    += (_, _) => ClearAllBookmarks();
 
         // ========================
         // View
@@ -140,6 +141,7 @@ public partial class MainForm
         _menuEditDelete.Enabled = _context.HasPage;
         _menuEditFill.Enabled   = _context.HasPage;
         _menuEditToggleBookmark.Enabled = _context.HasPage;
+        _menuEditClearAllBookmarks.Enabled = _context.Project?.Bookmarks.Count > 0;
 
         // NOTE: ブックマークの有無に応じてメニューのテキストを切り替える
         if (_context.CurrentStage is { } stage && _context.CurrentPage is { } page && _context.Project != null)
