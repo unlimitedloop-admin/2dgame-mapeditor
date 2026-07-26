@@ -39,6 +39,7 @@ public partial class MainForm : Form
     private readonly PropertyWindowContent _propertyWindowContent;
     private readonly MetaTilePaletteContent _metaTilePaletteContent;
     private readonly BookmarkListContent _bookmarkListContent;
+    private readonly MarkerColorPanelContent _markerColorPanelContent;
 
     //========================
     // EditorForms
@@ -57,6 +58,7 @@ public partial class MainForm : Form
     private MetaTilePaletteControl _metaTilePalette => _metaTilePaletteContent.MetaTilePalette;
     private PageNavBarControl _pageNavBar => _mapViewContent.PageNavBar;
     private BookmarkListControl _bookmarkList => _bookmarkListContent.BookmarkList;
+    private MarkerColorPanelControl _markerColorPanel => _markerColorPanelContent.MarkerColorPanel;
 
     //========================
     // Tools
@@ -79,7 +81,6 @@ public partial class MainForm : Form
     private bool _showGrid = true;
     private ClipboardData? _clipboard;
 
-    // TODO: マーカーの色設定パネル用、仮置き
     private readonly MarkerState _markerState = new();
 
     //========================
@@ -111,6 +112,8 @@ public partial class MainForm : Form
         _propertyWindowContent = new PropertyWindowContent();
         _metaTilePaletteContent = new MetaTilePaletteContent();
         _bookmarkListContent = new BookmarkListContent();
+        _markerColorPanelContent = new MarkerColorPanelContent();
+
         _mapView.ZoomChanged += (_, _) =>
         {
             _mapViewContent.UpdateZoomTitle(_mapView.ZoomScale);
@@ -133,7 +136,7 @@ public partial class MainForm : Form
         BindToolManager();
         BindTilePalette();
         BindMetaTilePalette();
-        
+        BindMarkerColorPanel();
         BindPageNavigationController();
         
         InitializeStageExplorerEvents();

@@ -85,7 +85,7 @@ namespace StageSmith.Editor
             _menuEditCopy               = new ToolStripMenuItem("Copy")                     { ShortcutKeys = Keys.Control | Keys.C };
             _menuEditPaste              = new ToolStripMenuItem("Paste")                    { ShortcutKeys = Keys.Control | Keys.V };
             _menuEditDelete             = new ToolStripMenuItem("Delete")                   { ShortcutKeys = Keys.Delete };
-            _menuEditFill               = new ToolStripMenuItem("Fill")                     { ShortcutKeyDisplayString = "F" };
+            _menuEditFill               = new ToolStripMenuItem("Fill")                     { ShortcutKeys = Keys.Insert };
             _menuEditSelectAllSameTile  = new ToolStripMenuItem("Select All Same Tile")     { ShortcutKeys = Keys.Control | Keys.Shift | Keys.A };
             _menuEditSelectEmptyTile    = new ToolStripMenuItem("Select Empty Tile")        { ShortcutKeys = Keys.Control | Keys.Shift | Keys.E };
             _menuEditInvertSelection    = new ToolStripMenuItem("Invert Selection")         { ShortcutKeys = Keys.Control | Keys.I };

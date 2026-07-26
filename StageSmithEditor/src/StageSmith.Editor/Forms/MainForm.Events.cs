@@ -27,6 +27,14 @@ public partial class MainForm
                     ToggleBookmark(stage, page);
                 return true;
 
+            case Keys.Control | Keys.M:
+                MoveToNextMarker();
+                return true;
+
+            case Keys.Control | Keys.Shift | Keys.M:
+                MoveToPreviousMarker();
+                return true;
+
             case Keys.Control | Keys.J:
                 OpenJumpPageDialog();
                 return true;
