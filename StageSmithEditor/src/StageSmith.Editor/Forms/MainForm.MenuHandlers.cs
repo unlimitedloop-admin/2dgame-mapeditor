@@ -198,7 +198,7 @@ public partial class MainForm
     private void FillSelection() => ApplySelectionFill();
     //private void SelectAllSameTile() { }              // MainForm.Commands.cs で定義済み
     //private void SelectEmptyTile() { }                // MainForm.Commands.cs で定義済み
-    private void InvertSelection() { /* TODO */ }
+    //private void InvertSelection() { /* TODO */ }
     //private void ClearSelection() { }                 // MainForm.Commands.cs で定義済み
     // OpenFindTileDialog / FindTileOnMap / FindNextTile / FindPrevTile / ClearSearchHighlight は MainForm.Search.cs で定義済み
     //private void OpenReplaceTileDialog() { }          // MainForm.Search.cs で定義済み

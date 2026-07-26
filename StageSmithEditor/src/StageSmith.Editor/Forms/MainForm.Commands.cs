@@ -192,6 +192,37 @@ public partial class MainForm
         _mapView.Invalidate();
     }
 
+    private void InvertSelection()
+    {
+        if (_page == null || _selectionTool == null) return;
+
+        var tileMap = _page.TileMap;
+        var selected = _selectionTool.GetSelectedPositions().ToHashSet();
+
+        var rects = new List<Rectangle>();
+
+        for (var y = 0; y < tileMap.Height; y++)
+        {
+            for (var x = 0; x < tileMap.Width; x++)
+            {
+                if (!selected.Contains((x, y)))
+                    rects.Add(new Rectangle(x, y, 1, 1));
+            }
+        }
+
+        if (rects.Count == 0)
+        {
+            // 元の選択範囲がページ全体だった場合、反転結果は「選択なし」になる
+            _selectionTool.ClearSelection();
+            _mapView.Invalidate();
+            return;
+        }
+
+        SetToolMode(EditorToolMode.Selection);
+        _selectionTool.SetSelectionRects(rects);
+        _mapView.Invalidate();
+    }
+
     // 選択範囲の移動（コピー or カット） - この機能は、選択範囲を新しい位置に移動し、必要に応じて元の位置をクリアします。
     private void OnSelectionMoveRequested(Rectangle rect, Point offset, bool copy)
     {
