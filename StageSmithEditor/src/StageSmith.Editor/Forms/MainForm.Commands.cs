@@ -155,6 +155,43 @@ public partial class MainForm
         _mapView.Invalidate();
     }
 
+    private void SelectAllSameTile()
+    {
+        if (_selectedTileId < 0) return;
+        SelectTilesMatching(_selectedTileId);
+    }
+
+    private void SelectEmptyTile()
+    {
+        SelectTilesMatching(0);
+    }
+
+    /// <summary>
+    /// 現在ページ内で指定タイルIDと一致する全マスを、複数選択範囲として確定する。
+    /// </summary>
+    private void SelectTilesMatching(int tileId)
+    {
+        if (_page == null || _selectionTool == null) return;
+
+        var tileMap = _page.TileMap;
+        var rects = new List<Rectangle>();
+
+        for (var y = 0; y < tileMap.Height; y++)
+        {
+            for (var x = 0; x < tileMap.Width; x++)
+            {
+                if (tileMap.GetTile(x, y) == tileId)
+                    rects.Add(new Rectangle(x, y, 1, 1));
+            }
+        }
+
+        if (rects.Count == 0) return;
+
+        SetToolMode(EditorToolMode.Selection);
+        _selectionTool.SetSelectionRects(rects);
+        _mapView.Invalidate();
+    }
+
     // 選択範囲の移動（コピー or カット） - この機能は、選択範囲を新しい位置に移動し、必要に応じて元の位置をクリアします。
     private void OnSelectionMoveRequested(Rectangle rect, Point offset, bool copy)
     {

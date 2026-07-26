@@ -73,6 +73,32 @@ public class SelectionTool : ITool, IDisposable
         };
     }
 
+    /// <summary>
+    /// 複数の確定済み矩形を外部からまとめて設定する。
+    /// メニューコマンド（Select All Same Tile / Select Empty Tile など）から使用する。
+    /// ドラッグ中の状態や単一選択の拡張基準点はリセットする。
+    /// </summary>
+    public void SetSelectionRects(IEnumerable<Rectangle> rects)
+    {
+        _selectionRects.Clear();
+        _selectionRects.AddRange(rects);
+
+        _dragStart = null;
+        _dragEnd = null;
+        _draggingRect = null;
+        _anchorPoint = null;   // 複数選択なのでShift拡張の基準点は持たせない
+        _isMoving = false;
+        _moveBuffer = null;
+        _currentOffset = Point.Empty;
+        _keyCheckTimer.Stop();
+
+        StopMarching();
+        if (_selectionRects.Count > 0)
+            _marchTimer.Start();
+
+        SelectionChanged?.Invoke();
+    }
+
     // =========================
     // ITool 実装
     // =========================
