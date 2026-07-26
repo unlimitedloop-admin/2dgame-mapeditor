@@ -100,12 +100,21 @@ public partial class MainForm
     private void PasteSelection()
     {
         if (_clipboard == null) return;
-        // TODO: 選択範囲の左上にペーストするようにしたい（貼り付け先のタイル位置を選択し直す必要がある）
+
+        // 選択範囲があれば、その外接矩形の左上を貼り付け基準点にする
+        if (_selectionTool != null && _selectionTool.SelectionRects.Count > 0)
+        {
+            var minX = _selectionTool.SelectionRects.Min(r => r.Left);
+            var minY = _selectionTool.SelectionRects.Min(r => r.Top);
+            PasteSelection(minX, minY);
+            return;
+        }
+
+        // 選択範囲が無い場合のみ、ホバー位置にフォールバックする
         var pos = _mapView.GetHoverTile();
         if (pos.X < 0 || pos.Y < 0) return;
         PasteSelection(pos.X, pos.Y);
     }
-
 
     private void ClearSelection()
     {

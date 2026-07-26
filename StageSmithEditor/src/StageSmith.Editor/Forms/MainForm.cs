@@ -75,12 +75,8 @@ public partial class MainForm : Form
     //========================
     // その他
     //========================
-    private bool _showRowNumbers = false;
-    private bool _showColumnNumbers = false;
-
     private bool _showGrid = true;
     private ClipboardData? _clipboard;
-
     private readonly MarkerState _markerState = new();
 
     //========================

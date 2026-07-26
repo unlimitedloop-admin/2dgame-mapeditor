@@ -227,13 +227,11 @@ public partial class MainForm
 
     private void ApplyRowNumberState(bool show)
     {
-        _showRowNumbers = show;
         _mapView.SetShowRowNumbers(show);
     }
 
     private void ApplyColumnNumberState(bool show)
     {
-        _showColumnNumbers = show;
         _mapView.SetShowColumnNumbers(show);
     }
 
