@@ -63,6 +63,16 @@ namespace StageSmithEditor.Properties {
         /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
+        internal static System.Drawing.Bitmap icons8_delete_file_30 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-delete-file-30", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
         internal static System.Drawing.Bitmap icons8_グリッド_24 {
             get {
                 object obj = ResourceManager.GetObject("icons8-グリッド-24", resourceCulture);
@@ -173,6 +183,16 @@ namespace StageSmithEditor.Properties {
         /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
+        internal static System.Drawing.Bitmap icons8_検索_30 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-検索-30", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
         internal static System.Drawing.Bitmap icons8_画像を開く_30 {
             get {
                 object obj = ResourceManager.GetObject("icons8_画像を開く_30", resourceCulture);
@@ -196,6 +216,16 @@ namespace StageSmithEditor.Properties {
         internal static System.Drawing.Bitmap icons8_目に見える_24 {
             get {
                 object obj = ResourceManager.GetObject("icons8-目に見える-24", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
+        internal static System.Drawing.Bitmap icons8_置換_30 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-置換-30", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

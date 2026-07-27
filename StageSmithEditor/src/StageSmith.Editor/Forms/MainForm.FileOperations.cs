@@ -677,6 +677,34 @@ public partial class MainForm
         _commandManager.Execute(new AddPageCommand(stage, _context));
     }
 
+    private void RemoveCurrentPage()
+    {
+        var stage = _context.CurrentStage;
+        var page = _context.CurrentPage;
+        
+        if (stage == null || page == null)
+        {
+            MessageBox.Show(
+                "削除対象のページがありません。",
+                "ページ削除",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return;
+        }
+
+        var confirm = MessageBox.Show(
+            this,
+            $"ページ「{page.Name}」を削除しますか？",
+            "ページの削除",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Warning
+        );
+        
+        if (confirm != DialogResult.Yes) return;
+        
+        _commandManager.Execute(new RemovePageCommand(stage, page, _context));
+    }
+
     /// <summary>
     /// プロジェクト切り替え前にマップビュー・タイルパレット・プロパティウィンドウの表示をすべてクリアする。
     /// </summary>

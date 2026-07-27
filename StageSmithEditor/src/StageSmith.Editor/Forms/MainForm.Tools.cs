@@ -25,6 +25,9 @@ public partial class MainForm
     private ToolStripButton _showGridButton = null!;
     private ToolStripButton _tilePreviewButton = null!;
     private ToolStripButton _addPageButton = null!;
+    private ToolStripButton _removePageButton = null!;
+    private ToolStripButton _tileSearchButton = null!;
+    private ToolStripButton _tileReplaceButton = null!;
 
     //========================
     // ツールストリップ初期化
@@ -55,7 +58,11 @@ public partial class MainForm
 
         _showGridButton = CreateButton("ShowGrid", "グリッド表示切替 (G)", StageSmithEditor.Properties.Resources.icons8_グリッド_24, true);
         _tilePreviewButton = CreateButton("TilePreview", "タイルプレビュー切替 (T)", StageSmithEditor.Properties.Resources.icons8_目に見える_24, true);
-        _addPageButton = CreateButton("AddPage", "ページを追加 (Ctrl+T)", StageSmithEditor.Properties.Resources.icons8_ファイル追加_30, true);
+        _addPageButton = CreateButton("AddPage", "ページを追加 (Ctrl+T)", StageSmithEditor.Properties.Resources.icons8_ファイル追加_30);
+        _removePageButton = CreateButton("RemovePage", "ページを削除 (Ctrl+Shift+T)", StageSmithEditor.Properties.Resources.icons8_delete_file_30);
+
+        _tileSearchButton = CreateButton("TileSearch", "タイル検索 (Ctrl+F)", StageSmithEditor.Properties.Resources.icons8_検索_30);
+        _tileReplaceButton = CreateButton("TileReplace", "タイル置換 (Ctrl+H)", StageSmithEditor.Properties.Resources.icons8_置換_30);
 
         //========================
         // イベント
@@ -135,6 +142,21 @@ public partial class MainForm
             AddPageToCurrentStage();
         };
 
+        _removePageButton.Click += (_, _) =>
+        {
+            RemoveCurrentPage();
+        };
+
+        _tileSearchButton.Click += (_, _) =>
+        {
+            OpenFindTileDialog();
+        };
+
+        _tileReplaceButton.Click += (_, _) =>
+        {
+            OpenReplaceTileDialog();
+        };
+
         //========================
         // UI構築
         //========================
@@ -159,7 +181,11 @@ public partial class MainForm
             _showGridButton,
             _tilePreviewButton,
             new ToolStripSeparator(),
-            _addPageButton
+            _addPageButton,
+            _removePageButton,
+            new ToolStripSeparator(),
+            _tileSearchButton,
+            _tileReplaceButton
         ]);
 
         Controls.Add(_editorToolStrip);
