@@ -168,6 +168,10 @@ public partial class MainForm
                 _menuViewColumnNumbers.Checked = !_menuViewColumnNumbers.Checked;
                 return true;
 
+            case Keys.I:
+                _menuViewTileInfo.Checked = !_menuViewTileInfo.Checked;
+                return true;
+
             case Keys.Insert:
                 ApplySelectionFill();
                 return true;

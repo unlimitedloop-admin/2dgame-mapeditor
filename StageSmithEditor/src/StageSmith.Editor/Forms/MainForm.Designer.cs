@@ -140,8 +140,6 @@ namespace StageSmith.Editor
             _menuViewZoomIn             = new ToolStripMenuItem("Zoom In")              { ShortcutKeys = Keys.Control | Keys.Oemplus };
             _menuViewZoomOut            = new ToolStripMenuItem("Zoom Out")             { ShortcutKeys = Keys.Control | Keys.OemMinus };
             _menuViewResetZoom          = new ToolStripMenuItem("Reset Zoom")           { ShortcutKeys = Keys.Control | Keys.D0 };
-            _menuViewRuler              = new ToolStripMenuItem("Ruler")                { ShortcutKeyDisplayString = "U", CheckOnClick = true };
-            _menuViewPageBoundary       = new ToolStripMenuItem("Page Boundary")        { ShortcutKeyDisplayString = "B", CheckOnClick = true };
             _menuViewToolBar            = new ToolStripMenuItem("Tool Bar")             { CheckOnClick = true, Checked = true };
             _menuViewStatusBar          = new ToolStripMenuItem("Status Bar")           { CheckOnClick = true, Checked = true };
 
@@ -157,9 +155,6 @@ namespace StageSmith.Editor
                 _menuViewZoomIn,
                 _menuViewZoomOut,
                 _menuViewResetZoom,
-                new ToolStripSeparator(),
-                _menuViewRuler,
-                _menuViewPageBoundary,
                 new ToolStripSeparator(),
                 _menuViewToolBar,
                 _menuViewStatusBar,
@@ -330,8 +325,6 @@ namespace StageSmith.Editor
         private ToolStripMenuItem _menuViewZoomIn          = null!;
         private ToolStripMenuItem _menuViewZoomOut         = null!;
         private ToolStripMenuItem _menuViewResetZoom       = null!;
-        private ToolStripMenuItem _menuViewRuler           = null!;
-        private ToolStripMenuItem _menuViewPageBoundary    = null!;
         private ToolStripMenuItem _menuViewToolBar         = null!;
         private ToolStripMenuItem _menuViewStatusBar       = null!;
 

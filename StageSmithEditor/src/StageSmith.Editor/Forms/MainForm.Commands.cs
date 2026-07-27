@@ -146,6 +146,15 @@ public partial class MainForm
         _mapView.Invalidate();
     }
 
+    private void CutSelection()
+    {
+        if (_page == null || _selectionTool == null) return;
+        if (_selectionTool.SelectionRects.Count == 0) return;
+
+        CopySelection();
+        DeleteSelection();
+    }
+
     private void SelectAllTiles()
     {
         if (_page == null || _selectionTool == null) return;

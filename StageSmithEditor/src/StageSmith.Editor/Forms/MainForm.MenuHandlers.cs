@@ -56,6 +56,7 @@ public partial class MainForm
         _menuViewRowNumbers.CheckedChanged      += (_, _) => ApplyRowNumberState(_menuViewRowNumbers.Checked);
         _menuViewColumnNumbers.CheckedChanged   += (_, _) => ApplyColumnNumberState(_menuViewColumnNumbers.Checked);
         _menuViewMarkerOverlay.CheckedChanged   += (_, _) => ToggleMarkerOverlay(_menuViewMarkerOverlay.Checked);
+        _menuViewTileInfo.CheckedChanged        += (_, _) => _mapView.SetShowTileInfo(_menuViewTileInfo.Checked);
         _menuViewZoomIn.Click                   += (_, _) => ZoomIn();
         _menuViewZoomOut.Click                  += (_, _) => ZoomOut();
         _menuViewResetZoom.Click                += (_, _) => ResetZoom();
@@ -188,19 +189,19 @@ public partial class MainForm
     //private void CloseProject() { }                   // MainForm.FileOperations.cs で定義済み
     //private void NewStage() { }                       // MainForm.FileOperations.cs で定義済み
     //private void SaveStage() { }                      // MainForm.FileOperations.cs で定義済み
-    private void ReloadStage() { /* TODO */ }
+    //private void ReloadStage() { }                    // MainForm.FileOperations.cs で定義済み
     //private void DropStage() { }                      // MainForm.FileOperations.cs で定義済み
     private void ImportTileSet() => OpenTilesetImage();
     private void ExportBin() => ExportCurrentStageBin();
     //private void ExportAllStages() { }                // MainForm.FileOperations.cs で定義済み
-    private void CutSelection() { /* TODO */ }
+    //private void CutSelection() { }                   // MainForm.Commands.cs で定義済み
     //private void CopySelection() { }                  // MainForm.Commands.cs で定義済み
     //private void PasteSelection() { }                 // MainForm.Commands.cs で定義済み
     //private void DeleteSelection() { }                // MainForm.Commands.cs で定義済み
     private void FillSelection() => ApplySelectionFill();
     //private void SelectAllSameTile() { }              // MainForm.Commands.cs で定義済み
     //private void SelectEmptyTile() { }                // MainForm.Commands.cs で定義済み
-    //private void InvertSelection() { /* TODO */ }
+    //private void InvertSelection() { }                // MainForm.Commands.cs で定義済み
     //private void ClearSelection() { }                 // MainForm.Commands.cs で定義済み
     // OpenFindTileDialog / FindTileOnMap / FindNextTile / FindPrevTile / ClearSearchHighlight は MainForm.Search.cs で定義済み
     //private void OpenReplaceTileDialog() { }          // MainForm.Search.cs で定義済み

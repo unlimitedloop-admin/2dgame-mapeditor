@@ -285,6 +285,87 @@ public partial class MainForm
         ShowStatusMessage($"{TruncatePathForStatus(path)} へステージを保存しました");
     }
 
+    /// <summary>
+    /// 現在のステージを、最後に保存した状態までリロードする。
+    /// </summary>
+    private void ReloadStage()
+    {
+        var project = _context.Project;
+        var stage = _context.CurrentStage;
+
+        if (project == null || stage == null)
+        {
+            MessageBox.Show(
+                "リロード対象のステージがありません。",
+                "Reload Stage",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(stage.FilePath))
+        {
+            MessageBox.Show(
+                this,
+                "このステージはまだ一度も保存されていないため、リロードできません。",
+                "Reload Stage",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+            return;
+        }
+
+        var confirm = MessageBox.Show(
+            this,
+            $"「{stage.Name}」を最後に保存した状態まで戻します。\n" +
+            "現在の未保存の変更は失われます。よろしいですか？",
+            "Reload Stage",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Warning);
+
+        if (confirm != DialogResult.Yes) return;
+
+        Stage reloaded;
+
+        try
+        {
+            var repository = new JsonProjectRepository();
+            reloaded = repository.LoadStage(stage.FilePath);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                this,
+                $"ステージファイルの読み込みに失敗しました。\n{stage.FilePath}\n{ex.Message}",
+                "Reload Stage",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+            return;
+        }
+
+        var stageIndex = project.Stages.IndexOf(stage);
+        if (stageIndex < 0) return;
+
+        var pageIndexBeforeReload = _context.CurrentPageIndex;
+
+        project.Stages[stageIndex] = reloaded;
+
+        // ステージを丸ごと差し替えるため、既存のUndo履歴は整合性を保てなくなる。
+        // 他ステージ分も含め、New/Open Projectと同じ扱いで全クリアする（合意済み）。
+        _commandManager.Clear();
+        _savedUndoCount = 0;
+
+        _context.SetStage(stageIndex); // ContextChanged経由でビュー全体が再同期される
+
+        // リロード後もページ位置を維持できる場合は維持する（SetStageで一旦0に戻るため）
+        if (pageIndexBeforeReload > 0 && pageIndexBeforeReload < reloaded.Pages.Count)
+        {
+            _context.SetPage(pageIndexBeforeReload);
+        }
+
+        UpdateTitle();
+        ShowStatusMessage($"「{reloaded.Name}」を {TruncatePathForStatus(stage.FilePath)} から再読込しました");
+    }
+
     private void DropStage()
     {
         var stage = _context.CurrentStage;

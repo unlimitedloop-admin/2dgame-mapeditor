@@ -18,6 +18,14 @@ public class MapViewControl : DoubleBufferedPanel
     private bool _lastIsShift = false;
 
     private bool _showGrid = true;
+    private bool _showTileInfo = false;
+
+    private readonly ToolTip _tileInfoToolTip = new()
+    {
+        InitialDelay = 0,
+        ReshowDelay = 0,
+        AutomaticDelay = 0
+    };
 
     private int _currentPageIndex = -1;
 
@@ -45,26 +53,13 @@ public class MapViewControl : DoubleBufferedPanel
             _modifierPollTimer.Stop();
             _lastIsAlt = false;
             _lastIsShift = false;
+            _tileInfoToolTip.Hide(this);
         };
-    }
-
-    protected override void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            _tilesetHolder.Dispose();
-            _modifierPollTimer.Dispose();
-        }
-
-        base.Dispose(disposing);
     }
 
     // ===== Toggle Grid =====
     private bool _showRowNumbers = false;
     private bool _showColumnNumbers = false;
-
-    public bool ShowRowNumbers => _showRowNumbers;
-    public bool ShowColumnNumbers => _showColumnNumbers;
 
     public void SetShowRowNumbers(bool show)
     {
@@ -255,6 +250,12 @@ public class MapViewControl : DoubleBufferedPanel
     {
         _showGrid = show;
         Invalidate();
+    }
+
+    public void SetShowTileInfo(bool show)
+    {
+        _showTileInfo = show;
+        if (!show) _tileInfoToolTip.Hide(this);
     }
 
     public void SetCurrentPageIndex(int pageIndex)
@@ -629,6 +630,7 @@ public class MapViewControl : DoubleBufferedPanel
         {
             Cursor = Cursors.Default;
             _hoverTile = new Point(-1, -1);
+            _tileInfoToolTip.Hide(this);
             Invalidate();
             return;
         }
@@ -637,6 +639,7 @@ public class MapViewControl : DoubleBufferedPanel
         if (_hoverTile != newHover)
         {
             _hoverTile = newHover;
+            UpdateTileInfoToolTip(e.Location);
             Invalidate();
         }
 
@@ -681,6 +684,21 @@ public class MapViewControl : DoubleBufferedPanel
     {
         (x, y) = ScreenToTile(px, py);
         return IsInside(x, y);
+    }
+
+    private void UpdateTileInfoToolTip(Point clientLocation)
+    {
+        if (!_showTileInfo || _tileMap == null)
+        {
+            _tileInfoToolTip.Hide(this);
+            return;
+        }
+
+        var tileId = _tileMap.GetTile(_hoverTile.X, _hoverTile.Y);
+        var text = $"Tile: {tileId}\n(x: {_hoverTile.X}, y: {_hoverTile.Y})";
+
+        // カーソルに重ならないよう少し右下へオフセットして表示
+        _tileInfoToolTip.Show(text, this, clientLocation.X + 16, clientLocation.Y + 16, 3000);
     }
 
     private bool IsInside(int x, int y)
@@ -1024,6 +1042,18 @@ public class MapViewControl : DoubleBufferedPanel
 
             g.DrawString(y.ToString(), font, brush, rect, format);
         }
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _tilesetHolder.Dispose();
+            _modifierPollTimer.Dispose();
+            _tileInfoToolTip.Dispose();
+        }
+
+        base.Dispose(disposing);
     }
 }
 

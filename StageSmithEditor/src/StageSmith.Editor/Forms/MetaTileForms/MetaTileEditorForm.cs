@@ -606,7 +606,6 @@ public sealed class MetaTileEditorForm : Form
 
     private static Control? FindFocusedControl(Control parent)
     {
-        // TODO: Implement logic to find the focused control within the form.
         foreach(Control child in parent.Controls)
         {
             if (child.Focused)
