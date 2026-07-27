@@ -205,7 +205,7 @@ public partial class MainForm
     //private void ClearSelection() { }                 // MainForm.Commands.cs で定義済み
     // OpenFindTileDialog / FindTileOnMap / FindNextTile / FindPrevTile / ClearSearchHighlight は MainForm.Search.cs で定義済み
     //private void OpenReplaceTileDialog() { }          // MainForm.Search.cs で定義済み
-    private void ToggleShowTileNumbers(bool show) { /* TODO */ }
+    //private void ToggleShowTileNumbers(bool show) { } // MainForm.Events.cs で定義済み
     //private void ToggleMarkerOverlay(bool show) { }   // MainForm.Events.cs で定義済み
     private void ZoomIn() => _mapView.ZoomIn();
     private void ZoomOut() => _mapView.ZoomOut();

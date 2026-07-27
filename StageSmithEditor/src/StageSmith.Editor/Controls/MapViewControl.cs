@@ -27,6 +27,14 @@ public class MapViewControl : DoubleBufferedPanel
         AutomaticDelay = 0
     };
 
+    private bool _showTileNumbers = false;
+
+    public void SetShowTileNumbers(bool show)
+    {
+        _showTileNumbers = show;
+        Invalidate();
+    }
+
     private int _currentPageIndex = -1;
 
     public MapViewControl()
@@ -295,6 +303,8 @@ public class MapViewControl : DoubleBufferedPanel
             DrawGrid(g);
         }
 
+        DrawTileNumbers(g);
+
         DrawColumnNumbers(g);
         DrawRowNumbers(g);
 
@@ -367,6 +377,37 @@ public class MapViewControl : DoubleBufferedPanel
         {
             var py = offsetY + y * dstSize;
             g.DrawLine(pen, offsetX, py, offsetX + _tileMap.Width * dstSize, py);
+        }
+    }
+
+    private void DrawTileNumbers(Graphics g)
+    {
+        if (!_showTileNumbers || _tileMap == null) return;
+
+        using var font = new Font("Yu Gothic UI", 7f);
+        using var brush = new SolidBrush(Color.FromArgb(220, Color.White));
+        using var shadowBrush = new SolidBrush(Color.FromArgb(220, Color.Black));
+
+        var format = new StringFormat
+        {
+            Alignment = StringAlignment.Near,
+            LineAlignment = StringAlignment.Near
+        };
+
+        for (var y = 0; y < _tileMap.Height; y++)
+        {
+            for (var x = 0; x < _tileMap.Width; x++)
+            {
+                var tileId = _tileMap.GetTile(x, y);
+                var text = tileId.ToString();
+
+                var rect = GetTileRect(x, y);
+                var textPoint = new PointF(rect.X + 2, rect.Y + 1);
+                var shadowPoint = new PointF(textPoint.X + 1, textPoint.Y + 1);
+
+                g.DrawString(text, font, shadowBrush, shadowPoint, format);
+                g.DrawString(text, font, brush, textPoint, format);
+            }
         }
     }
 

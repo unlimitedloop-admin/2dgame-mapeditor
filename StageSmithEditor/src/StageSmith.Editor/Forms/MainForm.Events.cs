@@ -229,6 +229,11 @@ public partial class MainForm
         _showGridButton.Checked = visible;
     }
 
+    private void ToggleShowTileNumbers(bool show)
+    {
+        _mapView.SetShowTileNumbers(show);
+    }
+
     private void ApplyRowNumberState(bool show)
     {
         _mapView.SetShowRowNumbers(show);
