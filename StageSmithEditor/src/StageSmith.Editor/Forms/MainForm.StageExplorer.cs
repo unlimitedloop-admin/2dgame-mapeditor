@@ -40,6 +40,21 @@ public partial class MainForm
         };
 
         _stageExplorer.StageDeleteRequested += DeleteStage;
+
+        _stageExplorer.StageMapViewerRequested += stage =>
+        {
+            if (_context.Project == null) return;
+            _context.SetStage(_context.Project.Stages.IndexOf(stage));
+            OpenStageMapViewer();
+        };
+
+        _stageExplorer.PageNodeEditorRequested += (stage, page) =>
+        {
+            if (_context.Project == null) return;
+            _context.SetStage(_context.Project.Stages.IndexOf(stage));
+            _context.SetPage(stage.Pages.IndexOf(page));
+            OpenNodeEditor();
+        };
     }
 
     //========================

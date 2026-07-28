@@ -418,6 +418,11 @@ public partial class MainForm
             // _mapView.ShowPreview = false;  ← 削除
             _mapView.Invalidate();
         };
+
+        _metaTilePalette.MetaTileEditorRequested += () =>
+        {
+            OpenMetaTileEditor();
+        };
     }
 
     //========================

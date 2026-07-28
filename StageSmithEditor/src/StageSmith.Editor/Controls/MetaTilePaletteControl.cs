@@ -15,6 +15,7 @@ public sealed class MetaTilePaletteControl : DoubleBufferedPanel
 
     private readonly ToolTip _toolTip = new();
     private readonly List<MetaTileLayoutItem> _items = [];
+    private readonly ContextMenuStrip _contextMenu;
 
     private int? _hoverMetaTileId;
     private int? _selectedMetaTileId;
@@ -26,6 +27,7 @@ public sealed class MetaTilePaletteControl : DoubleBufferedPanel
     private const int MinPreviewTileSize = 4;
 
     public event Action<MetaTile>? MetaTileSelected;
+    public event Action? MetaTileEditorRequested;
 
     public int? SelectedMetaTileId => _selectedMetaTileId;
 
@@ -35,6 +37,10 @@ public sealed class MetaTilePaletteControl : DoubleBufferedPanel
         AutoScroll = true;
         ResizeRedraw = true;
         BackColor = Color.FromArgb(245, 245, 245);
+
+        _contextMenu = new ContextMenuStrip();
+        _contextMenu.Items.Add("メタタイルエディタを起動...", null, (_, _) => MetaTileEditorRequested?.Invoke());
+        ContextMenuStrip = _contextMenu;
     }
 
     public void SetStage(Stage? stage)

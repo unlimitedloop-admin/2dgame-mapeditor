@@ -256,10 +256,10 @@ public partial class MainForm
         _mapView.Invalidate();
     }
 
-    private static bool IsFocusedOnTextBox()
+    private bool IsFocusedOnTextBox()
     {
         var focused = GetFocusedControl(Form.ActiveForm);
-        return focused is TextBox;
+        return focused is TextBox || _stageExplorer.IsEditingLabel;
     }
 
     private static Control? GetFocusedControl(Control? parent)
