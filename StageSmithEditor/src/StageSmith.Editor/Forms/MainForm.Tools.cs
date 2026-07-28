@@ -24,10 +24,14 @@ public partial class MainForm
     private ToolStripButton _markerButton = null!;
     private ToolStripButton _showGridButton = null!;
     private ToolStripButton _tilePreviewButton = null!;
+    private ToolStripButton _numberLabelButton = null!;
     private ToolStripButton _addPageButton = null!;
     private ToolStripButton _removePageButton = null!;
     private ToolStripButton _tileSearchButton = null!;
     private ToolStripButton _tileReplaceButton = null!;
+    private ToolStripButton _tileSearchPrevHitButton = null!;
+    private ToolStripButton _tileSearchNextHitButton = null!;
+    private ToolStripButton _tileSearchClearButton = null!;
 
     //========================
     // ツールストリップ初期化
@@ -58,11 +62,16 @@ public partial class MainForm
 
         _showGridButton = CreateButton("ShowGrid", "グリッド表示切替 (G)", StageSmithEditor.Properties.Resources.icons8_グリッド_24, true);
         _tilePreviewButton = CreateButton("TilePreview", "タイルプレビュー切替 (T)", StageSmithEditor.Properties.Resources.icons8_目に見える_24, true);
+        _numberLabelButton = CreateButton("NumberLabel", "番号ラベル切替 (L)", StageSmithEditor.Properties.Resources.icons8_数字_30, true);
+
         _addPageButton = CreateButton("AddPage", "ページを追加 (Ctrl+T)", StageSmithEditor.Properties.Resources.icons8_ファイル追加_30);
         _removePageButton = CreateButton("RemovePage", "ページを削除 (Ctrl+Shift+T)", StageSmithEditor.Properties.Resources.icons8_delete_file_30);
 
         _tileSearchButton = CreateButton("TileSearch", "タイル検索 (Ctrl+F)", StageSmithEditor.Properties.Resources.icons8_検索_30);
         _tileReplaceButton = CreateButton("TileReplace", "タイル置換 (Ctrl+H)", StageSmithEditor.Properties.Resources.icons8_置換_30);
+        _tileSearchPrevHitButton = CreateButton("TileSearchPrevHit", "前の検索結果 (Shift+F4)", StageSmithEditor.Properties.Resources.ai_前を検索_40);
+        _tileSearchNextHitButton = CreateButton("TileSearchNextHit", "次の検索結果 (F4)", StageSmithEditor.Properties.Resources.ai_次を検索_40);
+        _tileSearchClearButton = CreateButton("TileSearchClear", "検索結果をクリア (Ctrl+Shift+F)", StageSmithEditor.Properties.Resources.ai_検索結果を削除_40);
 
         //========================
         // イベント
@@ -137,6 +146,11 @@ public partial class MainForm
             _menuViewTilePreview.Checked = !_menuViewTilePreview.Checked;
         };
 
+        _numberLabelButton.Click += (_, _) =>
+        {
+            _menuViewShowTileNumbers.Checked = !_menuViewShowTileNumbers.Checked;
+        };
+
         _addPageButton.Click += (_, _) =>
         {
             AddPageToCurrentStage();
@@ -155,6 +169,21 @@ public partial class MainForm
         _tileReplaceButton.Click += (_, _) =>
         {
             OpenReplaceTileDialog();
+        };
+
+        _tileSearchPrevHitButton.Click += (_, _) =>
+        {
+            FindPrevTile();
+        };
+
+        _tileSearchNextHitButton.Click += (_, _) =>
+        {
+            FindNextTile();
+        };
+
+        _tileSearchClearButton.Click += (_, _) =>
+        {
+            ClearSearchHighlight();
         };
 
         //========================
@@ -180,12 +209,16 @@ public partial class MainForm
             new ToolStripSeparator(),
             _showGridButton,
             _tilePreviewButton,
+            _numberLabelButton,
             new ToolStripSeparator(),
             _addPageButton,
             _removePageButton,
             new ToolStripSeparator(),
             _tileSearchButton,
-            _tileReplaceButton
+            _tileReplaceButton,
+            _tileSearchPrevHitButton,
+            _tileSearchNextHitButton,
+            _tileSearchClearButton
         ]);
 
         Controls.Add(_editorToolStrip);

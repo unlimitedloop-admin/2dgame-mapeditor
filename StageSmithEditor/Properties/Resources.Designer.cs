@@ -63,6 +63,36 @@ namespace StageSmithEditor.Properties {
         /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
+        internal static System.Drawing.Bitmap ai_前を検索_40 {
+            get {
+                object obj = ResourceManager.GetObject("ai_前を検索_40", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
+        internal static System.Drawing.Bitmap ai_検索結果を削除_40 {
+            get {
+                object obj = ResourceManager.GetObject("ai_検索結果を削除_40", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
+        internal static System.Drawing.Bitmap ai_次を検索_40 {
+            get {
+                object obj = ResourceManager.GetObject("ai_次を検索_40", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
         internal static System.Drawing.Bitmap icons8_delete_file_30 {
             get {
                 object obj = ResourceManager.GetObject("icons8-delete-file-30", resourceCulture);
@@ -176,6 +206,16 @@ namespace StageSmithEditor.Properties {
         internal static System.Drawing.Bitmap icons8_名前を付けて保存_30 {
             get {
                 object obj = ResourceManager.GetObject("icons8-名前を付けて保存-30", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
+        internal static System.Drawing.Bitmap icons8_数字_30 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-数字-30", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
