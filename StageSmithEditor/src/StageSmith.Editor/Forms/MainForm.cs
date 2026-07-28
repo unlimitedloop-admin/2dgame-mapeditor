@@ -127,8 +127,6 @@ public partial class MainForm : Form
         InitializeTools();
         InitializeDockLayout();
 
-        _stageExplorerContent.Activate();
-
         BindToolManager();
         BindTilePalette();
         BindMetaTilePalette();

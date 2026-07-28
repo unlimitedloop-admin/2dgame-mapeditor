@@ -38,6 +38,8 @@ public partial class MainForm
             _mapViewContent.Show(_dockPanel, DockState.Document);
             _mapViewContent.UpdateZoomTitle(_mapView.ZoomScale);
         }
+
+        _stageExplorerContent.Activate();
     }
 
     private void ShowDockContent(DockContent content, DockState dockState)
