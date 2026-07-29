@@ -259,7 +259,7 @@ namespace StageSmith.Editor
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode       = AutoScaleMode.Font;
-            ClientSize          = new Size(1200, 900);
+            ClientSize          = ViewerConstants.MainFormClientSize;
             Name                = "MainForm";
             Text                = "StageSmith Editor";
             MainMenuStrip       = _menuStrip;

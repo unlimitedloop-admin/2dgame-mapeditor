@@ -59,8 +59,15 @@ public partial class MainForm
         ResetView();
 
         _context.Project = project;
-        _context.SetStage(0);
-        _context.SetPage(0);
+
+        var stageIndex = project.ResolveLastEditedStageIndex() ?? 0;
+        _context.SetStage(stageIndex); // 内部でPageIndexは一旦0になる
+
+        var pageIndex = project.LastEditedPageIndex;
+        if (pageIndex > 0 && pageIndex < (_context.CurrentStage?.Pages.Count ?? 0))
+        {
+            _context.SetPage(pageIndex);
+        }
 
         _commandManager.Clear();
         _savedUndoCount = 0;
@@ -110,6 +117,10 @@ public partial class MainForm
         }
 
         var repository = new JsonProjectRepository();
+
+        _context.Project.LastEditedStageId = _context.CurrentStage?.Id;
+        _context.Project.LastEditedPageIndex = _context.CurrentPageIndex;
+
         repository.Save(_context.Project, _currentProjectPath);
 
         _savedUndoCount = _commandManager.UndoCount;
@@ -141,6 +152,10 @@ public partial class MainForm
         _currentProjectPath = dialog.FileName;
 
         var repository = new JsonProjectRepository();
+
+        _context.Project.LastEditedStageId = _context.CurrentStage?.Id;
+        _context.Project.LastEditedPageIndex = _context.CurrentPageIndex;
+
         repository.Save(_context.Project, _currentProjectPath);
 
         _savedUndoCount = _commandManager.UndoCount;

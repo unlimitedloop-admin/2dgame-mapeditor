@@ -85,7 +85,7 @@ public partial class MainForm : Form
     public MainForm()
     {
         InitializeComponent();
-        StartPosition = FormStartPosition.CenterScreen;
+        LoadConfig();   // ini読込 + ウィンドウ位置復元（未保存時はCenterScreenへフォールバック）
         KeyPreview = true;
 
         // DockPanel をメインコンテナとして設置
@@ -125,7 +125,6 @@ public partial class MainForm : Form
         InitializeMenuHandlers();
 
         InitializeTools();
-        InitializeDockLayout();
 
         BindToolManager();
         BindTilePalette();
@@ -184,6 +183,9 @@ public partial class MainForm : Form
                 return;
             }
 
+            SaveConfig();
+            SaveDockLayout();
+
             _nodeEditorForm?.Close();
             _metaTileEditorForm?.Close();
             _stageMapViewerForm?.Close();
@@ -197,8 +199,8 @@ public partial class MainForm : Form
         ToggleMarkerOverlay(_menuViewMarkerOverlay.Checked);
     }
 
-    // REVIEW: 未使用?
     private void MainForm_Load(object sender, EventArgs e)
     {
+        InitializeDockLayoutFromSavedOrDefault();
     }
 }

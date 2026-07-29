@@ -46,6 +46,14 @@ public sealed class EditorProject
     /// </summary>
     public List<Bookmark> Bookmarks { get; set; } = [];
 
+    /// <summary>
+    /// 最後に編集していたステージ／ページ位置（プロジェクトを開いた際の復元用セッション情報）。
+    /// ステージの実データではなく、UIの復元用途に限定する。
+    /// StageIndexではなくStageIdで持つ理由：将来ステージの並び替え・削除が入ってもズレない安定参照にするため。
+    /// </summary>
+    public Guid? LastEditedStageId { get; set; }
+    public int LastEditedPageIndex { get; set; } = 0;
+
     [JsonIgnore]
     public bool HasStages => Stages.Count > 0;
 
@@ -61,6 +69,7 @@ public sealed class EditorProject
         Stages ??= [];
         StageFilePaths ??= [];
         Bookmarks ??= [];
+        if (LastEditedPageIndex < 0) LastEditedPageIndex = 0;
 
         foreach (var stage in Stages)
         {
@@ -103,5 +112,17 @@ public sealed class EditorProject
     public Stage? FindStage(Guid stageId)
     {
         return Stages.FirstOrDefault(x => x.Id == stageId);
+    }
+
+    /// <summary>
+    /// LastEditedStageId に対応する Stages 上のインデックスを解決する。
+    /// 該当ステージが見つからない場合（削除済み等）は null を返す。
+    /// </summary>
+    public int? ResolveLastEditedStageIndex()
+    {
+        if (LastEditedStageId is null) return null;
+
+        var index = Stages.FindIndex(s => s.Id == LastEditedStageId.Value);
+        return index >= 0 ? index : null;
     }
 }
