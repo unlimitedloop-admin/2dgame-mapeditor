@@ -44,4 +44,10 @@ public class EditorConfig
     public bool UseProjectSubDirectory { get; set; } = false;
     public string? DefaultProjectSaveDirectory { get; set; }
     public byte DefaultClearTileId { get; set; } = 0;
+
+    /// <summary>
+    /// EditorPropertiesDialog等でCancel時に元設定を汚さないための複製。
+    /// 全プロパティが値型/stringのみのため MemberwiseClone で十分。
+    /// </summary>
+    public EditorConfig Clone() => (EditorConfig)MemberwiseClone();
 }

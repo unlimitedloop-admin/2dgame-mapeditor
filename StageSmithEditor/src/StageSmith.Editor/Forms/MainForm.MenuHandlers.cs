@@ -79,6 +79,11 @@ public partial class MainForm
         _menuNavForward.Click     += (_, _) => NavigateForward();
 
         // ========================
+        // Tools
+        // ========================
+        _menuToolsOptions.Click += (_, _) => OpenEditorPropertiesDialog();
+
+        // ========================
         // Window
         // ========================
         _menuWindowMapView.Click        += (_, _) => ShowMapViewContent();

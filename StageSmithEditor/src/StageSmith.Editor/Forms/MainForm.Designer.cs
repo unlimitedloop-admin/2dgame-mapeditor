@@ -194,6 +194,16 @@ namespace StageSmith.Editor
             ]);
 
             // ========================
+            // Tools
+            // ========================
+            _menuTools        = new ToolStripMenuItem("Tools");
+            _menuToolsOptions = new ToolStripMenuItem("Options...");
+
+            _menuTools.DropDownItems.AddRange([
+                _menuToolsOptions,
+            ]);
+
+            // ========================
             // Window
             // ========================
             _menuWindow                 = new ToolStripMenuItem("Window");
@@ -246,6 +256,7 @@ namespace StageSmith.Editor
                 _menuEdit,
                 _menuView,
                 _menuNavigation,
+                _menuTools,
                 _menuWindow,
                 _menuHelp,
             ]);
@@ -341,6 +352,10 @@ namespace StageSmith.Editor
         private ToolStripMenuItem _menuNavJumpPage    = null!;
         private ToolStripMenuItem _menuNavBack        = null!;
         private ToolStripMenuItem _menuNavForward     = null!;
+
+        // Tools
+        private ToolStripMenuItem _menuTools        = null!;
+        private ToolStripMenuItem _menuToolsOptions = null!;
 
         // Window
         private ToolStripMenuItem _menuWindow               = null!;
