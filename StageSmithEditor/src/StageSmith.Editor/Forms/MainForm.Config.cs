@@ -64,6 +64,16 @@ public partial class MainForm
         _config.LastSelectedPageIndex = _context.CurrentPageIndex;
         _config.LastToolMode = _currentMode;
 
+        _config.ShowGridLines = _menuViewGridLines.Checked;
+        _config.ShowTilePreview = _menuViewTilePreview.Checked;
+        _config.ShowTileNumbers = _menuViewShowTileNumbers.Checked;
+        _config.ShowRowNumbers = _menuViewRowNumbers.Checked;
+        _config.ShowColumnNumbers = _menuViewColumnNumbers.Checked;
+        _config.ShowTileInfo = _menuViewTileInfo.Checked;
+        _config.ShowMarkerOverlay = _menuViewMarkerOverlay.Checked;
+        _config.ShowToolBar = _menuViewToolBar.Checked;
+        _config.ShowStatusBar = _menuViewStatusBar.Checked;
+
         var bounds = WindowState == FormWindowState.Normal ? Bounds : RestoreBounds;
         _config.MainWindowX = bounds.X;
         _config.MainWindowY = bounds.Y;
@@ -72,5 +82,51 @@ public partial class MainForm
         _config.MainWindowMaximized = WindowState == FormWindowState.Maximized;
 
         _configRepository.Save(_config);
+    }
+
+    /// <summary>
+    /// Viewメニュー状態・ツール状態をコンフィグから復元する。
+    /// 既存の CheckedChanged ハンドラ（MainForm.MenuHandlers.cs）を極力再利用し、
+    /// 「_menuViewXxx.Checked が単一の真実」という既存方針を崩さない。
+    /// </summary>
+    private void ApplyViewStateFromConfig()
+    {
+        _menuViewGridLines.Checked = _config.ShowGridLines;
+        ApplyGridState(_config.ShowGridLines);
+
+        _menuViewTilePreview.Checked = _config.ShowTilePreview;
+        ApplyTilePreviewState(_config.ShowTilePreview);
+        UpdateTilePreviewIcon();
+
+        _menuViewShowTileNumbers.Checked = _config.ShowTileNumbers;
+        ToggleShowTileNumbers(_config.ShowTileNumbers);
+
+        _menuViewRowNumbers.Checked = _config.ShowRowNumbers;
+        ApplyRowNumberState(_config.ShowRowNumbers);
+
+        _menuViewColumnNumbers.Checked = _config.ShowColumnNumbers;
+        ApplyColumnNumberState(_config.ShowColumnNumbers);
+
+        _menuViewTileInfo.Checked = _config.ShowTileInfo;
+        _mapView.SetShowTileInfo(_config.ShowTileInfo);
+
+        _menuViewMarkerOverlay.Checked = _config.ShowMarkerOverlay;
+        ToggleMarkerOverlay(_config.ShowMarkerOverlay);
+
+        _menuViewToolBar.Checked = _config.ShowToolBar;
+        _editorToolStrip.Visible = _config.ShowToolBar;
+
+        _menuViewStatusBar.Checked = _config.ShowStatusBar;
+        _statusStrip.Visible = _config.ShowStatusBar;
+    }
+
+    /// <summary>
+    /// 直前に使用していたツール（Pen/Selection/Marker）を復元する。
+    /// ツール群の初期化（InitializeTools）完了後に呼び出すこと。
+    /// </summary>
+    private void ApplyToolModeFromConfig()
+    {
+        SetToolMode(_config.LastToolMode);
+        UpdateToolbarCheckedState();
     }
 }

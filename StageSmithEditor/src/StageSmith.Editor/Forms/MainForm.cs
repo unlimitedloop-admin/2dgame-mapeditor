@@ -127,6 +127,8 @@ public partial class MainForm : Form
         InitializeTools();
 
         BindToolManager();
+        ApplyToolModeFromConfig(); // ツール初期化・イベント購読後に復元
+
         BindTilePalette();
         BindMetaTilePalette();
         BindMarkerColorPanel();
@@ -194,9 +196,7 @@ public partial class MainForm : Form
         UpdateEditorAvailability();
         UpdateTitle();
 
-        UpdateTilePreviewIcon();
-        ApplyGridState(_showGrid);
-        ToggleMarkerOverlay(_menuViewMarkerOverlay.Checked);
+        ApplyViewStateFromConfig();
     }
 
     private void MainForm_Load(object sender, EventArgs e)

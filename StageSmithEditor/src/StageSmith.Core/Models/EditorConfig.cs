@@ -9,7 +9,7 @@ namespace StageSmith.Core.Models;
 public class EditorConfig
 {
     //========================
-    // 基盤（④）
+    // 基盤
     //========================
     public string? LastOpenedProjectPath { get; set; }
     public int LastSelectedStageIndex { get; set; } = -1;
@@ -24,8 +24,19 @@ public class EditorConfig
     public int MainWindowHeight { get; set; } = -1;
     public bool MainWindowMaximized { get; set; } = false;
 
+    // View メニュー状態（Designerの初期Checked値に合わせたデフォルト）
+    public bool ShowGridLines { get; set; } = true;
+    public bool ShowTilePreview { get; set; } = false;
+    public bool ShowTileNumbers { get; set; } = false;
+    public bool ShowRowNumbers { get; set; } = false;
+    public bool ShowColumnNumbers { get; set; } = false;
+    public bool ShowTileInfo { get; set; } = false;
+    public bool ShowMarkerOverlay { get; set; } = false;
+    public bool ShowToolBar { get; set; } = true;
+    public bool ShowStatusBar { get; set; } = true;
+
     //========================
-    // 拡張プロパティ（③）
+    // 拡張プロパティ
     //========================
     public NumberDisplayFormat NumberDisplayFormat { get; set; } = NumberDisplayFormat.Hex;
     public bool KeepSelectedTileOnPageChange { get; set; } = false;

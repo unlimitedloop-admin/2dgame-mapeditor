@@ -36,6 +36,16 @@ public class IniConfigRepository : IConfigRepository
         config.MainWindowHeight = GetInt(values, nameof(config.MainWindowHeight), config.MainWindowHeight);
         config.MainWindowMaximized = GetBool(values, nameof(config.MainWindowMaximized), config.MainWindowMaximized);
 
+        config.ShowGridLines = GetBool(values, nameof(config.ShowGridLines), config.ShowGridLines);
+        config.ShowTilePreview = GetBool(values, nameof(config.ShowTilePreview), config.ShowTilePreview);
+        config.ShowTileNumbers = GetBool(values, nameof(config.ShowTileNumbers), config.ShowTileNumbers);
+        config.ShowRowNumbers = GetBool(values, nameof(config.ShowRowNumbers), config.ShowRowNumbers);
+        config.ShowColumnNumbers = GetBool(values, nameof(config.ShowColumnNumbers), config.ShowColumnNumbers);
+        config.ShowTileInfo = GetBool(values, nameof(config.ShowTileInfo), config.ShowTileInfo);
+        config.ShowMarkerOverlay = GetBool(values, nameof(config.ShowMarkerOverlay), config.ShowMarkerOverlay);
+        config.ShowToolBar = GetBool(values, nameof(config.ShowToolBar), config.ShowToolBar);
+        config.ShowStatusBar = GetBool(values, nameof(config.ShowStatusBar), config.ShowStatusBar);
+
         config.NumberDisplayFormat = GetEnum(values, nameof(config.NumberDisplayFormat), config.NumberDisplayFormat);
         config.KeepSelectedTileOnPageChange = GetBool(values, nameof(config.KeepSelectedTileOnPageChange), config.KeepSelectedTileOnPageChange);
         config.UseStageSubFolder = GetBool(values, nameof(config.UseStageSubFolder), config.UseStageSubFolder);
@@ -63,6 +73,17 @@ public class IniConfigRepository : IConfigRepository
             $"{nameof(config.MainWindowWidth)}={config.MainWindowWidth}",
             $"{nameof(config.MainWindowHeight)}={config.MainWindowHeight}",
             $"{nameof(config.MainWindowMaximized)}={config.MainWindowMaximized}",
+            "",
+            "[View]",
+            $"{nameof(config.ShowGridLines)}={config.ShowGridLines}",
+            $"{nameof(config.ShowTilePreview)}={config.ShowTilePreview}",
+            $"{nameof(config.ShowTileNumbers)}={config.ShowTileNumbers}",
+            $"{nameof(config.ShowRowNumbers)}={config.ShowRowNumbers}",
+            $"{nameof(config.ShowColumnNumbers)}={config.ShowColumnNumbers}",
+            $"{nameof(config.ShowTileInfo)}={config.ShowTileInfo}",
+            $"{nameof(config.ShowMarkerOverlay)}={config.ShowMarkerOverlay}",
+            $"{nameof(config.ShowToolBar)}={config.ShowToolBar}",
+            $"{nameof(config.ShowStatusBar)}={config.ShowStatusBar}",
             "",
             "[Properties]",
             $"{nameof(config.NumberDisplayFormat)}={config.NumberDisplayFormat}",

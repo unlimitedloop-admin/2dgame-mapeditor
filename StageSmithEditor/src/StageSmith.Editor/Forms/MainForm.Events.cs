@@ -232,6 +232,7 @@ public partial class MainForm
     private void ToggleShowTileNumbers(bool show)
     {
         _mapView.SetShowTileNumbers(show);
+        _numberLabelButton.Checked = show;
     }
 
     private void ApplyRowNumberState(bool show)
