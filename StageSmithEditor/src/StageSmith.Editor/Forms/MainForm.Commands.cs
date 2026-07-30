@@ -127,9 +127,11 @@ public partial class MainForm
         if (_page == null || _selectionTool == null)
             return;
 
+        var clearTileId = _config.DefaultClearTileId;
+
         var positions = _selectionTool
             .GetSelectedPositions()
-            .Where(p => _page.TileMap.GetTile(p.x, p.y) != 0)
+            .Where(p => _page.TileMap.GetTile(p.x, p.y) != clearTileId)
             .ToList();
 
         if (positions.Count == 0)
@@ -138,7 +140,7 @@ public partial class MainForm
         var command = new TilePaintCommand(
             _page.TileMap,
             positions,
-            0 // 空タイル
+            clearTileId // 空タイル
         );
 
         _commandManager.Execute(command);
@@ -239,6 +241,7 @@ public partial class MainForm
 
         var tileMap = _page.TileMap;
         var command = new DragPaintCommand(tileMap);
+        var clearTileId = _config.DefaultClearTileId;
 
         var buffer = new byte[rect.Width, rect.Height];
 
@@ -282,7 +285,7 @@ public partial class MainForm
                     if (targetPositions.Contains((ox, oy)))
                         continue;
 
-                    command.Add(ox, oy, 0);
+                    command.Add(ox, oy, clearTileId);
                 }
             }
         }
