@@ -40,9 +40,11 @@ public sealed class JsonProjectRepository : IProjectRepository
         // Stages（実行時オブジェクト）から StageFilePaths（保存用参照）を再構築する
         project.StageFilePaths.Clear();
 
+        var useSubFolder = project.UseStageSubFolder == true;
+
         foreach (var stage in project.Stages)
         {
-            var stageFilePath = ResolveStageFilePath(stage, stageDir);
+            var stageFilePath = ResolveStageFilePath(stage, stageDir, useSubFolder);
 
             // 新規 or 変更済みステージのみ書き込む（未変更ステージへの無駄な書き込みを避ける）
             if (stage.IsDirty || stage.FilePath == null)
@@ -144,7 +146,7 @@ public sealed class JsonProjectRepository : IProjectRepository
     // Utilities
     // ===================================================
 
-    public static string ResolveStageFilePath(Stage stage, string stageDir)
+    public static string ResolveStageFilePath(Stage stage, string stageDir, bool useSubFolder = false)
     {
         if (!string.IsNullOrWhiteSpace(stage.FilePath))
             return stage.FilePath;
@@ -156,12 +158,20 @@ public sealed class JsonProjectRepository : IProjectRepository
             baseName = "Stage";
 
         var safeName = SanitizeFileName(baseName);
-        var candidate = Path.Combine(stageDir, $"{safeName}{extension}");
 
+        var targetDir = stageDir;
+        if (useSubFolder)
+        {
+            targetDir = Path.Combine(stageDir, safeName);
+            Directory.CreateDirectory(targetDir);
+        }
+
+        var candidate = Path.Combine(targetDir, $"{safeName}{extension}");
+ 
         var suffix = 2;
         while (File.Exists(candidate))
         {
-            candidate = Path.Combine(stageDir, $"{safeName}_{suffix}{extension}");
+            candidate = Path.Combine(targetDir, $"{safeName}_{suffix}{extension}");
             suffix++;
         }
 

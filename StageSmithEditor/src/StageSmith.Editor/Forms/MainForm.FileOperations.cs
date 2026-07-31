@@ -19,6 +19,9 @@ public partial class MainForm
 
         var project = ProjectFactory.CreateNewProject();
 
+        // このプロジェクトのステージ保存構造を、作成時点のエディタ設定で固定する
+        project.UseStageSubFolder = _config.UseStageSubFolder ? true : null;
+
         _currentProjectPath = null;
 
         ResetView();

@@ -47,6 +47,16 @@ public sealed class EditorProject
     public List<Bookmark> Bookmarks { get; set; } = [];
 
     /// <summary>
+    /// このプロジェクトがステージファイルをサブフォルダ分けして保存するかどうか。
+    /// プロジェクト新規作成時（NewProject）に、その時点の EditorConfig.UseStageSubFolder を
+    /// 一度だけ焼き込む。以降はプロジェクトが存在する限り固定値とし、
+    /// エディタ設定(ini)を後から変更しても遡って影響しない。
+    /// null（＝OFF）の場合は .sseproj に属性自体を書き出さない。
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? UseStageSubFolder { get; set; }
+
+    /// <summary>
     /// 最後に編集していたステージ／ページ位置（プロジェクトを開いた際の復元用セッション情報）。
     /// ステージの実データではなく、UIの復元用途に限定する。
     /// StageIndexではなくStageIdで持つ理由：将来ステージの並び替え・削除が入ってもズレない安定参照にするため。
