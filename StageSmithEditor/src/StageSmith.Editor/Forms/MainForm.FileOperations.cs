@@ -149,10 +149,16 @@ public partial class MainForm
             FileName = $"{_context.Project.Name}{FileExtensions.Project}"
         };
 
+        if (!string.IsNullOrWhiteSpace(_config.DefaultProjectSaveDirectory) &&
+            Directory.Exists(_config.DefaultProjectSaveDirectory))
+        {
+            dialog.InitialDirectory = _config.DefaultProjectSaveDirectory;
+        }
+
         if (dialog.ShowDialog(this) != DialogResult.OK)
             return;
 
-        _currentProjectPath = dialog.FileName;
+        _currentProjectPath = ResolveNewProjectPath(dialog.FileName);
 
         var repository = new JsonProjectRepository();
 
@@ -165,6 +171,25 @@ public partial class MainForm
 
         _stageExplorer.RebuildTree();
         UpdateTitle();
+    }
+
+    /// <summary>
+    /// UseProjectSubDirectory が有効な場合、ダイアログで選んだパスの下に
+    /// プロジェクト名フォルダを1つ噛ませたパスへ差し替える。
+    /// 既存プロジェクトの上書き保存（SaveProject）はこの経路を通らないため影響しない。
+    /// </summary>
+    private string ResolveNewProjectPath(string dialogSelectedPath)
+    {
+        if (!_config.UseProjectSubDirectory)
+            return dialogSelectedPath;
+
+        var projectName = Path.GetFileNameWithoutExtension(dialogSelectedPath);
+        var parentDir = Path.GetDirectoryName(dialogSelectedPath) ?? string.Empty;
+        var subDir = Path.Combine(parentDir, projectName);
+
+        Directory.CreateDirectory(subDir);
+
+        return Path.Combine(subDir, Path.GetFileName(dialogSelectedPath));
     }
 
     /// <summary>
@@ -295,7 +320,7 @@ public partial class MainForm
 
         var path = !string.IsNullOrWhiteSpace(stage.FilePath)
             ? stage.FilePath
-            : JsonProjectRepository.ResolveStageFilePath(stage, stageDir);
+            : JsonProjectRepository.ResolveStageFilePath(stage, stageDir, project.UseStageSubFolder == true);
 
         repository.SaveStage(stage, path);
 

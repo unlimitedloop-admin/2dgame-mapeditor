@@ -18,6 +18,10 @@ public partial class MainForm
 
         if (!string.IsNullOrWhiteSpace(stage?.TilesetImagePath))
         {
+            // NOTE: ここでタイルセット画像をロードするのは、タイルセット画像が変更された場合にビューを更新するためです。
+            // WARNING: タイルセット画像のロードは重い処理であるため、頻繁に呼び出すとパフォーマンスに影響を与える可能性があります。
+            // REVIEW: ページを移動するたびに選択したタイルがリセットされるのはユーザーにとって不便であるため、タイルセット画像のロードを最小限に抑える方法を検討する必要があります。
+            // TODO: 「今読み込まれているタイルセットがどのステージのものか」を覚えておいて、実際にステージが変わった時だけLoadTilesetImage()を呼ぶようにします。
             LoadTilesetImage(stage.TilesetImagePath);
         }
 
