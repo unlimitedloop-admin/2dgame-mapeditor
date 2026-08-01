@@ -16,13 +16,29 @@ public partial class MainForm
         _mapView.SetCurrentPageIndex(_context.CurrentPageIndex);
         _metaTilePalette.SetStage(stage);
 
-        if (!string.IsNullOrWhiteSpace(stage?.TilesetImagePath))
+        var stageChanged = stage != null && stage.Id != _loadedTilesetStageId;
+        var pageChanged = page?.Id != _lastAppliedPageId;
+        _lastAppliedPageId = page?.Id;
+
+        // ステージが実際に切り替わった時は、設定に関わらず必ずタイルセットを読み直す
+        // （LoadTilesetImage / ClearTileset 内部で選択タイルのリセットも行われる）。
+        if (stageChanged)
         {
-            // NOTE: ここでタイルセット画像をロードするのは、タイルセット画像が変更された場合にビューを更新するためです。
-            // WARNING: タイルセット画像のロードは重い処理であるため、頻繁に呼び出すとパフォーマンスに影響を与える可能性があります。
-            // REVIEW: ページを移動するたびに選択したタイルがリセットされるのはユーザーにとって不便であるため、タイルセット画像のロードを最小限に抑える方法を検討する必要があります。
-            // TODO: 「今読み込まれているタイルセットがどのステージのものか」を覚えておいて、実際にステージが変わった時だけLoadTilesetImage()を呼ぶようにします。
-            LoadTilesetImage(stage.TilesetImagePath);
+            _loadedTilesetStageId = stage!.Id;
+
+            if (!string.IsNullOrWhiteSpace(stage.TilesetImagePath))
+            {
+                LoadTilesetImage(stage.TilesetImagePath);
+            }
+            else
+            {
+                ClearTileset();
+            }
+        }
+        // 同一ステージ内のページ移動時は、KeepSelectedTileOnPageChange 設定に従う。
+        else if (pageChanged && !_config.KeepSelectedTileOnPageChange)
+        {
+            ResetTileSelectionOnly();
         }
 
         _propertyWindow.RefreshProperties();
@@ -31,6 +47,18 @@ public partial class MainForm
         _mapView.Invalidate();
         _tilePalette.Invalidate();
         _metaTilePalette.RefreshPalette();
+    }
+
+
+    /// <summary>
+    /// タイルセット自体は維持したまま、選択中タイルのみ解除する。
+    /// KeepSelectedTileOnPageChange=OFF時の、同一ステージ内ページ移動用。
+    /// </summary>
+    private void ResetTileSelectionOnly()
+    {
+        _selectedTileId = -1;
+        _tilePalette.SetSelected(-1);
+        _mapView.PreviewTileId = -1;
     }
 
     /// <summary>

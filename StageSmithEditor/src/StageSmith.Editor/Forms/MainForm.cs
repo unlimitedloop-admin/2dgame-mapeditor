@@ -17,6 +17,8 @@ public partial class MainForm : Form
     private Page? _page;
     private int _selectedTileId = -1;
     private Bitmap? _tileset;
+    private Guid? _loadedTilesetStageId;
+    private Guid? _lastAppliedPageId;       // ページ移動検知用
     private readonly EditorContext _context = new();
 
     //========================

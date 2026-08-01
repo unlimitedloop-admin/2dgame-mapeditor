@@ -702,6 +702,28 @@ public partial class MainForm
     }
 
     /// <summary>
+    /// タイルセット未設定のステージへ切り替わった際、前のステージの表示を持ち越さないための後始末。
+    /// LoadTilesetImage() の成功パスと対になる「空にする」版。
+    /// </summary>
+    private void ClearTileset()
+    {
+        _tileset?.Dispose();
+        _tileset = null;
+
+        _tilePalette.SetTileset(null);
+        _mapView.SetTileset(null);
+        _metaTilePalette.SetTileset(null);
+        _findTileDialog?.SetTileset(null);
+        _replaceTileDialog?.SetTileset(null);
+
+        _selectedTileId = -1;
+        _tilePalette.SetSelected(-1);
+        _mapView.PreviewTileId = -1;
+
+        _nodeEditorForm?.SyncTileset(null);
+    }
+
+    /// <summary>
     /// 現在のステージに新規ページを追加し、追加したページへ移動する。
     /// </summary>
     private void AddPageToCurrentStage()
@@ -757,6 +779,7 @@ public partial class MainForm
         _tileset?.Dispose();
         _tileset = null;
         _selectedTileId = -1;
+        _loadedTilesetStageId = null;
 
         _mapView.SetTileMap(null);
         _mapView.SetTileset(null);
