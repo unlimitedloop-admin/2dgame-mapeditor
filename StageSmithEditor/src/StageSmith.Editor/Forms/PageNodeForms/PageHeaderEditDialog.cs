@@ -1,5 +1,6 @@
 using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
+using StageSmith.Editor.Utilities;
 
 namespace StageSmith.Editor;
 
@@ -45,16 +46,18 @@ public class PageHeaderEditDialog : Form
     private readonly CheckBox _chkWind;
     private readonly TextBox  _txtRemarks;
     private readonly Label    _lblZValue;
+    private readonly NumberDisplayFormat _format;
 
     //========================
     // 初期化
     //========================
-    public PageHeaderEditDialog(Page page)
+    public PageHeaderEditDialog(Page page, NumberDisplayFormat format)
     {
         _page        = page;
+        _format      = format;
         ResultHeader = page.Header;
 
-        Text            = $"ページヘッダー編集  -  Room ID: 0x{page.Header.RoomId:X2}";
+        Text            = $"ページヘッダー編集  -  Room ID: {NumberFormatHelper.FormatByte(page.Header.RoomId, format)}";
         FormBorderStyle = FormBorderStyle.FixedDialog;
         StartPosition   = FormStartPosition.CenterParent;
         MaximizeBox     = false;
@@ -101,7 +104,7 @@ public class PageHeaderEditDialog : Form
         // --- 接続先グループ ---
         var connGroup = new GroupBox
         {
-            Text = "接続先 Room ID（未接続は 255）",
+            Text = $"接続先 Room ID（未接続は {NumberFormatHelper.FormatByte(0xFF, format)}）",
             Dock = DockStyle.Fill,
             Font = new Font("Yu Gothic UI", 9f),
         };
@@ -250,7 +253,8 @@ public class PageHeaderEditDialog : Form
             !TryParseRoomId(_txtBack.Text,  out var back)  ||
             !TryParseRoomId(_txtFront.Text, out var front))
         {
-            MessageBox.Show("Room IDは0〜255の数値で入力してください。",
+            var hint = _format == NumberDisplayFormat.Hex ? "00〜FFの16進数" : "0〜255の数値";
+            MessageBox.Show($"Room IDは{hint}で入力してください。",
                 "入力エラー", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
@@ -285,9 +289,9 @@ public class PageHeaderEditDialog : Form
     //========================
     // ヘルパー
     //========================
-    private static bool TryParseRoomId(string text, out byte value)
+    private bool TryParseRoomId(string text, out byte value)
     {
-        if (byte.TryParse(text, out value)) return true;
+        if (NumberFormatHelper.TryParseByte(text, _format, out value)) return true;
         value = 0xFF;
         return false;
     }
@@ -295,11 +299,11 @@ public class PageHeaderEditDialog : Form
     private static ScrollType GetScrollType(ComboBox combo)
         => combo.SelectedItem is ScrollType t ? t : ScrollType.None;
 
-    private static TextBox CreateRoomIdBox(byte value)
+    private TextBox CreateRoomIdBox(byte value)
     {
         return new TextBox
         {
-            Text   = value.ToString(),
+            Text   = NumberFormatHelper.FormatByte(value, _format),
             Anchor = AnchorStyles.Left | AnchorStyles.Right,
             Font   = new Font("Yu Gothic UI", 9f),
         };

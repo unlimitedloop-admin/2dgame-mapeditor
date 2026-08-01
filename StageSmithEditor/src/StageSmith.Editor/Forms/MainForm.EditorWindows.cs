@@ -17,6 +17,11 @@ public partial class MainForm
             };
 
             _nodeEditorForm.Show();
+
+            // フォーム生成タイミングでは LoadTilesetImage() の対象外だったため、
+            // 現在のタイルセット・表示設定を明示的に同期する。
+            _nodeEditorForm.SyncTileset(_tileset);
+            _nodeEditorForm.SetNumberDisplayFormat(_config.NumberDisplayFormat);
         }
         else
         {

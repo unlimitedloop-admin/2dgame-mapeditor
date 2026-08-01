@@ -18,6 +18,18 @@ public static class NumberFormatHelper
             : value.ToString();
 
     /// <summary>
+    /// FormatByte()の逆変換。TextBox入力値を現在の表示形式に応じてパースする。
+    /// </summary>
+    public static bool TryParseByte(string text, NumberDisplayFormat format, out byte value)
+    {
+        text = text.Trim();
+
+        return format == NumberDisplayFormat.Hex
+            ? byte.TryParse(text, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out value)
+            : byte.TryParse(text, out value);
+    }
+
+    /// <summary>
     /// マップビューの列番号（0〜15 → Hex時 0〜F、オフセット無し）。
     /// </summary>
     public static string FormatColumnIndex(int x, NumberDisplayFormat format)

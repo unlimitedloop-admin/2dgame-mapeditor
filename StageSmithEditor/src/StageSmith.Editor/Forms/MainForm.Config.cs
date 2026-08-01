@@ -140,5 +140,6 @@ public partial class MainForm
         _pageNavBar.SetNumberDisplayFormat(_config.NumberDisplayFormat);
         _tilePalette.SetNumberDisplayFormat(_config.NumberDisplayFormat);
         _propertyWindow.SetNumberDisplayFormat(_config.NumberDisplayFormat);
+        _nodeEditorForm?.SetNumberDisplayFormat(_config.NumberDisplayFormat);
     }
 }

@@ -68,6 +68,15 @@ public partial class PageNodeEditorForm : Form
     private readonly Label _connectionFrontLabel;
     private readonly ComboBox _zComboBox;
 
+
+    private NumberDisplayFormat _numberDisplayFormat = NumberDisplayFormat.Hex;
+
+    public void SetNumberDisplayFormat(NumberDisplayFormat format)
+    {
+        _numberDisplayFormat = format;
+        _nodeEditView.SetNumberDisplayFormat(format);
+    }
+
     //========================
     // 初期化
     //========================
@@ -400,7 +409,7 @@ public partial class PageNodeEditorForm : Form
         var page = stage.Pages.ElementAtOrDefault(pageIndex);
         if (page == null) return;
 
-        using var dialog = new PageHeaderEditDialog(page);
+        using var dialog = new PageHeaderEditDialog(page, _numberDisplayFormat);
         if (dialog.ShowDialog(this) != DialogResult.OK) return;
 
         var oldHeader  = page.Header;
@@ -947,7 +956,7 @@ public partial class PageNodeEditorForm : Form
         var sourcePage = stage.Pages.ElementAtOrDefault(pageIndex.Value);
         if (sourcePage == null) return;
 
-        using var dialog = new ConnectExistingPageDialog(stage, sourcePage, pageIndex.Value);
+        using var dialog = new ConnectExistingPageDialog(stage, sourcePage, pageIndex.Value, _numberDisplayFormat);
 
         if (dialog.ShowDialog(this) != DialogResult.OK) return;
 

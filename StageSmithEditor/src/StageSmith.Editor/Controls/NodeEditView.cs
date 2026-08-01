@@ -1,3 +1,4 @@
+using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
 using StageSmith.Editor.Utilities;
 using System.ComponentModel;
@@ -130,6 +131,14 @@ public class NodeEditView : Panel
     //========================
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public int FilterZ { get; set; } = 0;
+
+    private NumberDisplayFormat _numberDisplayFormat;
+
+    public void SetNumberDisplayFormat(NumberDisplayFormat format)
+    {
+        _numberDisplayFormat = format;
+        Invalidate();
+    }
 
     //========================
     // タイルプレビューキャッシュ
@@ -414,7 +423,7 @@ public class NodeEditView : Panel
         {
             // 1.5x未満 → 色 + Room IDテキスト
             var textColor = IsLightColor(color) ? Color.Black : Color.White;
-            DrawNodeText(g, rect, $"{page.Header.RoomId}", textColor);
+            DrawNodeText(g, rect, NumberFormatHelper.FormatByte(page.Header.RoomId, _numberDisplayFormat), textColor);
         }
 
         // 枠線は常に描画

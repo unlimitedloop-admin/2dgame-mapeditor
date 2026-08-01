@@ -1,4 +1,6 @@
+using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
+using StageSmith.Editor.Utilities;
 
 namespace StageSmith.Editor;
 
@@ -15,6 +17,7 @@ public class ConnectExistingPageDialog : Form
     private readonly Stage _stage;
     private readonly Page  _sourcePage;
     private readonly int   _sourceIndex;
+    private readonly NumberDisplayFormat _format;
 
     //========================
     // 結果
@@ -38,11 +41,12 @@ public class ConnectExistingPageDialog : Form
     //========================
     // 初期化
     //========================
-    public ConnectExistingPageDialog(Stage stage, Page sourcePage, int sourceIndex)
+    public ConnectExistingPageDialog(Stage stage, Page sourcePage, int sourceIndex, NumberDisplayFormat format)
     {
         _stage      = stage;
         _sourcePage = sourcePage;
         _sourceIndex = sourceIndex;
+        _format      = format;
 
         Text            = "既存ページを隣接部屋として接続";
         FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -70,7 +74,7 @@ public class ConnectExistingPageDialog : Form
             Dock      = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleLeft,
             Font      = new Font("Yu Gothic UI", 9f),
-            Text      = $"選択中の Room ID: {sourcePage.Header.RoomId}  " +
+            Text      = $"選択中の Room ID: {NumberFormatHelper.FormatByte(sourcePage.Header.RoomId, format)}  " +
                         $"x:{sourcePage.NodeX}, y:{sourcePage.NodeY}, z:{sourcePage.Header.Z}",
         };
 
@@ -182,7 +186,7 @@ public class ConnectExistingPageDialog : Form
                 AutoSize = true,
                 Location = new Point(12, yOffset),
                 Font     = new Font("Yu Gothic UI", 9f),
-                Text     = $"Room ID  {page.Header.RoomId}     " +
+                Text     = $"Room ID  {NumberFormatHelper.FormatByte(page.Header.RoomId, _format)}     " +
                            $"x:{page.NodeX}, y:{page.NodeY}, z:{page.Header.Z}",
             };
 
@@ -305,9 +309,10 @@ public class ConnectExistingPageDialog : Form
 
         if (_radioManual!.Checked == true)
         {
-            if (!byte.TryParse(_manualRoomIdBox!.Text, out var roomId))
+            if (!NumberFormatHelper.TryParseByte(_manualRoomIdBox!.Text, _format, out var roomId))
             {
-                MessageBox.Show("Room IDは0〜254の数値で入力してください。",
+                var hint = _format == NumberDisplayFormat.Hex ? "00〜FFの16進数" : "0〜254の数値";
+                MessageBox.Show($"Room IDは{hint}で入力してください。",
                     "入力エラー", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
