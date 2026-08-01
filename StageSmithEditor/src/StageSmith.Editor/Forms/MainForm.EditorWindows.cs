@@ -93,7 +93,8 @@ public partial class MainForm
             _tagManagerForm = new TagManagerForm(_context.Project);
             _tagManagerForm.TagsChanged += () =>
             {
-                //_nodeEditorForm?.RefreshCurrentPageInfo(); // TODO: Tags:ラベル再描画用（後述）
+                _nodeEditorForm?.RefreshCurrentPageInfo();
+                _propertyWindow.RefreshProperties();
             };
             _tagManagerForm.Show();
         }

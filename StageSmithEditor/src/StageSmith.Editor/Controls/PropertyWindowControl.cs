@@ -1,6 +1,7 @@
 using StageSmith.Application.Commands;
 using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
+using StageSmith.Editor.Forms;
 
 namespace StageSmith.Editor.Controls;
 
@@ -29,6 +30,9 @@ public sealed class PropertyWindowControl : UserControl
     private TextBox _projectNameTextBox = null!;
     private TextBox _stageNameTextBox = null!;
     private TextBox _pageNameTextBox = null!;
+
+    private Label _stageTagsValueLabel = null!;
+    private Label _pageTagsValueLabel = null!;
 
     private CheckBox _pageEnableCheckBox = null!;
     private CheckBox _pageReadOnlyCheckBox = null!;
@@ -116,12 +120,14 @@ public sealed class PropertyWindowControl : UserControl
 
         AddHeader("Stage", Color.FromArgb(200, 255, 200));
         _stageNameTextBox = AddTextRow("Name");
+        _stageTagsValueLabel = AddTagsRow("Tags", OnEditStageTagsClick);
 
         AddHeader("Page", Color.FromArgb(255, 200, 0));
         _pageNameTextBox = AddTextRow("Name");
         _pageEnableCheckBox = AddCheckRow("Enable");
         _pageReadOnlyCheckBox = AddCheckRow("ReadOnly");
         _pageRemarksTextBox = AddTextRow("Remarks");
+        _pageTagsValueLabel = AddTagsRow("Tags", OnEditPageTagsClick);
 
         AddHeader("Page Header", Color.FromArgb(255, 220, 120));
 
@@ -207,6 +213,7 @@ public sealed class PropertyWindowControl : UserControl
 
         _projectNameTextBox.Text = _context.Project?.Name ?? "";
         _stageNameTextBox.Text = _context.CurrentStage?.Name ?? "";
+        _stageTagsValueLabel.Text = ResolveTagLabels(_context.Project, _context.CurrentStage?.TagIds);
 
         var page = _context.CurrentPage;
 
@@ -214,6 +221,7 @@ public sealed class PropertyWindowControl : UserControl
         _pageEnableCheckBox.Checked = page?.Enable ?? false;
         _pageReadOnlyCheckBox.Checked = page?.ReadOnly ?? false;
         _pageRemarksTextBox.Text = page?.Remarks ?? "";
+        _pageTagsValueLabel.Text = ResolveTagLabels(_context.Project, page?.TagIds);
 
         if (page != null)
         {
@@ -256,6 +264,64 @@ public sealed class PropertyWindowControl : UserControl
         CommandRequested?.Invoke(new ActionCommand(
             () => { page.Header = newHeader; DataChanged?.Invoke(); },
             () => { page.Header = oldHeader; DataChanged?.Invoke(); }
+        ));
+    }
+
+    private static string ResolveTagLabels(EditorProject? project, List<string>? tagIds)
+    {
+        if (project == null || tagIds == null || tagIds.Count == 0)
+            return "-";
+
+        var labels = tagIds
+            .Select(idStr => Guid.TryParse(idStr, out var id) ? project.FindTag(id) : null)
+            .Where(tag => tag != null)
+            .Select(tag => tag!.Label)
+            .ToList();
+
+        return labels.Count > 0 ? string.Join(", ", labels) : "-";
+    }
+
+    private void OnEditStageTagsClick(object? sender, EventArgs e)
+    {
+        var stage = _context?.CurrentStage;
+        var project = _context?.Project;
+        if (stage == null || project == null) return;
+
+        var oldIds = stage.TagIds.ToList();
+        var oldGuids = oldIds.Where(s => Guid.TryParse(s, out _)).Select(Guid.Parse).ToList();
+
+        using var dialog = new TagAssignDialog(project.Tags, oldGuids);
+        if (dialog.ShowDialog(FindForm()) != DialogResult.OK) return;
+
+        var newIds = dialog.SelectedTagIds.Select(id => id.ToString()).ToList();
+        if (oldIds.SequenceEqual(newIds)) return;
+
+        CommandRequested?.Invoke(new ActionCommand(
+            () => { stage.TagIds = newIds; stage.MarkDirty(); DataChanged?.Invoke(); RefreshProperties(); },
+            () => { stage.TagIds = oldIds; stage.MarkDirty(); DataChanged?.Invoke(); RefreshProperties(); }
+        ));
+    }
+
+    private void OnEditPageTagsClick(object? sender, EventArgs e)
+    {
+        var page = _context?.CurrentPage;
+        var project = _context?.Project;
+        if (page == null || project == null) return;
+
+        var oldIds = page.TagIds.ToList();
+        var oldGuids = oldIds.Where(s => Guid.TryParse(s, out _)).Select(Guid.Parse).ToList();
+
+        using var dialog = new TagAssignDialog(project.Tags, oldGuids);
+        if (dialog.ShowDialog(FindForm()) != DialogResult.OK) return;
+
+        var newIds = dialog.SelectedTagIds.Select(id => id.ToString()).ToList();
+        if (oldIds.SequenceEqual(newIds)) return;
+
+        var stage = _context?.CurrentStage;
+
+        CommandRequested?.Invoke(new ActionCommand(
+            () => { page.TagIds = newIds; stage?.MarkDirty(); DataChanged?.Invoke(); RefreshProperties(); },
+            () => { page.TagIds = oldIds; stage?.MarkDirty(); DataChanged?.Invoke(); RefreshProperties(); }
         ));
     }
 
@@ -329,6 +395,38 @@ public sealed class PropertyWindowControl : UserControl
 
         AddRow(CreateLabel(labelText), checkBox);
         return checkBox;
+    }
+
+    /// <summary>「値ラベル + 編集...ボタン」の行を追加し、値ラベルを返す。</summary>
+    private Label AddTagsRow(string labelText, EventHandler onEditClick)
+    {
+        var row = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            AutoSize = true,
+        };
+
+        var valueLabel = new Label
+        {
+            Text = "-",
+            AutoSize = true,
+            MaximumSize = new Size(140, 0),
+            Padding = new Padding(0, 4, 4, 0),
+        };
+
+        var editButton = new Button
+        {
+            Text = "編集...",
+            AutoSize = true,
+        };
+        editButton.Click += onEditClick;
+
+        row.Controls.Add(valueLabel);
+        row.Controls.Add(editButton);
+
+        AddRow(CreateLabel(labelText), row);
+        return valueLabel;
     }
 
     private static Label CreateLabel(string text)

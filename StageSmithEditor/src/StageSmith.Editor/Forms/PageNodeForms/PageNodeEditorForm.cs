@@ -307,6 +307,16 @@ public partial class PageNodeEditorForm : Form
         _connectionFrontLabel.Text = FormatConnection("Front", h.FrontPage);
     }
 
+    /// <summary>
+    /// 現在選択中ページの情報表示（Tagsラベル含む）を再描画する。
+    /// Tag Managerでのタグ編集後、MainForm経由で呼び出される。
+    /// </summary>
+    public void RefreshCurrentPageInfo()
+    {
+        if (_nodeEditView.SelectedPageIndex >= 0)
+            UpdateInfoDisplay(_nodeEditView.SelectedPageIndex);
+    }
+
     private void ClearInfoDisplay()
     {
         _pageIndexLabel.Text  = "Page: -";

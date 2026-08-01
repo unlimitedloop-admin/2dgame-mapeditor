@@ -162,13 +162,15 @@ public sealed class EditorProject
 
         var idStr = tagId.ToString();
 
-        // タグ削除時、参照している全Stage/PageのTagIdsからも道連れで除去する
-        // （Stage削除時にBookmarksを掃除する既存パターンと同じ考え方）
         foreach (var stage in Stages)
         {
-            stage.TagIds.Remove(idStr);
+            var removed = stage.TagIds.Remove(idStr);
+
             foreach (var page in stage.Pages)
-                page.TagIds.Remove(idStr);
+                removed |= page.TagIds.Remove(idStr);
+
+            if (removed)
+                stage.MarkDirty();
         }
 
         return Tags.Remove(target);
