@@ -743,7 +743,9 @@ public class MapViewControl : DoubleBufferedPanel
         }
 
         var tileId = _tileMap.GetTile(_hoverTile.X, _hoverTile.Y);
-        var text = $"Tile: {tileId}\n(x: {_hoverTile.X}, y: {_hoverTile.Y})";
+        var text = $"Tile: {NumberFormatHelper.FormatByte(tileId, _numberDisplayFormat)}\n" +
+                   $"(x: {NumberFormatHelper.FormatColumnIndex(_hoverTile.X, _numberDisplayFormat)}, " +
+                   $"y: {NumberFormatHelper.FormatRowIndex(_hoverTile.Y, _numberDisplayFormat)})";
 
         // カーソルに重ならないよう少し右下へオフセットして表示
         _tileInfoToolTip.Show(text, this, clientLocation.X + 16, clientLocation.Y + 16, 3000);

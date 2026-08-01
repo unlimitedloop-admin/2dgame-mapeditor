@@ -1,5 +1,6 @@
 using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
+using StageSmith.Editor.Utilities;
 
 namespace StageSmith.Editor.Forms;
 
@@ -22,8 +23,8 @@ public sealed class ReplaceTileDialog : TileSearchDialogBase
     private const int TopOffset = 60;         // 置換タイル番号行の分の余白
     private const int ButtonRowStartX = 172;  // 置換/全て置換ボタンの分の余白
 
-    public ReplaceTileDialog(TileSearchState searchState, int initialTileId, Bitmap? tileset)
-        : base(searchState, initialTileId, TopOffset, ButtonRowStartX)
+    public ReplaceTileDialog(TileSearchState searchState, int initialTileId, Bitmap? tileset, NumberDisplayFormat format)
+        : base(searchState, initialTileId, format, TopOffset, ButtonRowStartX)
     {
         Text = "タイル置換";
         ClientSize = new Size(540, 230);
@@ -39,7 +40,7 @@ public sealed class ReplaceTileDialog : TileSearchDialogBase
         {
             Location = new Point(12, 84),
             Width = 80,
-            Text = searchState.ReplaceTileId >= 0 ? searchState.ReplaceTileId.ToString() : string.Empty
+            Text = searchState.ReplaceTileId >= 0 ? NumberFormatHelper.FormatByte(searchState.ReplaceTileId, format) : string.Empty
         };
         _replaceTileIdTextBox.TextChanged += (_, _) =>
         {
@@ -94,8 +95,9 @@ public sealed class ReplaceTileDialog : TileSearchDialogBase
     {
         if (!TryGetTileId(_tileIdTextBox, out var searchTileId))
         {
+            var hint = _format == NumberDisplayFormat.Hex ? "00～FFの16進数" : "0～255の数値";
             MessageBox.Show(
-                "0～255の範囲で検索するタイル番号を入力してください。",
+                $"{hint}で検索するタイル番号を入力してください。",
                 Text,
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Warning);
@@ -104,8 +106,9 @@ public sealed class ReplaceTileDialog : TileSearchDialogBase
 
         if (!TryGetTileId(_replaceTileIdTextBox, out var replaceTileId))
         {
+            var hint = _format == NumberDisplayFormat.Hex ? "00～FFの16進数" : "0～255の数値";
             MessageBox.Show(
-                "0～255の範囲で置換するタイル番号を入力してください。",
+                $"{hint}で置換するタイル番号を入力してください。",
                 Text,
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Warning);

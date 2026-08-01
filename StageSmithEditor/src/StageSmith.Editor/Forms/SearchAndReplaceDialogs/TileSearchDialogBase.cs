@@ -14,6 +14,7 @@ public abstract class TileSearchDialogBase : Form
 {
     protected readonly TileSearchState _searchState;
     private readonly SafeTilesetHolder _tilesetHolder = new();
+    protected readonly NumberDisplayFormat _format;
 
     protected readonly TextBox _tileIdTextBox;
     protected readonly Panel _previewPanel;
@@ -44,10 +45,12 @@ public abstract class TileSearchDialogBase : Form
     protected TileSearchDialogBase(
         TileSearchState searchState,
         int initialTileId,
+        NumberDisplayFormat format,
         int topOffset = 0,
         int buttonRowStartX = 12)
     {
         _searchState = searchState;
+        _format = format;
 
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
@@ -66,7 +69,7 @@ public abstract class TileSearchDialogBase : Form
         {
             Location = new Point(12, 38),
             Width = 80,
-            Text = initialTileId >= 0 ? initialTileId.ToString() : string.Empty
+            Text = initialTileId >= 0 ? NumberFormatHelper.FormatByte(initialTileId, format) : string.Empty
         };
 
         _previewPanel = new Panel
@@ -183,19 +186,26 @@ public abstract class TileSearchDialogBase : Form
         g.DrawImage(tileset, dstRect, srcRect, GraphicsUnit.Pixel);
     }
 
-    /// <summary>指定テキストボックスから0～255のタイルIDをパースする。</summary>
-    protected static bool TryGetTileId(TextBox textBox, out int tileId)
+    /// <summary>指定テキストボックスから0～255のタイルIDをパースする（現在の表示形式に従う）。</summary>
+    protected bool TryGetTileId(TextBox textBox, out int tileId)
     {
-        return int.TryParse(textBox.Text, out tileId)
-            && tileId is >= 0 and <= 255;
+        if (!NumberFormatHelper.TryParseByte(textBox.Text, _format, out var value))
+        {
+            tileId = -1;
+            return false;
+        }
+
+        tileId = value;
+        return true;
     }
 
     private void TrySearch()
     {
         if (!TryGetTileId(_tileIdTextBox, out var tileId))
         {
+            var hint = _format == NumberDisplayFormat.Hex ? "00～FFの16進数" : "0～255の数値";
             MessageBox.Show(
-                "0～255の範囲でタイル番号を入力してください。",
+                $"{hint}でタイル番号を入力してください。",
                 Text,
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Warning);

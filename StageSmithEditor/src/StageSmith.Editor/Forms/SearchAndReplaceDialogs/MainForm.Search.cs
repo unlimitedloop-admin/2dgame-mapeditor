@@ -48,7 +48,7 @@ public partial class MainForm
             ? _selectedTileId
             : _searchState.TargetTileId;
 
-        _findTileDialog = new FindTileDialog(_searchState, initialTileId, _tileset);
+        _findTileDialog = new FindTileDialog(_searchState, initialTileId, _tileset, _config.NumberDisplayFormat);
         _findTileDialog.SearchRequested   += ExecuteTileSearch;                  // 常に新規検索に単純化
         _findTileDialog.NextRequested     += () => _searchState.MoveNext();
         _findTileDialog.PreviousRequested += () => _searchState.MovePrevious();
@@ -148,7 +148,7 @@ public partial class MainForm
             ? _selectedTileId
             : _searchState.TargetTileId;
 
-        _replaceTileDialog = new ReplaceTileDialog(_searchState, initialTileId, _tileset);
+        _replaceTileDialog = new ReplaceTileDialog(_searchState, initialTileId, _tileset, _config.NumberDisplayFormat);
         _replaceTileDialog.SearchRequested     += ExecuteTileSearch;
         _replaceTileDialog.NextRequested       += () => _searchState.MoveNext();
         _replaceTileDialog.PreviousRequested   += () => _searchState.MovePrevious();
