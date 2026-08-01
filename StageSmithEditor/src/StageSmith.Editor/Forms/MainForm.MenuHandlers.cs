@@ -90,7 +90,7 @@ public partial class MainForm
         _menuWindowStageExplorer.Click  += (_, _) => ShowDockContent(_stageExplorerContent, DockState.DockLeft);
         _menuWindowProperties.Click     += (_, _) => ShowDockContent(_propertyWindowContent, DockState.DockRight);
         _menuWindowBookmarkList.Click   += (_, _) => ShowDockContent(_bookmarkListContent, DockState.DockLeft);
-        _menuWindowTagManager.Click     += (_, _) => { /* TODO: TagManager */ };
+        _menuWindowTagManager.Click     += (_, _) => OpenTagManager();
         _menuWindowMarkerManager.Click  += (_, _) => ShowDockContent(_markerColorPanelContent, DockState.DockRight);
         _menuWindowStageMapViewer.Click += (_, _) => OpenStageMapViewer();
         _menuWindowPageNodeEditor.Click += (_, _) => OpenNodeEditor();

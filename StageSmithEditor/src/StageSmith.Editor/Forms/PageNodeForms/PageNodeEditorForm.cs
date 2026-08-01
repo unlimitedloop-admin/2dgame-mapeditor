@@ -59,7 +59,7 @@ public partial class PageNodeEditorForm : Form
     private readonly Label _pageIndexLabel;
     private readonly Label _roomIdLabel;
     private readonly Label _tagsLabel;
-    private readonly Label _bookmarkLabel;
+    private readonly Label _remarksLabel;
     private readonly Label _connectionUpLabel;
     private readonly Label _connectionDownLabel;
     private readonly Label _connectionLeftLabel;
@@ -126,7 +126,7 @@ public partial class PageNodeEditorForm : Form
         _pageIndexLabel = CreateInfoLabel("Page: -", new Point(80, 4));
         _roomIdLabel    = CreateInfoLabel("Room ID: -", new Point(160, 4));
         _tagsLabel      = CreateInfoLabel("Tags: -", new Point(280, 4));
-        _bookmarkLabel  = CreateInfoLabel("Bookmark: -", new Point(460, 4));
+        _remarksLabel  = CreateInfoLabel("Bookmark: -", new Point(460, 4));
 
         // 接続情報ラベル群
         _connectionUpLabel      = CreateInfoLabel("Up:    ----", new Point(8, 28));
@@ -138,7 +138,7 @@ public partial class PageNodeEditorForm : Form
 
         _infoPanel.Controls.AddRange([
             _zComboBox,
-            _pageIndexLabel, _roomIdLabel, _tagsLabel, _bookmarkLabel,
+            _pageIndexLabel, _roomIdLabel, _tagsLabel, _remarksLabel,
             _connectionUpLabel, _connectionDownLabel,
             _connectionLeftLabel, _connectionRightLabel,
             _connectionBackLabel, _connectionFrontLabel,
@@ -291,8 +291,13 @@ public partial class PageNodeEditorForm : Form
 
         _pageIndexLabel.Text  = $"Page: {pageIndex}";
         _roomIdLabel.Text     = $"Room ID: 0x{h.RoomId:X2}";
-        _tagsLabel.Text       = $"Tags: {(string.IsNullOrEmpty(page.Tag) ? "-" : page.Tag)}";
-        _bookmarkLabel.Text   = $"Bookmark: {(string.IsNullOrEmpty(page.Remarks) ? "-" : page.Remarks)}";
+        var tagLabels = page.TagIds
+            .Select(idStr => Guid.TryParse(idStr, out var tagId) ? _context.Project?.FindTag(tagId) : null)
+            .Where(t => t != null)
+            .Select(t => t!.Label);
+
+        _tagsLabel.Text = $"Tags: {(tagLabels.Any() ? string.Join(", ", tagLabels) : "-")}";
+        _remarksLabel.Text   = $"Remarks: {(string.IsNullOrEmpty(page.Remarks) ? "-" : page.Remarks)}";
 
         _connectionUpLabel.Text    = FormatConnectionWithScroll("Up",    h.UpPage,    h.ScrollUp);
         _connectionDownLabel.Text  = FormatConnectionWithScroll("Down",  h.DownPage,  h.ScrollDown);
@@ -307,7 +312,7 @@ public partial class PageNodeEditorForm : Form
         _pageIndexLabel.Text  = "Page: -";
         _roomIdLabel.Text     = "Room ID: -";
         _tagsLabel.Text       = "Tags: -";
-        _bookmarkLabel.Text   = "Bookmark: -";
+        _remarksLabel.Text    = "Remarks: -";
 
         _connectionUpLabel.Text    = "Up:    ----";
         _connectionDownLabel.Text  = "Down:  ----";

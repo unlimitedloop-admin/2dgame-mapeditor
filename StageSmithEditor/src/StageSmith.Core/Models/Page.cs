@@ -12,10 +12,8 @@ public sealed class Page
     public bool ReadOnly { get; set; }
     public string Remarks { get; set; } = "";
 
-    /// <summary>
-    /// 後でノード接続や構造ビューアで使うためのラベル
-    /// </summary>
-    public string Tag { get; set; } = string.Empty;
+    /// <summary>付与されているTag.Idの一覧。マスターはEditorProject.Tagsが持つ。</summary>
+    public List<string> TagIds { get; set; } = [];
 
     /// <summary>
     /// ノードエディタ上のX配置座標。エディタ専用（bin/def出力対象外）。
@@ -51,7 +49,7 @@ public sealed class Page
             Enable = Enable,
             ReadOnly = ReadOnly,
             Remarks = Remarks,
-            Tag = Tag,
+            TagIds = new List<string>(TagIds),
             NodeX = NodeX,
             NodeY = NodeY,
             ScrollType = ScrollType,

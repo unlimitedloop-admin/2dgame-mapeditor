@@ -8,15 +8,8 @@ public sealed class Stage
 
     public string Name { get; set; } = "New Stage";
 
-    /// <summary>
-    /// 表示順・出力順を意識した番号
-    /// </summary>
     public int StageNumber { get; set; }
 
-    /// <summary>
-    /// ステージの説明。将来のエディタで表示するためのもの。
-    /// .def 出力には使わない。
-    /// </summary>
     public string Description { get; set; } = string.Empty;
 
     /// <summary>
@@ -28,17 +21,11 @@ public sealed class Stage
 
     public List<Page> Pages { get; set; } = [];
 
-    /// <summary>
-    /// ステージ単位で管理するメタタイル定義。
-    /// .sseproj の保存対象にする想定。
-    /// </summary>
     public List<MetaTile> MetaTiles { get; set; } = [];
 
-    /// <summary>
-    /// このステージが保存されている .ssestage ファイルの絶対パス。
-    /// 新規作成直後でまだ一度も保存されていない場合は null。
-    /// ファイル自身への自己参照になるため、.ssestage の保存対象には含めない。
-    /// </summary>
+    /// <summary>付与されているTag.Idの一覧。マスターはEditorProject.Tagsが持つ。</summary>
+    public List<string> TagIds { get; set; } = [];
+
     [JsonIgnore]
     public string? FilePath { get; set; }
 
@@ -156,6 +143,7 @@ public sealed class Stage
     {
         Pages ??= [];
         MetaTiles ??= [];
+        TagIds ??= [];
 
         foreach (var metaTile in MetaTiles)
         {
@@ -203,6 +191,7 @@ public sealed class Stage
             Description = Description,
             Key = Key,
             TilesetImagePath = TilesetImagePath,
+            TagIds = new List<string>(TagIds),
             FilePath = null,   // 複製は未保存扱い
             IsDirty = true      // 保存されるまでダーティ扱い
         };

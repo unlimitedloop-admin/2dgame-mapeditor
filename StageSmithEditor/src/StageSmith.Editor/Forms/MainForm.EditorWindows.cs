@@ -1,3 +1,5 @@
+using StageSmith.Editor.Forms;
+
 namespace StageSmith.Editor;
 
 public partial class MainForm
@@ -75,6 +77,29 @@ public partial class MainForm
         else
         {
             _stageMapViewerForm.BringToFront();
+        }
+    }
+    private void OpenTagManager()
+    {
+        if (_context.Project == null)
+        {
+            MessageBox.Show(this, "プロジェクトがありません。", "Tag Manager",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        if (_tagManagerForm == null || _tagManagerForm.IsDisposed)
+        {
+            _tagManagerForm = new TagManagerForm(_context.Project);
+            _tagManagerForm.TagsChanged += () =>
+            {
+                //_nodeEditorForm?.RefreshCurrentPageInfo(); // TODO: Tags:ラベル再描画用（後述）
+            };
+            _tagManagerForm.Show();
+        }
+        else
+        {
+            _tagManagerForm.BringToFront();
         }
     }
 }

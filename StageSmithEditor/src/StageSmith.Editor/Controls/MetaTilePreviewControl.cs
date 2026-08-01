@@ -72,12 +72,6 @@ public sealed class MetaTilePreviewControl : DoubleBufferedPanel
         PreviewScale = DefaultPreviewScale;
     }
 
-    protected override void OnMouseEnter(EventArgs e)
-    {
-        base.OnMouseEnter(e);
-        Focus();
-    }
-
     protected override void OnMouseDown(MouseEventArgs e)
     {
         base.OnMouseDown(e);

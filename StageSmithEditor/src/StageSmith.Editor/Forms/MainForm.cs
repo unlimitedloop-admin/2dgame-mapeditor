@@ -4,7 +4,9 @@ using StageSmith.Core.Models;
 using StageSmith.Editor.Controllers;
 using StageSmith.Editor.Controls;
 using StageSmith.Editor.DockContents;
+using StageSmith.Editor.Forms;
 using StageSmith.Editor.Tools;
+using System.Runtime.CompilerServices;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace StageSmith.Editor;
@@ -49,6 +51,7 @@ public partial class MainForm : Form
     private PageNodeEditorForm? _nodeEditorForm;
     private MetaTileEditorForm? _metaTileEditorForm;
     private StageMapViewerForm? _stageMapViewerForm;
+    private TagManagerForm? _tagManagerForm;
 
     //========================
     // Controls（DockContent 経由で参照）

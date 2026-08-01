@@ -47,6 +47,12 @@ public sealed class EditorProject
     public List<Bookmark> Bookmarks { get; set; } = [];
 
     /// <summary>
+    /// プロジェクト全体で共有するタグ定義（マスター）。
+    /// Stage/Page側はこのTag.Idを参照する形で付与する。
+    /// </summary>
+    public List<Tag> Tags { get; set; } = [];
+
+    /// <summary>
     /// このプロジェクトがステージファイルをサブフォルダ分けして保存するかどうか。
     /// プロジェクト新規作成時（NewProject）に、その時点の EditorConfig.UseStageSubFolder を
     /// 一度だけ焼き込む。以降はプロジェクトが存在する限り固定値とし、
@@ -79,6 +85,7 @@ public sealed class EditorProject
         Stages ??= [];
         StageFilePaths ??= [];
         Bookmarks ??= [];
+        Tags ??= [];
         if (LastEditedPageIndex < 0) LastEditedPageIndex = 0;
 
         foreach (var stage in Stages)
@@ -123,6 +130,51 @@ public sealed class EditorProject
     {
         return Stages.FirstOrDefault(x => x.Id == stageId);
     }
+
+    public Tag AddTag(Tag source)
+    {
+        var tag = new Tag
+        {
+            Label    = source.Label,
+            Color    = source.Color,
+            Priority = source.Priority,
+            IconPath = source.IconPath,
+        };
+
+        Tags.Add(tag);
+        return tag;
+    }
+
+    /// <summary>既存タグの内容を更新する。Idが一致するものが対象。</summary>
+    public bool UpdateTag(Tag source)
+    {
+        var index = Tags.FindIndex(t => t.Id == source.Id);
+        if (index < 0) return false;
+
+        Tags[index] = source;
+        return true;
+    }
+
+    public bool RemoveTag(Guid tagId)
+    {
+        var target = Tags.FirstOrDefault(t => t.Id == tagId);
+        if (target is null) return false;
+
+        var idStr = tagId.ToString();
+
+        // タグ削除時、参照している全Stage/PageのTagIdsからも道連れで除去する
+        // （Stage削除時にBookmarksを掃除する既存パターンと同じ考え方）
+        foreach (var stage in Stages)
+        {
+            stage.TagIds.Remove(idStr);
+            foreach (var page in stage.Pages)
+                page.TagIds.Remove(idStr);
+        }
+
+        return Tags.Remove(target);
+    }
+
+    public Tag? FindTag(Guid tagId) => Tags.FirstOrDefault(t => t.Id == tagId);
 
     /// <summary>
     /// LastEditedStageId に対応する Stages 上のインデックスを解決する。
