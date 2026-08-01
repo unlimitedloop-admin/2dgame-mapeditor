@@ -29,7 +29,7 @@ public sealed class TagManagerForm : Form
 
         Text = "Tag Manager";
         StartPosition = FormStartPosition.CenterScreen;
-        Size = new Size(560, 420);
+        ClientSize = new Size(596, 307);    // デフォルトのサイズ。ユーザーがリサイズ可能
 
         InitializeLayout();
 
@@ -49,7 +49,7 @@ public sealed class TagManagerForm : Form
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200));
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
 
         // --- 左：一覧 ---
         _tagListBox.Dock = DockStyle.Fill;
@@ -142,7 +142,7 @@ public sealed class TagManagerForm : Form
         {
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
-            Padding = new Padding(0, 4, 0, 4)
+            Padding = new Padding(0, 6, 0, 6)
         };
 
         var newButton = new Button { Text = "New", AutoSize = true };
