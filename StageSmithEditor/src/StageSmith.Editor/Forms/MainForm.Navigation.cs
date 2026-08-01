@@ -121,7 +121,7 @@ public partial class MainForm
         var currentPageNumber = _context.CurrentPageIndex + 1;
         var maxPageNumber = stage.Pages.Count;
 
-        using var dialog = new JumpPageDialog(currentPageNumber, maxPageNumber);
+        using var dialog = new JumpPageDialog(currentPageNumber, maxPageNumber, _config.NumberDisplayFormat);
         if (dialog.ShowDialog(this) != DialogResult.OK) return;
 
         var targetIndex = dialog.SelectedPageNumber - 1;

@@ -1,4 +1,6 @@
+using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
+using StageSmith.Editor.Utilities;
 
 namespace StageSmith.Editor.Controls;
 
@@ -33,6 +35,9 @@ public class PageNavBarControl : UserControl
     private readonly Button _lastButton;
     private readonly NumericUpDown _zNumeric;
     private bool _updating;
+    private NumberDisplayFormat _numberDisplayFormat = NumberDisplayFormat.Hex;
+    private int _lastCurrent;
+    private int _lastTotal;
 
     //========================
     // 定数
@@ -174,7 +179,9 @@ public class PageNavBarControl : UserControl
         var total = context.PageCount;
         var current = total > 0 ? context.CurrentPageIndex + 1 : 0;
 
-        _pageLabel.Text = total > 0 ? $"{current} / {total}" : "- / -";
+        _lastCurrent = current;
+        _lastTotal = total;
+        UpdatePageLabel();
 
         _firstButton.Enabled = current > 1;
         _prevButton.Enabled = current > 1;
@@ -212,6 +219,20 @@ public class PageNavBarControl : UserControl
     //========================
     // ヘルパー
     //========================
+    public void SetNumberDisplayFormat(NumberDisplayFormat format)
+    {
+        _numberDisplayFormat = format;
+        _zNumeric.Hexadecimal = format == NumberDisplayFormat.Hex;
+        UpdatePageLabel();
+    }
+
+    private void UpdatePageLabel()
+    {
+        _pageLabel.Text = _lastTotal > 0
+            ? $"{NumberFormatHelper.FormatByte(_lastCurrent, _numberDisplayFormat)} / {NumberFormatHelper.FormatByte(_lastTotal, _numberDisplayFormat)}"
+            : "- / -";
+    }
+
     private static Button CreateNavButton(string text, string tooltip)
     {
         return new Button

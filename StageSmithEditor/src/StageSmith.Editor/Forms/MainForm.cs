@@ -199,6 +199,7 @@ public partial class MainForm : Form
         UpdateTitle();
 
         ApplyViewStateFromConfig();
+        ApplyNumberDisplayFormat();
     }
 
     private void MainForm_Load(object sender, EventArgs e)

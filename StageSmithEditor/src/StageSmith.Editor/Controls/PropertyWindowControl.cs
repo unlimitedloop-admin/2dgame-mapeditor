@@ -8,6 +8,8 @@ public sealed class PropertyWindowControl : UserControl
 {
     private EditorContext? _context;
 
+    private NumberDisplayFormat _numberDisplayFormat = NumberDisplayFormat.Hex;
+
     private bool _isRefreshing;
 
     /// <summary>
@@ -75,6 +77,24 @@ public sealed class PropertyWindowControl : UserControl
     {
         _context = context;
         _context.ContextChanged += RefreshProperties;
+
+        RefreshProperties();
+    }
+
+    public void SetNumberDisplayFormat(NumberDisplayFormat format)
+    {
+        _numberDisplayFormat = format;
+
+        var hex = format == NumberDisplayFormat.Hex;
+
+        _roomIdNumeric.Hexadecimal = hex;
+        _leftPageNumeric.Hexadecimal = hex;
+        _rightPageNumeric.Hexadecimal = hex;
+        _upPageNumeric.Hexadecimal = hex;
+        _downPageNumeric.Hexadecimal = hex;
+        _frontPageNumeric.Hexadecimal = hex;
+        _backPageNumeric.Hexadecimal = hex;
+        _zNumeric.Hexadecimal = hex;
 
         RefreshProperties();
     }
@@ -163,10 +183,7 @@ public sealed class PropertyWindowControl : UserControl
         TrackChange(_pageRemarksTextBox,
             () => _pageRemarksTextBox.Text,
             v => { if (_context?.CurrentPage != null) _context.CurrentPage.Remarks = v; });
-        // ↑ ついでに直します。既存コードはここだけDataChanged?.Invoke()が漏れていました。
 
-        // Page Header系は複合フィールド（1つのstructへまとめて書き込む）なので、
-        // 個別トラックではなく共通のUpdatePageHeader()へLeaveで委譲する。
         foreach (var control in new Control[]
         {
             _roomIdNumeric, _flagWaterCheckBox, _flagWindCheckBox,

@@ -129,4 +129,16 @@ public partial class MainForm
         SetToolMode(_config.LastToolMode);
         UpdateToolbarCheckedState();
     }
+
+    /// <summary>
+    /// NumberDisplayFormat設定を各コントロールへ反映する。
+    /// 起動時とOptionsダイアログOK確定時の両方から呼ばれる。
+    /// </summary>
+    private void ApplyNumberDisplayFormat()
+    {
+        _mapView.SetNumberDisplayFormat(_config.NumberDisplayFormat);
+        _pageNavBar.SetNumberDisplayFormat(_config.NumberDisplayFormat);
+        _tilePalette.SetNumberDisplayFormat(_config.NumberDisplayFormat);
+        _propertyWindow.SetNumberDisplayFormat(_config.NumberDisplayFormat);
+    }
 }

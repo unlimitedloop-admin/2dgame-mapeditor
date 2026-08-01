@@ -8,6 +8,7 @@ public class TilePaletteControl : DoubleBufferedPanel
     private readonly SafeTilesetHolder _tilesetHolder = new();
 
     public int SelectedTileIndex { get; private set; } = -1;
+    private NumberDisplayFormat _numberDisplayFormat = NumberDisplayFormat.Hex;
 
     public event Action<int>? TileSelected;
     public event EventHandler? TilesetImageSelectionRequested;
@@ -101,6 +102,11 @@ public class TilePaletteControl : DoubleBufferedPanel
         Invalidate();
     }
 
+    public void SetNumberDisplayFormat(NumberDisplayFormat format)
+    {
+        _numberDisplayFormat = format;
+    }
+
     public void SetSelected(int index)
     {
         SelectedTileIndex = index;
@@ -147,7 +153,9 @@ public class TilePaletteControl : DoubleBufferedPanel
 
         _hoverTileIndex = index;
 
-        _toolTip.SetToolTip(this, index >= 0 ? $"タイル番号: {index}" : string.Empty);
+        _toolTip.SetToolTip(this, index >= 0
+            ? $"タイル番号: {NumberFormatHelper.FormatByte(index, _numberDisplayFormat)}"
+            : string.Empty);
     }
 
     protected override void OnMouseLeave(EventArgs e)

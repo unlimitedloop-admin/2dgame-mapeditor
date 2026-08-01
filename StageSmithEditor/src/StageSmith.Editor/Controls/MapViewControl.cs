@@ -68,6 +68,7 @@ public class MapViewControl : DoubleBufferedPanel
     // ===== Toggle Grid =====
     private bool _showRowNumbers = false;
     private bool _showColumnNumbers = false;
+    private NumberDisplayFormat _numberDisplayFormat = NumberDisplayFormat.Hex;
 
     public void SetShowRowNumbers(bool show)
     {
@@ -80,6 +81,12 @@ public class MapViewControl : DoubleBufferedPanel
     {
         _showColumnNumbers = show;
         UpdatePreferredControlSize();
+        Invalidate();
+    }
+
+    public void SetNumberDisplayFormat(NumberDisplayFormat format)
+    {
+        _numberDisplayFormat = format;
         Invalidate();
     }
 
@@ -1053,7 +1060,7 @@ public class MapViewControl : DoubleBufferedPanel
                 dstSize,
                 ViewerConstants.ColumnNumberBandHeight);
 
-            g.DrawString(x.ToString(), font, brush, rect, format);
+            g.DrawString(NumberFormatHelper.FormatColumnIndex(x, _numberDisplayFormat), font, brush, rect, format);
         }
     }
 
@@ -1081,7 +1088,7 @@ public class MapViewControl : DoubleBufferedPanel
                 ViewerConstants.RowNumberBandWidth,
                 dstSize);
 
-            g.DrawString(y.ToString(), font, brush, rect, format);
+            g.DrawString(NumberFormatHelper.FormatRowIndex(y, _numberDisplayFormat), font, brush, rect, format);
         }
     }
 
