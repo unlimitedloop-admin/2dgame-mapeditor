@@ -10,6 +10,7 @@ public sealed class TagManagerForm : Form
     private Guid? _editingTagId;
     private string? _pendingIconSourcePath; // Save時にコピーする、まだTagIcons/未反映のアイコン元パス
     private bool _pendingIconCleared;
+    private bool _isReadOnly;
 
     private readonly ListBox _tagListBox = new();
     private readonly TextBox _labelTextBox = new();
@@ -248,6 +249,8 @@ public sealed class TagManagerForm : Form
 
     private void SaveCurrentTag()
     {
+        if (_isReadOnly) return;
+
         _currentTag.Label = _labelTextBox.Text.Trim();
         if (string.IsNullOrWhiteSpace(_currentTag.Label))
             _currentTag.Label = "New Tag";
@@ -291,6 +294,8 @@ public sealed class TagManagerForm : Form
 
     private void DeleteCurrentTag()
     {
+        if (_isReadOnly) return;
+
         if (!_editingTagId.HasValue)
         {
             UpdateStatus("Nothing to delete.");
@@ -412,5 +417,14 @@ public sealed class TagManagerForm : Form
         }
 
         public override string ToString() => Label;
+    }
+
+    /// <summary>
+    /// 読み取り専用状態を反映する。Save/DeleteをガードするだけでOK
+    /// （New/アイコン選択/色変更は作業コピー内の変更に過ぎず、Save時点で初めて確定するため）。
+    /// </summary>
+    public void SetReadOnly(bool isReadOnly)
+    {
+        _isReadOnly = isReadOnly;
     }
 }

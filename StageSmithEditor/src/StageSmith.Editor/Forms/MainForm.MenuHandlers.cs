@@ -46,6 +46,7 @@ public partial class MainForm
         _menuEditClearSearchHighlight.Click += (_, _) => ClearSearchHighlight();
         _menuEditToggleBookmark.Click       += (_, _) => ToggleBookmarkForCurrentPage();
         _menuEditClearAllBookmarks.Click    += (_, _) => ClearAllBookmarks();
+        _menuEditToggleReadOnly.CheckedChanged += (_, _) => ApplyReadOnlyState(_menuEditToggleReadOnly.Checked);
 
         // ========================
         // View
@@ -186,34 +187,10 @@ public partial class MainForm
         _menuNavForward.Enabled = CanMoveZLayer(forward: true);
     }
 
-    // ========================
-    // 未実装スタブ（後続タスクで実装）
-    // ========================
-    //private void OpenProject() { }                    // MainForm.FileOperations.cs で定義済み
-    //private void SaveProject() { }                    // MainForm.FileOperations.cs で定義済み
-    //private void CloseProject() { }                   // MainForm.FileOperations.cs で定義済み
-    //private void NewStage() { }                       // MainForm.FileOperations.cs で定義済み
-    //private void SaveStage() { }                      // MainForm.FileOperations.cs で定義済み
-    //private void ReloadStage() { }                    // MainForm.FileOperations.cs で定義済み
-    //private void DropStage() { }                      // MainForm.FileOperations.cs で定義済み
     private void ImportTileSet() => OpenTilesetImage();
     private void ExportBin() => ExportCurrentStageBin();
-    //private void ExportAllStages() { }                // MainForm.FileOperations.cs で定義済み
-    //private void CutSelection() { }                   // MainForm.Commands.cs で定義済み
-    //private void CopySelection() { }                  // MainForm.Commands.cs で定義済み
-    //private void PasteSelection() { }                 // MainForm.Commands.cs で定義済み
-    //private void DeleteSelection() { }                // MainForm.Commands.cs で定義済み
     private void FillSelection() => ApplySelectionFill();
-    //private void SelectAllSameTile() { }              // MainForm.Commands.cs で定義済み
-    //private void SelectEmptyTile() { }                // MainForm.Commands.cs で定義済み
-    //private void InvertSelection() { }                // MainForm.Commands.cs で定義済み
-    //private void ClearSelection() { }                 // MainForm.Commands.cs で定義済み
-    // OpenFindTileDialog / FindTileOnMap / FindNextTile / FindPrevTile / ClearSearchHighlight は MainForm.Search.cs で定義済み
-    //private void OpenReplaceTileDialog() { }          // MainForm.Search.cs で定義済み
-    //private void ToggleShowTileNumbers(bool show) { } // MainForm.Events.cs で定義済み
-    //private void ToggleMarkerOverlay(bool show) { }   // MainForm.Events.cs で定義済み
     private void ZoomIn() => _mapView.ZoomIn();
     private void ZoomOut() => _mapView.ZoomOut();
     private void ResetZoom() => _mapView.ResetZoom();
-    //private void OpenJumpPageDialog() { }             // MainForm.Navigation.cs で定義済み
 }

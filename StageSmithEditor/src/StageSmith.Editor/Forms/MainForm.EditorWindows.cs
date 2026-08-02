@@ -56,6 +56,8 @@ public partial class MainForm
 
             _metaTileEditorForm.MetaTilesChanged += RefreshMetaTilePaletteFromCurrentStage;
 
+            _metaTileEditorForm.SetReadOnly(_commandManager.IsReadOnly);
+
             _metaTileEditorForm.Show();
         }
         else
@@ -96,6 +98,7 @@ public partial class MainForm
                 _nodeEditorForm?.RefreshCurrentPageInfo();
                 _propertyWindow.RefreshProperties();
             };
+            _tagManagerForm.SetReadOnly(_commandManager.IsReadOnly);
             _tagManagerForm.Show();
         }
         else

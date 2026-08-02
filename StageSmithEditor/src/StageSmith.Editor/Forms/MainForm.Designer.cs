@@ -98,6 +98,7 @@ namespace StageSmith.Editor
             _menuEditClearSearchHighlight = new ToolStripMenuItem("Clear Search Highlight") { ShortcutKeyDisplayString = "Shift+Esc" };
             _menuEditToggleBookmark     = new ToolStripMenuItem("Add Bookmark")             { ShortcutKeyDisplayString = "Ctrl+B" };
             _menuEditClearAllBookmarks  = new ToolStripMenuItem("Clear All Bookmarks");
+            _menuEditToggleReadOnly     = new ToolStripMenuItem("Read-Only Mode")           { CheckOnClick = true };
 
             _menuEdit.DropDownItems.AddRange([
                 _menuEditUndo,
@@ -123,7 +124,9 @@ namespace StageSmith.Editor
                 _menuEditClearSearchHighlight,
                 new ToolStripSeparator(),
                 _menuEditToggleBookmark,
-                _menuEditClearAllBookmarks
+                _menuEditClearAllBookmarks,
+                new ToolStripSeparator(),
+                _menuEditToggleReadOnly
             ]);
 
             // ========================
@@ -323,6 +326,7 @@ namespace StageSmith.Editor
         private ToolStripMenuItem _menuEditClearSearchHighlight = null!;
         private ToolStripMenuItem _menuEditToggleBookmark       = null!;
         private ToolStripMenuItem _menuEditClearAllBookmarks    = null!;
+        private ToolStripMenuItem _menuEditToggleReadOnly       = null!;
 
         // View
         private ToolStripMenuItem _menuView                = null!;

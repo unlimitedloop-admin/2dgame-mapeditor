@@ -7,8 +7,16 @@ public class CommandManager
 
     public event Action? HistoryChanged;
 
+    /// <summary>
+    /// true の間、Execute/Undo/Redo は全て無視される。
+    /// トグルの実体（ON/OFF切り替え）はMainForm側のメニューが管理する。
+    /// </summary>
+    public bool IsReadOnly { get; set; }
+
     public void Execute(ICommand command)
     {
+        if (IsReadOnly) return;
+
         command.Execute();
         _undoStack.Push(command);
         _redoStack.Clear();
@@ -17,6 +25,7 @@ public class CommandManager
 
     public void Undo()
     {
+        if (IsReadOnly) return;
         if (_undoStack.Count == 0) return;
 
         var cmd = _undoStack.Pop();
@@ -27,6 +36,7 @@ public class CommandManager
 
     public void Redo()
     {
+        if (IsReadOnly) return;
         if (_redoStack.Count == 0) return;
 
         var cmd = _redoStack.Pop();

@@ -40,6 +40,8 @@ public sealed class MetaTileEditorForm : Form
 
     public event Action? MetaTilesChanged;
 
+    private bool _isReadOnly;
+
     public MetaTileEditorForm(Stage stage, Bitmap? tileset)
     {
         _stage = stage ?? throw new ArgumentNullException(nameof(stage));
@@ -313,6 +315,7 @@ public sealed class MetaTileEditorForm : Form
     private void InitializeCommandManager()
     {
         _commandManager.HistoryChanged += RefreshMetaTileViews;
+        _commandManager.IsReadOnly = _isReadOnly;
     }
 
     private void ResetCommandManager()
@@ -320,6 +323,18 @@ public sealed class MetaTileEditorForm : Form
         _commandManager.HistoryChanged -= RefreshMetaTileViews;
         _commandManager = new CommandManager();
         _commandManager.HistoryChanged += RefreshMetaTileViews;
+        _commandManager.IsReadOnly = _isReadOnly;
+    }
+
+    /// <summary>
+    /// 読み取り専用状態を反映する。
+    /// キャンバス編集（Command経由）はCommandManager.IsReadOnlyで一括ブロックされるが、
+    /// Save/Delete（Stage.MetaTilesを直接操作、Commandを通らない）は個別にガードする。
+    /// </summary>
+    public void SetReadOnly(bool isReadOnly)
+    {
+        _isReadOnly = isReadOnly;
+        _commandManager.IsReadOnly = isReadOnly;
     }
 
     private void SetWorkingMetaTile(MetaTile metaTile, int? editingMetaTileId)
@@ -367,6 +382,8 @@ public sealed class MetaTileEditorForm : Form
 
     private void SaveCurrentMetaTile()
     {
+        if (_isReadOnly) return;
+
         _currentMetaTile.Name = GetMetaTileName();
 
         if (_editingMetaTileId.HasValue)
@@ -391,6 +408,8 @@ public sealed class MetaTileEditorForm : Form
 
     private void SaveCurrentMetaTileAsNew()
     {
+        if (_isReadOnly) return;
+
         _currentMetaTile.Name = GetMetaTileName();
 
         var saved = _stage.AddMetaTile(_currentMetaTile);
@@ -404,6 +423,8 @@ public sealed class MetaTileEditorForm : Form
 
     private void DeleteCurrentMetaTile()
     {
+        if (_isReadOnly) return;
+
         if (!_editingMetaTileId.HasValue)
         {
             UpdateStatus("Nothing to delete.");

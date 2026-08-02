@@ -248,8 +248,9 @@ public partial class MainForm
             : _context.Project.Name;
 
         var dirtyMark = IsProjectDirty() ? " *" : "";
+        var readOnlyMark = _commandManager.IsReadOnly ? " [Read-Only]" : "";
 
-        Text = $"StageSmith Editor - {displayName}{dirtyMark}";
+        Text = $"StageSmith Editor - {displayName}{dirtyMark}{readOnlyMark}";
     }
 
     /// <summary>
@@ -273,6 +274,8 @@ public partial class MainForm
 
     private void NewStage()
     {
+        if (BlockIfReadOnly("New Stage")) return;
+
         var project = _context.Project;
         if (project == null)
         {
@@ -411,6 +414,8 @@ public partial class MainForm
 
     private void DropStage()
     {
+        if (BlockIfReadOnly("Drop Stage")) return;
+
         var stage = _context.CurrentStage;
         if (stage == null) return;
 
@@ -613,6 +618,8 @@ public partial class MainForm
 
     private void OpenTilesetImage()
     {
+        if (BlockIfReadOnly("Import Tileset")) return;
+
         var stage = _context.CurrentStage;
 
         if (stage == null)

@@ -12,6 +12,8 @@ public partial class MainForm
     /// </summary>
     private void ImportStage()
     {
+        if (BlockIfReadOnly("Import Stage")) return;
+
         var project = _context.Project;
 
         if (project == null)
