@@ -19,6 +19,9 @@ public partial class MainForm
         _menuFileSaveStage.Click     += (_, _) => SaveStage();
         _menuFileReloadStage.Click   += (_, _) => ReloadStage();
         _menuFileDropStage.Click     += (_, _) => DropStage();
+        _menuFileAddPage.Click       += (_, _) => AddPageToCurrentStage();
+        _menuFileDuplicatePage.Click += (_, _) => DuplicateCurrentPage();
+        _menuFileRemovePage.Click    += (_, _) => RemoveCurrentPage();
         _menuFileImportTileSet.Click += (_, _) => ImportTileSet();
         _menuFileExportBin.Click     += (_, _) => ExportBin();
         _menuFileExportAll.Click     += (_, _) => ExportAllStages();
@@ -133,6 +136,9 @@ public partial class MainForm
         _menuFileSaveStage.Enabled     = hasStage;
         _menuFileReloadStage.Enabled   = hasStage;
         _menuFileDropStage.Enabled     = hasStage;
+        _menuFileAddPage.Enabled       = hasStage;
+        _menuFileDuplicatePage.Enabled = _context.HasPage;
+        _menuFileRemovePage.Enabled    = _context.HasPage;
         _menuFileImportTileSet.Enabled = hasStage;
         _menuFileExportBin.Enabled     = hasStage;
         _menuFileExportAll.Enabled     = hasProject;

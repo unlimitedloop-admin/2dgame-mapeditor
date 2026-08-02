@@ -51,6 +51,9 @@ namespace StageSmith.Editor
             _menuFileSaveStage      = new ToolStripMenuItem("Save Stage")       { ShortcutKeys = Keys.Control | Keys.S };
             _menuFileReloadStage    = new ToolStripMenuItem("Reload Stage");
             _menuFileDropStage      = new ToolStripMenuItem("Drop Stage");
+            _menuFileAddPage        = new ToolStripMenuItem("Add Page")             { ShortcutKeyDisplayString = "Ctrl+T" };
+            _menuFileDuplicatePage  = new ToolStripMenuItem("Duplicate Page");
+            _menuFileRemovePage     = new ToolStripMenuItem("Remove Page");
             _menuFileImportTileSet  = new ToolStripMenuItem("Import TileSet");
             _menuFileExportBin      = new ToolStripMenuItem("Export BIN");
             _menuFileExportAll      = new ToolStripMenuItem("Export All Stages");
@@ -67,6 +70,10 @@ namespace StageSmith.Editor
                 _menuFileSaveStage,
                 _menuFileReloadStage,
                 _menuFileDropStage,
+                new ToolStripSeparator(),
+                _menuFileAddPage,
+                _menuFileDuplicatePage,
+                _menuFileRemovePage,
                 new ToolStripSeparator(),
                 _menuFileImportTileSet,
                 _menuFileExportBin,
@@ -299,6 +306,9 @@ namespace StageSmith.Editor
         private ToolStripMenuItem _menuFileSaveStage      = null!;
         private ToolStripMenuItem _menuFileReloadStage    = null!;
         private ToolStripMenuItem _menuFileDropStage      = null!;
+        private ToolStripMenuItem _menuFileAddPage        = null!;
+        private ToolStripMenuItem _menuFileDuplicatePage  = null!;
+        private ToolStripMenuItem _menuFileRemovePage      = null!;
         private ToolStripMenuItem _menuFileImportTileSet  = null!;
         private ToolStripMenuItem _menuFileExportBin      = null!;
         private ToolStripMenuItem _menuFileExportAll      = null!;

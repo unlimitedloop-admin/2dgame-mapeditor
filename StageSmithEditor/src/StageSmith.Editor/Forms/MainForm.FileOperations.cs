@@ -749,6 +749,27 @@ public partial class MainForm
         _commandManager.Execute(new AddPageCommand(stage, _context));
     }
 
+    /// <summary>
+    /// 現在のページを複製し、直後に挿入して複製先へ移動する。
+    /// </summary>
+    private void DuplicateCurrentPage()
+    {
+        var stage = _context.CurrentStage;
+        var page = _context.CurrentPage;
+
+        if (stage == null || page == null)
+        {
+            MessageBox.Show(
+                "複製対象のページがありません。",
+                "ページ複製",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return;
+        }
+
+        _commandManager.Execute(new DuplicatePageCommand(stage, page, _context));
+    }
+
     private void RemoveCurrentPage()
     {
         var stage = _context.CurrentStage;
