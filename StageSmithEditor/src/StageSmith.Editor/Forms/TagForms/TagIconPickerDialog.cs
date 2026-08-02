@@ -76,6 +76,15 @@ public sealed class TagIconPickerDialog : Form
 
         defaultsGroup.Controls.Add(flow);
 
+        var hintLabel = new Label
+        {
+            Text = "推奨: 正方形・64×64px程度の画像（表示時は自動で縮小されます）",
+            Dock = DockStyle.Top,
+            Height = 20,
+            ForeColor = SystemColors.GrayText,
+            Font = new Font("Yu Gothic UI", 8f),
+        };
+
         var browseButton = new Button
         {
             Text   = "カスタム画像を参照...",
@@ -121,6 +130,7 @@ public sealed class TagIconPickerDialog : Form
         };
 
         Controls.Add(defaultsGroup);
+        Controls.Add(hintLabel);
         Controls.Add(browseButton);
         Controls.Add(clearButton);
         Controls.Add(cancelButton);

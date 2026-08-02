@@ -2,6 +2,7 @@ using StageSmith.Application.Commands;
 using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
 using StageSmith.Editor.Forms;
+using StageSmith.Editor.Utilities;
 
 namespace StageSmith.Editor.Controls;
 
@@ -31,8 +32,10 @@ public sealed class PropertyWindowControl : UserControl
     private TextBox _stageNameTextBox = null!;
     private TextBox _pageNameTextBox = null!;
 
-    private Label _stageTagsValueLabel = null!;
-    private Label _pageTagsValueLabel = null!;
+    private FlowLayoutPanel _stageTagsBadgesPanel = null!;
+    private FlowLayoutPanel _pageTagsBadgesPanel = null!;
+
+    private const int TagIconSize = 16;
 
     private CheckBox _pageEnableCheckBox = null!;
     private CheckBox _pageReadOnlyCheckBox = null!;
@@ -120,14 +123,14 @@ public sealed class PropertyWindowControl : UserControl
 
         AddHeader("Stage", Color.FromArgb(200, 255, 200));
         _stageNameTextBox = AddTextRow("Name");
-        _stageTagsValueLabel = AddTagsRow("Tags", OnEditStageTagsClick);
+        _stageTagsBadgesPanel = AddTagsRow("Tags", OnEditStageTagsClick);
 
         AddHeader("Page", Color.FromArgb(255, 200, 0));
         _pageNameTextBox = AddTextRow("Name");
         _pageEnableCheckBox = AddCheckRow("Enable");
         _pageReadOnlyCheckBox = AddCheckRow("ReadOnly");
         _pageRemarksTextBox = AddTextRow("Remarks");
-        _pageTagsValueLabel = AddTagsRow("Tags", OnEditPageTagsClick);
+        _pageTagsBadgesPanel = AddTagsRow("Tags", OnEditPageTagsClick);
 
         AddHeader("Page Header", Color.FromArgb(255, 220, 120));
 
@@ -213,7 +216,7 @@ public sealed class PropertyWindowControl : UserControl
 
         _projectNameTextBox.Text = _context.Project?.Name ?? "";
         _stageNameTextBox.Text = _context.CurrentStage?.Name ?? "";
-        _stageTagsValueLabel.Text = ResolveTagLabels(_context.Project, _context.CurrentStage?.TagIds);
+        RebuildTagBadges(_stageTagsBadgesPanel, _context.Project, _context.CurrentStage?.TagIds);
 
         var page = _context.CurrentPage;
 
@@ -221,7 +224,7 @@ public sealed class PropertyWindowControl : UserControl
         _pageEnableCheckBox.Checked = page?.Enable ?? false;
         _pageReadOnlyCheckBox.Checked = page?.ReadOnly ?? false;
         _pageRemarksTextBox.Text = page?.Remarks ?? "";
-        _pageTagsValueLabel.Text = ResolveTagLabels(_context.Project, page?.TagIds);
+        RebuildTagBadges(_pageTagsBadgesPanel, _context.Project, page?.TagIds);
 
         if (page != null)
         {
@@ -267,19 +270,87 @@ public sealed class PropertyWindowControl : UserControl
         ));
     }
 
-    private static string ResolveTagLabels(EditorProject? project, List<string>? tagIds)
+    /// <summary>
+    /// バッジ表示を再構築する。優先度昇順（Priority値が小さいほど先頭）で並べる。
+    /// 画像リソースはバッジ（PictureBox）のDisposeに追従して解放される。
+    /// </summary>
+    private static void RebuildTagBadges(FlowLayoutPanel container, EditorProject? project, List<string>? tagIds)
     {
-        if (project == null || tagIds == null || tagIds.Count == 0)
-            return "-";
+        foreach (Control old in container.Controls)
+            old.Dispose();
+        container.Controls.Clear();
 
-        var labels = tagIds
-            .Select(idStr => Guid.TryParse(idStr, out var id) ? project.FindTag(id) : null)
-            .Where(tag => tag != null)
-            .Select(tag => tag!.Label)
-            .ToList();
+        var tags = (project == null || tagIds == null)
+            ? Enumerable.Empty<Tag>()
+            : tagIds
+                .Select(idStr => Guid.TryParse(idStr, out var id) ? project.FindTag(id) : null)
+                .Where(t => t != null)
+                .Select(t => t!)
+                .OrderBy(t => t.Priority)
+                .ThenBy(t => t.Label);
 
-        return labels.Count > 0 ? string.Join(", ", labels) : "-";
+        var tagList = tags.ToList();
+
+        if (tagList.Count == 0)
+        {
+            container.Controls.Add(new Label { Text = "-", AutoSize = true, Padding = new Padding(0, 3, 0, 0) });
+            return;
+        }
+
+        foreach (var tag in tagList)
+            container.Controls.Add(CreateTagBadge(tag, project!.BaseDirectory));
     }
+
+    private static Control CreateTagBadge(Tag tag, string baseDirectory)
+    {
+        var badgeColor = ColorTranslator.FromHtml(tag.Color);
+
+        var badge = new Panel
+        {
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            BackColor = badgeColor,
+            Padding = new Padding(4, 2, 4, 2),
+            Margin = new Padding(0, 0, 4, 4),
+            BorderStyle = BorderStyle.FixedSingle,
+        };
+
+        var inner = new FlowLayoutPanel
+        {
+            FlowDirection = FlowDirection.LeftToRight,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            WrapContents = false,
+        };
+
+        var icon = TagIconRenderer.SafeLoad(
+            string.IsNullOrWhiteSpace(tag.IconPath) ? null : Path.Combine(baseDirectory, tag.IconPath));
+
+        if (icon != null)
+        {
+            inner.Controls.Add(new PictureBox
+            {
+                Image = icon,
+                Size = new Size(TagIconSize, TagIconSize),
+                SizeMode = PictureBoxSizeMode.Zoom,
+                Margin = new Padding(0, 0, 3, 0),
+            });
+        }
+
+        inner.Controls.Add(new Label
+        {
+            Text = tag.Label,
+            AutoSize = true,
+            ForeColor = IsLightColor(badgeColor) ? Color.Black : Color.White,
+            Margin = new Padding(0),
+        });
+
+        badge.Controls.Add(inner);
+        return badge;
+    }
+
+    private static bool IsLightColor(Color color)
+        => (color.R * 0.299 + color.G * 0.587 + color.B * 0.114) > 128;
 
     private void OnEditStageTagsClick(object? sender, EventArgs e)
     {
@@ -397,22 +468,23 @@ public sealed class PropertyWindowControl : UserControl
         return checkBox;
     }
 
-    /// <summary>「値ラベル + 編集...ボタン」の行を追加し、値ラベルを返す。</summary>
-    private Label AddTagsRow(string labelText, EventHandler onEditClick)
+    /// <summary>「タグバッジ群 + 編集...ボタン」の行を追加し、バッジ格納用パネルを返す。</summary>
+    private FlowLayoutPanel AddTagsRow(string labelText, EventHandler onEditClick)
     {
         var row = new FlowLayoutPanel
         {
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = true,
             AutoSize = true,
         };
 
-        var valueLabel = new Label
+        var badgesPanel = new FlowLayoutPanel
         {
-            Text = "-",
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = true,
             AutoSize = true,
-            MaximumSize = new Size(140, 0),
-            Padding = new Padding(0, 4, 4, 0),
+            Margin = new Padding(0, 2, 6, 0),
         };
 
         var editButton = new Button
@@ -422,11 +494,11 @@ public sealed class PropertyWindowControl : UserControl
         };
         editButton.Click += onEditClick;
 
-        row.Controls.Add(valueLabel);
+        row.Controls.Add(badgesPanel);
         row.Controls.Add(editButton);
 
         AddRow(CreateLabel(labelText), row);
-        return valueLabel;
+        return badgesPanel;
     }
 
     private static Label CreateLabel(string text)
