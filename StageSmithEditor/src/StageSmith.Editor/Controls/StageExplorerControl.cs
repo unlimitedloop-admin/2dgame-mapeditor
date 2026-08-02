@@ -1,4 +1,5 @@
 using StageSmith.Core.Models;
+using StageSmith.Editor.Utilities;
 
 namespace StageSmith.Editor.Controls;
 
@@ -208,6 +209,8 @@ public class StageExplorerControl : UserControl
             Tag = new NodeTag(NodeKind.Stage, stage, null)
         };
 
+        ApplyTagColor(node, stage.TagIds);
+
         for (var i = 0; i < stage.Pages.Count; i++)
         {
             var page = stage.Pages[i];
@@ -229,12 +232,27 @@ public class StageExplorerControl : UserControl
 
         var label = isBookmarked ? $"{baseLabel}  ★" : baseLabel;
 
-        return new TreeNode(label)
+        var node = new TreeNode(label)
         {
             ImageIndex = IconPage,
             SelectedImageIndex = IconPage,
             Tag = new NodeTag(NodeKind.Page, stage, page)
         };
+
+        ApplyTagColor(node, page.TagIds);
+
+        return node;
+    }
+
+    /// <summary>
+    /// 付与されている代表タグの色を、視認性補正した上でノードの文字色として反映する。
+    /// タグが無い場合は既定の文字色（変更なし）のまま。
+    /// </summary>
+    private void ApplyTagColor(TreeNode node, List<string> tagIds)
+    {
+        var color = ResolveTagColor(tagIds);
+        if (color != null)
+            node.ForeColor = color.Value;
     }
 
     //========================
@@ -258,7 +276,7 @@ public class StageExplorerControl : UserControl
 
                 pageNode.ForeColor = isCurrent
                     ? SystemColors.Highlight
-                    : _treeView.ForeColor;
+                    : ResolveTagColor(tag.Page.TagIds) ?? _treeView.ForeColor;
 
                 // WinForms の TreeView は太字変更後にテキスト幅を再計算しないため
                 // 末尾スペースを付与して右端の欠けを防ぐ
@@ -269,6 +287,14 @@ public class StageExplorerControl : UserControl
 
         _treeView.EndUpdate();
         _treeView.Invalidate();
+    }
+
+    private Color? ResolveTagColor(List<string> tagIds)
+    {
+        var tag = TagDisplayHelper.ResolveRepresentativeTag(_project, tagIds);
+        if (tag == null) return null;
+
+        return TagDisplayHelper.GetReadableTextColor(ColorTranslator.FromHtml(tag.Color));
     }
 
     //========================
