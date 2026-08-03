@@ -171,6 +171,9 @@ public partial class MainForm : Form
         {
             _context.CurrentStage?.MarkDirty();
 
+            _undoButton.Enabled = _commandManager.CanUndo && !_commandManager.IsReadOnly;
+            _redoButton.Enabled = _commandManager.CanRedo && !_commandManager.IsReadOnly;
+
             _mapView.Invalidate();
             UpdateTitle();
             _stageExplorer?.RebuildTree();
