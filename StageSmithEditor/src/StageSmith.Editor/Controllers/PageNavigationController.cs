@@ -104,6 +104,16 @@ public sealed class PageNavigationController
         if (currentPage == null || stage == null)
             return;
 
+        if (_commandManager.IsReadOnly)
+        {
+            MessageBox.Show(
+                "読み取り専用モードのため実行できません。",
+                "新規ページ作成",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+            return;
+        }
+
         var confirmMessage =
             $"ページ{currentPage.Header.RoomId}の{ToJapaneseDirection(direction)}側に新規ページを増設します。よろしいですか？";
 

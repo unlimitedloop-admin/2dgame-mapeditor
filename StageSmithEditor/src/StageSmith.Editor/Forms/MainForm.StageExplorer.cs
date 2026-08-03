@@ -36,6 +36,8 @@ public partial class MainForm
 
         _stageExplorer.PageDeleteRequested += (stage, page) =>
         {
+            if (BlockIfReadOnly("Delete Page")) return;
+
             _commandManager.Execute(new RemovePageCommand(stage, page, _context));
         };
 

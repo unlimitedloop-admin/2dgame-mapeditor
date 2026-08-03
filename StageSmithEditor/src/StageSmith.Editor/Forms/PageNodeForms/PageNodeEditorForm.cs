@@ -1271,6 +1271,23 @@ public partial class PageNodeEditorForm : Form
 
         return null;
     }
+
+    /// <summary>
+    /// 読み取り専用モード中であれば警告を出してtrueを返す。
+    /// 確認ダイアログより前段でガードし、「はい」を押しても無反応になる事故を防ぐ。
+    /// </summary>
+    private bool BlockIfReadOnly(string commandName)
+    {
+        if (!_commandManager.IsReadOnly) return false;
+
+        MessageBox.Show(
+            "読み取り専用モードのため実行できません。",
+            commandName,
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Information);
+
+        return true;
+    }
 }
 
 /// <summary>方向の定義。コンテキストメニューの新規ページ追加方向に使用。</summary>

@@ -1,5 +1,7 @@
 using StageSmith.Core.Models;
 using StageSmith.Editor.Utilities;
+using System.ComponentModel;
+using System.Runtime.Serialization;
 
 namespace StageSmith.Editor.Controls;
 
@@ -77,6 +79,16 @@ public class StageExplorerControl : UserControl
     private readonly Font _currentPageFont;
     private bool _suppressSelectEvent;
     private bool _isEditingLabel;
+
+    //========================
+    // Change Enabled MenuItems
+    //========================
+    private ToolStripMenuItem _stageRenameMenuItem = null!;
+    private ToolStripMenuItem _stageCloneMenuItem  = null!;
+    private ToolStripMenuItem _stageDeleteMenuItem = null!;
+    private ToolStripMenuItem _pageRenameMenuItem    = null!;
+    private ToolStripMenuItem _pageDuplicateMenuItem = null!;
+    private ToolStripMenuItem _pageDeleteMenuItem    = null!;
 
     /// <summary>
     /// ステージ／ページ名がインライン編集中かどうか。
@@ -394,9 +406,21 @@ public class StageExplorerControl : UserControl
     //========================
     // コンテキストメニュー表示
     //========================
+    /// <summary>読み取り専用状態。MainFormから同期される。</summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public bool IsReadOnly { get; set; }
+
     private void ShowContextMenu(TreeNode node, Point location)
     {
         if (node.Tag is not NodeTag tag) return;
+
+        _stageRenameMenuItem.Enabled    = !IsReadOnly;
+        _stageCloneMenuItem.Enabled     = !IsReadOnly;
+        _stageDeleteMenuItem.Enabled    = !IsReadOnly;
+        _pageRenameMenuItem.Enabled     = !IsReadOnly;
+        _pageDuplicateMenuItem.Enabled  = !IsReadOnly;
+        _pageDeleteMenuItem.Enabled     = !IsReadOnly;
 
         if (tag.Kind == NodeKind.Stage)
         {
@@ -640,11 +664,16 @@ public class StageExplorerControl : UserControl
     private ContextMenuStrip CreateStageContextMenu()
     {
         var menu = new ContextMenuStrip();
-        menu.Items.Add("名前変更", null, OnStageRename);
+
+        _stageRenameMenuItem = new ToolStripMenuItem("名前変更", null, OnStageRename);
+        _stageCloneMenuItem  = new ToolStripMenuItem("複製", null, OnStageClone);
+        _stageDeleteMenuItem = new ToolStripMenuItem("削除", null, OnStageDelete);
+
+        menu.Items.Add(_stageRenameMenuItem);
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("複製",  null, OnStageClone);
+        menu.Items.Add(_stageCloneMenuItem);
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("削除", null, OnStageDelete);
+        menu.Items.Add(_stageDeleteMenuItem);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("ステージマップビューアーを起動...", null, OnStageMapViewerLaunch);
         return menu;
@@ -653,13 +682,18 @@ public class StageExplorerControl : UserControl
     private ContextMenuStrip CreatePageContextMenu()
     {
         var menu = new ContextMenuStrip();
-        menu.Items.Add("名前変更",    null, OnPageRename);
+
+        _pageRenameMenuItem    = new ToolStripMenuItem("名前変更", null, OnPageRename);
+        _pageDuplicateMenuItem = new ToolStripMenuItem("複製", null, OnPageDuplicate);
+        _pageDeleteMenuItem    = new ToolStripMenuItem("削除", null, OnPageDelete);
+
+        menu.Items.Add(_pageRenameMenuItem);
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("複製", null, OnPageDuplicate);
-         menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add(_pageDuplicateMenuItem);
+        menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add((ToolStripItem)_pageBookmarkMenuItem);
-       menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("削除",    null, OnPageDelete);
+        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add(_pageDeleteMenuItem);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("ページノードエディタを起動...", null, OnPageNodeEditorLaunch);
         return menu;

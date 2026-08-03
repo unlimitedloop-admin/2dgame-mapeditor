@@ -259,12 +259,21 @@ public partial class MainForm
     private void UpdateEditorAvailability()
     {
         var hasProject = _context.HasProject;
+        var isReadOnly = _commandManager.IsReadOnly;
 
         _mapView.Enabled         = hasProject;
         _tilePalette.Enabled     = hasProject;
         _propertyWindow.Enabled  = hasProject;
         _metaTilePalette.Enabled = hasProject;
         _stageExplorer.Enabled   = hasProject;
+
+        _saveButton.Enabled        = hasProject && !isReadOnly;
+        _saveAsButton.Enabled      = hasProject && !isReadOnly;
+        _openTileSetButton.Enabled = _context.HasStage && !isReadOnly;
+        _addPageButton.Enabled     = _context.HasStage && !isReadOnly;
+        _removePageButton.Enabled  = _context.HasPage && !isReadOnly;
+        _undoButton.Enabled        = _commandManager.CanUndo && !isReadOnly;
+        _redoButton.Enabled        = _commandManager.CanRedo && !isReadOnly;
 
         RefreshFileMenuState();
         RefreshEditMenuState();
@@ -439,6 +448,8 @@ public partial class MainForm
     /// </summary>
     private void DeleteStage(Stage stage)
     {
+        if (BlockIfReadOnly("Delete Stage")) return;
+
         var project = _context.Project;
         if (project == null) return;
 
