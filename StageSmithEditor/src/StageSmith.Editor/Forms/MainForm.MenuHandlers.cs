@@ -88,6 +88,7 @@ public partial class MainForm
         // ========================
         _menuToolsPen.Click       += (_, _) => SetToolMode(EditorToolMode.Pen);
         _menuToolsSelection.Click += (_, _) => SetToolMode(EditorToolMode.Selection);
+        _menuToolsBucket.Click    += (_, _) => SetToolMode(EditorToolMode.Bucket);
         _menuToolsMarker.Click    += (_, _) => SetToolMode(EditorToolMode.Marker);
         _menuToolsOptions.Click   += (_, _) => OpenEditorPropertiesDialog();
 

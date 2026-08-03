@@ -123,6 +123,16 @@ namespace StageSmithEditor.Properties {
         /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
+        internal static System.Drawing.Bitmap icons8_バケツ_24 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-バケツ-24", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
         internal static System.Drawing.Bitmap icons8_ファイルを開く_30 {
             get {
                 object obj = ResourceManager.GetObject("icons8-ファイルを開く-30", resourceCulture);

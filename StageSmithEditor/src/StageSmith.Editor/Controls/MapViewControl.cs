@@ -800,6 +800,14 @@ public class MapViewControl : DoubleBufferedPanel
             return;
         }
 
+        // Bucketツール単体選択時は、ツールバー/メニューのチェック状態で判別できるため
+        // 通常ポインタのまま（Pen/Selectionと同じ流儀）にする
+        if (currentTool is FillTool)
+        {
+            Cursor = Cursors.Default;
+            return;
+        }
+
         Cursor = currentTool?.GetCursor(x, y) ?? Cursors.Default;
     }
 

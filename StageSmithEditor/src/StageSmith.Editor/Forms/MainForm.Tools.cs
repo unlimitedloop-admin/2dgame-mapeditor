@@ -21,6 +21,7 @@ public partial class MainForm
     private ToolStripButton _redoButton = null!;
     private ToolStripButton _penButton = null!;
     private ToolStripButton _selectionButton = null!;
+    private ToolStripButton _bucketButton = null!;
     private ToolStripButton _markerButton = null!;
     private ToolStripButton _showGridButton = null!;
     private ToolStripButton _tilePreviewButton = null!;
@@ -58,6 +59,7 @@ public partial class MainForm
 
         _penButton = CreateButton("Pen", "ペン (P)", StageSmithEditor.Properties.Resources.icons8_鉛筆_24, true);
         _selectionButton = CreateButton("Selection", "選択 (S)", StageSmithEditor.Properties.Resources.icons8_選択_24, true);
+        _bucketButton = CreateButton("Bucket", "バケツ (B)", StageSmithEditor.Properties.Resources.icons8_バケツ_24, true);
         _markerButton = CreateButton("Marker", "マーカー (K)", StageSmithEditor.Properties.Resources.icons8_マーカー_24, true);
 
         _showGridButton = CreateButton("ShowGrid", "グリッド表示切替 (G)", StageSmithEditor.Properties.Resources.icons8_グリッド_24, true);
@@ -123,6 +125,12 @@ public partial class MainForm
         {
             if (_selectionTool != null)
                 ChangeTool(_selectionTool);
+        };
+
+        _bucketButton.Click += (_, _) =>
+        {
+            if (_fillTool != null)
+                ChangeTool(_fillTool);
         };
 
         _markerButton.Click += (_, _) =>
@@ -205,6 +213,7 @@ public partial class MainForm
             new ToolStripSeparator(),
             _penButton,
             _selectionButton,
+            _bucketButton,
             _markerButton,
             new ToolStripSeparator(),
             _showGridButton,
@@ -344,8 +353,19 @@ public partial class MainForm
                 _currentMode = EditorToolMode.Pen;
             else if (ReferenceEquals(tool, _selectionTool))
                 _currentMode = EditorToolMode.Selection;
+            else if (ReferenceEquals(tool, _fillTool))
+                _currentMode = EditorToolMode.Bucket;
             else if (ReferenceEquals(tool, _markerTool))
                 _currentMode = EditorToolMode.Marker;
+
+            // ツールバー/メニュー/ショートカットキーいずれの経路で切り替わっても
+            // 必ずこのイベントを通るため、モード変更に伴う副作用はここに集約する。
+            if (_currentMode != EditorToolMode.Selection)
+                _selectionTool?.ClearSelection();
+
+            // Markerツールに切り替えたら、マーカーオーバーレイを自動的に表示する
+            if (_currentMode == EditorToolMode.Marker && !_menuViewMarkerOverlay.Checked)
+                _menuViewMarkerOverlay.Checked = true;
 
             UpdateToolbarCheckedState();
             _mapView.Invalidate();
@@ -375,6 +395,7 @@ public partial class MainForm
             EditorToolMode.Pen => _penTool,
             EditorToolMode.Selection => _selectionTool,
             EditorToolMode.Marker => _markerTool,
+            EditorToolMode.Bucket => _fillTool,
             _ => null
         };
 
@@ -382,13 +403,6 @@ public partial class MainForm
             return;
 
         ChangeTool(tool);
-
-        if (mode == EditorToolMode.Pen)
-            _selectionTool?.ClearSelection();
-
-        // Markerツールに切り替えたら、マーカーオーバーレイを自動的に表示する
-        if (mode == EditorToolMode.Marker && !_menuViewMarkerOverlay.Checked)
-            _menuViewMarkerOverlay.Checked = true;
     }
 
     private void BindTilePalette()
@@ -434,15 +448,17 @@ public partial class MainForm
     //========================
     private void UpdateToolbarCheckedState()
     {
-        if (_penButton == null || _selectionButton == null || _markerButton == null)
+        if (_penButton == null || _selectionButton == null || _bucketButton == null || _markerButton == null)
             return;
 
         _penButton.Checked = _currentMode == EditorToolMode.Pen;
         _selectionButton.Checked = _currentMode == EditorToolMode.Selection;
+        _bucketButton.Checked = _currentMode == EditorToolMode.Bucket;
         _markerButton.Checked = _currentMode == EditorToolMode.Marker;
 
         _menuToolsPen.Checked = _currentMode == EditorToolMode.Pen;
         _menuToolsSelection.Checked = _currentMode == EditorToolMode.Selection;
+        _menuToolsBucket.Checked = _currentMode == EditorToolMode.Bucket;
         _menuToolsMarker.Checked = _currentMode == EditorToolMode.Marker;
     }
 

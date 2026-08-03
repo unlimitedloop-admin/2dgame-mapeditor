@@ -138,6 +138,10 @@ public partial class MainForm
                 SetToolMode(EditorToolMode.Marker);
                 return true;
 
+            case Keys.B:
+                SetToolMode(EditorToolMode.Bucket);
+                return true;
+
             case Keys.G:
                 _menuViewGridLines.Checked = !_menuViewGridLines.Checked;
                 return true;
@@ -196,6 +200,11 @@ public partial class MainForm
 
             case Keys.Control | Keys.D3:
             case Keys.Control | Keys.NumPad3:
+                SetToolMode(EditorToolMode.Bucket);
+                return true;
+
+            case Keys.Control | Keys.D4:
+            case Keys.Control | Keys.NumPad4:
                 SetToolMode(EditorToolMode.Marker);
                 return true;
         }
