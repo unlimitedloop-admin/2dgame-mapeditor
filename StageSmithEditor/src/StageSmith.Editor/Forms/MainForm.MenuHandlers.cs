@@ -1,3 +1,4 @@
+using StageSmith.Core.Constants;
 using StageSmith.Editor.Controls;
 using WeifenLuo.WinFormsUI.Docking;
 
@@ -85,7 +86,10 @@ public partial class MainForm
         // ========================
         // Tools
         // ========================
-        _menuToolsOptions.Click += (_, _) => OpenEditorPropertiesDialog();
+        _menuToolsPen.Click       += (_, _) => SetToolMode(EditorToolMode.Pen);
+        _menuToolsSelection.Click += (_, _) => SetToolMode(EditorToolMode.Selection);
+        _menuToolsMarker.Click    += (_, _) => SetToolMode(EditorToolMode.Marker);
+        _menuToolsOptions.Click   += (_, _) => OpenEditorPropertiesDialog();
 
         // ========================
         // Window

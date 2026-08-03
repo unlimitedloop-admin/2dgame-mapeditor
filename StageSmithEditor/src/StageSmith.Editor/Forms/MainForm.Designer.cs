@@ -206,10 +206,17 @@ namespace StageSmith.Editor
             // ========================
             // Tools
             // ========================
-            _menuTools        = new ToolStripMenuItem("Tools");
-            _menuToolsOptions = new ToolStripMenuItem("Options...");
+            _menuTools           = new ToolStripMenuItem("Tools");
+            _menuToolsPen        = new ToolStripMenuItem("Pen")       { ShortcutKeyDisplayString = "P" };
+            _menuToolsSelection  = new ToolStripMenuItem("Selection") { ShortcutKeyDisplayString = "S" };
+            _menuToolsMarker     = new ToolStripMenuItem("Marker")    { ShortcutKeyDisplayString = "K" };
+            _menuToolsOptions    = new ToolStripMenuItem("Options...");
 
             _menuTools.DropDownItems.AddRange([
+                _menuToolsPen,
+                _menuToolsSelection,
+                _menuToolsMarker,
+                new ToolStripSeparator(),
                 _menuToolsOptions,
             ]);
 
@@ -368,8 +375,11 @@ namespace StageSmith.Editor
         private ToolStripMenuItem _menuNavForward     = null!;
 
         // Tools
-        private ToolStripMenuItem _menuTools        = null!;
-        private ToolStripMenuItem _menuToolsOptions = null!;
+        private ToolStripMenuItem _menuTools           = null!;
+        private ToolStripMenuItem _menuToolsPen         = null!;
+        private ToolStripMenuItem _menuToolsSelection   = null!;
+        private ToolStripMenuItem _menuToolsMarker      = null!;
+        private ToolStripMenuItem _menuToolsOptions     = null!;
 
         // Window
         private ToolStripMenuItem _menuWindow               = null!;

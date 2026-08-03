@@ -385,6 +385,10 @@ public partial class MainForm
 
         if (mode == EditorToolMode.Pen)
             _selectionTool?.ClearSelection();
+
+        // Markerツールに切り替えたら、マーカーオーバーレイを自動的に表示する
+        if (mode == EditorToolMode.Marker && !_menuViewMarkerOverlay.Checked)
+            _menuViewMarkerOverlay.Checked = true;
     }
 
     private void BindTilePalette()
@@ -436,6 +440,10 @@ public partial class MainForm
         _penButton.Checked = _currentMode == EditorToolMode.Pen;
         _selectionButton.Checked = _currentMode == EditorToolMode.Selection;
         _markerButton.Checked = _currentMode == EditorToolMode.Marker;
+
+        _menuToolsPen.Checked = _currentMode == EditorToolMode.Pen;
+        _menuToolsSelection.Checked = _currentMode == EditorToolMode.Selection;
+        _menuToolsMarker.Checked = _currentMode == EditorToolMode.Marker;
     }
 
     //========================
