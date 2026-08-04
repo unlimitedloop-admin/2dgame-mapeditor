@@ -46,6 +46,12 @@ public class EditorConfig
     public byte DefaultClearTileId { get; set; } = 0;
 
     /// <summary>
+    /// trueの場合、Export BIN / Export All Stages のダイアログ初期表示フォルダを
+    /// ステージファイルの保存先ディレクトリにする。
+    /// </summary>
+    public bool UseStageDirectoryForExport { get; set; } = false;
+
+    /// <summary>
     /// EditorPropertiesDialog等でCancel時に元設定を汚さないための複製。
     /// 全プロパティが値型/stringのみのため MemberwiseClone で十分。
     /// </summary>

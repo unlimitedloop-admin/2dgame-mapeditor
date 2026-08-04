@@ -23,6 +23,9 @@ public sealed class EditorPropertiesDialog : Form
     private readonly CheckBox _useProjectSubDirectoryCheckBox;
     private readonly TextBox _defaultSaveDirectoryTextBox;
 
+    // ---- File タブ ----
+    private readonly CheckBox _useStageDirectoryForExportCheckBox;
+
     public EditorPropertiesDialog(EditorConfig currentConfig)
     {
         Result = currentConfig.Clone();
@@ -42,8 +45,10 @@ public sealed class EditorPropertiesDialog : Form
 
         var generalTab = new TabPage("General");
         var projectTab = new TabPage("Project");
+        var fileTab    = new TabPage("File");
         tabControl.TabPages.Add(generalTab);
         tabControl.TabPages.Add(projectTab);
+        tabControl.TabPages.Add(fileTab);
 
         // ============================================
         // General タブ
@@ -164,6 +169,19 @@ public sealed class EditorPropertiesDialog : Form
         projectTab.Controls.Add(browseButton);
 
         // ============================================
+        // File タブ
+        // ============================================
+        _useStageDirectoryForExportCheckBox = new CheckBox
+        {
+            Text     = "バイナリ出力先の初期フォルダをステージファイルの保存先にする",
+            Location = new Point(16, 16),
+            AutoSize = true,
+            Checked  = Result.UseStageDirectoryForExport,
+        };
+
+        fileTab.Controls.Add(_useStageDirectoryForExportCheckBox);
+
+        // ============================================
         // OK / Cancel
         // ============================================
         var okButton = new Button
@@ -207,5 +225,6 @@ public sealed class EditorPropertiesDialog : Form
         Result.UseStageSubFolder = _useStageSubFolderCheckBox.Checked;
         Result.UseProjectSubDirectory = _useProjectSubDirectoryCheckBox.Checked;
         Result.DefaultProjectSaveDirectory = _defaultSaveDirectoryTextBox.Text.Trim();
+        Result.UseStageDirectoryForExport = _useStageDirectoryForExportCheckBox.Checked;
     }
 }

@@ -52,6 +52,7 @@ public class IniConfigRepository : IConfigRepository
         config.UseProjectSubDirectory = GetBool(values, nameof(config.UseProjectSubDirectory), config.UseProjectSubDirectory);
         config.DefaultProjectSaveDirectory = GetString(values, nameof(config.DefaultProjectSaveDirectory), config.DefaultProjectSaveDirectory);
         config.DefaultClearTileId = (byte)GetInt(values, nameof(config.DefaultClearTileId), config.DefaultClearTileId);
+        config.UseStageDirectoryForExport = GetBool(values, nameof(config.UseStageDirectoryForExport), config.UseStageDirectoryForExport);
 
         return config;
     }
@@ -92,6 +93,7 @@ public class IniConfigRepository : IConfigRepository
             $"{nameof(config.UseProjectSubDirectory)}={config.UseProjectSubDirectory}",
             $"{nameof(config.DefaultProjectSaveDirectory)}={config.DefaultProjectSaveDirectory}",
             $"{nameof(config.DefaultClearTileId)}={config.DefaultClearTileId}",
+            $"{nameof(config.UseStageDirectoryForExport)}={config.UseStageDirectoryForExport}",
         };
 
         File.WriteAllLines(_filePath, lines);

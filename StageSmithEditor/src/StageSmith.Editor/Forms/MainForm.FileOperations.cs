@@ -543,6 +543,14 @@ public partial class MainForm
             FileName = $"{stage.Name}{FileExtensions.StageMapBinary}"
         };
 
+        if (_config.UseStageDirectoryForExport &&
+            !string.IsNullOrWhiteSpace(stage.FilePath))
+        {
+            var stageDir = Path.GetDirectoryName(stage.FilePath);
+            if (!string.IsNullOrWhiteSpace(stageDir) && Directory.Exists(stageDir))
+                dialog.InitialDirectory = stageDir;
+        }
+
         if (dialog.ShowDialog(this) != DialogResult.OK)
             return;
 
@@ -578,21 +586,52 @@ public partial class MainForm
             return;
         }
 
-        using var folderDialog = new FolderBrowserDialog
+        string? sharedOutputDir = null;
+        var perStageFolder = false;
+
+        if (_config.UseStageDirectoryForExport)
         {
-            Description = "出力先フォルダを選択",
-        };
+            var choice = MessageBox.Show(
+                this,
+                "各ステージのデータを、それぞれのステージファイルが保存されているフォルダへ出力しますか？\n" +
+                "「いいえ」を選ぶと、ステージ保存先フォルダへまとめて出力します。",
+                "Export All Stages",
+                MessageBoxButtons.YesNoCancel,
+                MessageBoxIcon.Question);
 
-        if (folderDialog.ShowDialog(this) != DialogResult.OK) return;
+            switch (choice)
+            {
+                case DialogResult.Yes:
+                    perStageFolder = true;
+                    break;
+                case DialogResult.No:
+                    sharedOutputDir = project.ResolveStageStorageDirectory();
+                    break;
+                default:
+                    return; // Cancel
+            }
+        }
+        else
+        {
+            using var folderDialog = new FolderBrowserDialog
+            {
+                Description = "出力先フォルダを選択",
+            };
 
-        var outputDir = folderDialog.SelectedPath;
+            if (folderDialog.ShowDialog(this) != DialogResult.OK) return;
+            sharedOutputDir = folderDialog.SelectedPath;
+        }
 
-        // TODO: 将来的にエディタ設定で「ステージごとにサブフォルダを分ける」オプションを追加する場合は
-        //       ここで outputDir をステージ単位のサブフォルダに切り替える分岐を入れる。
         var exportedCount = 0;
 
         foreach (var stage in project.Stages)
         {
+            var outputDir = perStageFolder
+                ? ResolvePerStageOutputDir(project, stage)
+                : sharedOutputDir!;
+
+            Directory.CreateDirectory(outputDir);
+
             var baseName = SanitizeFileName(stage.Name);
 
             var binPath = Path.Combine(outputDir, $"{baseName}{FileExtensions.StageMapBinary}");
@@ -606,14 +645,29 @@ public partial class MainForm
             exportedCount++;
         }
 
+        var summaryLocation = perStageFolder ? "各ステージフォルダ" : sharedOutputDir!;
+
         MessageBox.Show(
             this,
-            $"{exportedCount} 件のステージを出力しました。\n{outputDir}",
+            $"{exportedCount} 件のステージを出力しました。\n{summaryLocation}",
             "Export All Stages",
             MessageBoxButtons.OK,
             MessageBoxIcon.Information);
+    }
 
-        ShowStatusMessage($"{exportedCount} 件のステージを {TruncatePathForStatus(outputDir)} へ出力しました");
+    /// <summary>
+    /// 「各ステージフォルダへ出力」選択時の、ステージ単位の出力先を解決する。
+    /// 未保存（FilePath=null）のステージは、フォールバックとしてステージ保存先ディレクトリを使う。
+    /// </summary>
+    private static string ResolvePerStageOutputDir(EditorProject project, Stage stage)
+    {
+        var stageFileDir = string.IsNullOrWhiteSpace(stage.FilePath)
+            ? null
+            : Path.GetDirectoryName(stage.FilePath);
+
+        return string.IsNullOrWhiteSpace(stageFileDir)
+            ? project.ResolveStageStorageDirectory()
+            : stageFileDir;
     }
 
     /// <summary>
