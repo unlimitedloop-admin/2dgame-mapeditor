@@ -1,4 +1,7 @@
 using StageSmith.Core.Models;
+using StageSmith.Editor.Utilities;
+using System.ComponentModel;
+using System.Runtime.Serialization;
 
 namespace StageSmith.Editor.Controls;
 
@@ -11,20 +14,53 @@ public class StageExplorerControl : UserControl
     // イベント
     //========================
 
-    /// <summary>ページが選択されたとき発火する。</summary>
+    /// <summary>
+    /// ステージ（のみ）が選択されたとき発火する。
+    /// </summary>
+    public event Action<Stage>? StageSelected;
+
+    /// <summary>
+    /// ページが選択されたとき発火する。
+    /// </summary>
     public event Action<Stage, Page>? PageSelected;
 
-    /// <summary>ステージが追加・削除・複製されたとき発火する。</summary>
+    /// <summary>
+    /// ステージが追加・削除・複製されたとき発火する。
+    /// </summary>
     public event Action? StageListChanged;
 
-    /// <summary>ページが追加・削除・複製されたとき発火する。</summary>
+    /// <summary>
+    /// ページが追加・削除・複製されたとき発火する。
+    /// </summary>
     public event Action<Stage>? PageListChanged;
 
     /// <summary>
-    /// 現在表示中のページが削除されたとき発火する。
-    /// 第2引数は削除後に表示すべきページ（なければ null）。
+    /// ページの削除がユーザーによって確認されたとき発火する。
+    /// 実際のモデル操作（Undo対応含む）は呼び出し側が行う。
     /// </summary>
-    public event Action<Stage, Page?>? PageDeleted;
+    public event Action<Stage, Page>? PageDeleteRequested;
+
+    /// <summary>
+    /// ステージの削除がユーザーによって確認されたとき発火する。
+    /// 実際のモデル操作（ファイル削除・ブックマーク連動削除含む）は呼び出し側（MainForm）が行う。
+    /// </summary>
+    public event Action<Stage>? StageDeleteRequested;
+
+    /// <summary>
+    /// ブックマークの切り替えがユーザーによって要求されたとき発火する。
+    /// 実際のモデル操作（Undo対応含む）は呼び出し側が行う。
+    /// </summary>
+    public event Action<Stage, Page>? BookmarkToggleRequested;
+
+    /// <summary>
+    /// ステージマップビューアーの起動がコンテキストメニューから要求されたとき発火する。
+    /// </summary>
+    public event Action<Stage>? StageMapViewerRequested;
+
+    /// <summary>
+    /// ページノードエディタの起動がコンテキストメニューから要求されたとき発火する。
+    /// </summary>
+    public event Action<Stage, Page>? PageNodeEditorRequested;
 
     //========================
     // 内部状態
@@ -39,12 +75,32 @@ public class StageExplorerControl : UserControl
     private readonly TreeView _treeView;
     private readonly ContextMenuStrip _stageMenu;
     private readonly ContextMenuStrip _pageMenu;
+    private readonly ToolStripMenuItem _pageBookmarkMenuItem = new("ブックマークを追加");
+    private readonly Font _currentPageFont;
+    private bool _suppressSelectEvent;
+    private bool _isEditingLabel;
+
+    //========================
+    // Change Enabled MenuItems
+    //========================
+    private ToolStripMenuItem _stageRenameMenuItem = null!;
+    private ToolStripMenuItem _stageCloneMenuItem  = null!;
+    private ToolStripMenuItem _stageDeleteMenuItem = null!;
+    private ToolStripMenuItem _pageRenameMenuItem    = null!;
+    private ToolStripMenuItem _pageDuplicateMenuItem = null!;
+    private ToolStripMenuItem _pageDeleteMenuItem    = null!;
+
+    /// <summary>
+    /// ステージ／ページ名がインライン編集中かどうか。
+    /// キーコマンドの制御（TextBox フォーカス扱い）に使用する。
+    /// </summary>
+    public bool IsEditingLabel => _isEditingLabel;
 
     //========================
     // アイコンインデックス（ImageList）
     //========================
-    private const int _iconStage = 0;
-    private const int _iconPage = 1;
+    private const int IconStage = 0;
+    private const int IconPage = 1;
 
     //========================
     // 初期化
@@ -55,6 +111,9 @@ public class StageExplorerControl : UserControl
         _treeView = CreateTreeView();
         _stageMenu = CreateStageContextMenu();
         _pageMenu = CreatePageContextMenu();
+        _currentPageFont = new Font(_treeView.Font, FontStyle.Bold);
+
+        _pageBookmarkMenuItem.Click += OnPageBookmarkToggle;
 
         Controls.Add(_treeView);
     }
@@ -66,7 +125,7 @@ public class StageExplorerControl : UserControl
     /// <summary>
     /// プロジェクトをバインドしてツリーを再構築する。
     /// </summary>
-    public void Bind(EditorProject project)
+    public void Bind(EditorProject? project)
     {
         _project = project;
         RebuildTree();
@@ -79,7 +138,33 @@ public class StageExplorerControl : UserControl
     {
         _currentStage = stage;
         _currentPage = page;
+
+        var node = FindPageNode(stage, page);
+        if (node != null && !ReferenceEquals(_treeView.SelectedNode, node))
+        {
+            _suppressSelectEvent = true;
+            _treeView.SelectedNode = node;
+            _suppressSelectEvent = false;
+        }
+
         RefreshHighlight();
+    }
+
+    private TreeNode? FindPageNode(Stage stage, Page page)
+    {
+        foreach (TreeNode stageNode in _treeView.Nodes)
+        {
+            foreach (TreeNode pageNode in stageNode.Nodes)
+            {
+                if (pageNode.Tag is NodeTag tag
+                    && ReferenceEquals(tag.Stage, stage)
+                    && ReferenceEquals(tag.Page, page))
+                {
+                    return pageNode;
+                }
+            }
+        }
+        return null;
     }
 
     /// <summary>
@@ -106,6 +191,19 @@ public class StageExplorerControl : UserControl
         _treeView.EndUpdate();
 
         AdjustTreeViewWidth(_treeView);
+
+        // ノード再生成でネイティブ選択状態が失われるため、現在ページに合わせて再同期する
+        if (_currentStage != null && _currentPage != null)
+        {
+            var node = FindPageNode(_currentStage, _currentPage);
+            if (node != null)
+            {
+                _suppressSelectEvent = true;
+                _treeView.SelectedNode = node;
+                _suppressSelectEvent = false;
+            }
+        }
+
         RefreshHighlight();
     }
 
@@ -114,12 +212,16 @@ public class StageExplorerControl : UserControl
     //========================
     private TreeNode CreateStageNode(Stage stage)
     {
-        var node = new TreeNode(stage.Name)
+        var label = stage.IsDirty ? $"{stage.Name} *" : stage.Name;
+
+        var node = new TreeNode(label)
         {
-            ImageIndex = _iconStage,
-            SelectedImageIndex = _iconStage,
+            ImageIndex = IconStage,
+            SelectedImageIndex = IconStage,
             Tag = new NodeTag(NodeKind.Stage, stage, null)
         };
+
+        ApplyTagColor(node, stage.TagIds);
 
         for (var i = 0; i < stage.Pages.Count; i++)
         {
@@ -131,18 +233,38 @@ public class StageExplorerControl : UserControl
         return node;
     }
 
-    private static TreeNode CreatePageNode(Stage stage, Page page, int index)
+    private TreeNode CreatePageNode(Stage stage, Page page, int index)
     {
-        var label = string.IsNullOrWhiteSpace(page.Name)
+        var baseLabel = string.IsNullOrWhiteSpace(page.Name)
             ? $"Page {index:D2}"
             : $"Page {index:D2}  {page.Name}";
 
-        return new TreeNode(label)
+        var isBookmarked = _project?.Bookmarks
+            .Any(b => b.StageId == stage.Id && b.PageId == page.Id) ?? false;
+
+        var label = isBookmarked ? $"{baseLabel}  ★" : baseLabel;
+
+        var node = new TreeNode(label)
         {
-            ImageIndex = _iconPage,
-            SelectedImageIndex = _iconPage,
+            ImageIndex = IconPage,
+            SelectedImageIndex = IconPage,
             Tag = new NodeTag(NodeKind.Page, stage, page)
         };
+
+        ApplyTagColor(node, page.TagIds);
+
+        return node;
+    }
+
+    /// <summary>
+    /// 付与されている代表タグの色を、視認性補正した上でノードの文字色として反映する。
+    /// タグが無い場合は既定の文字色（変更なし）のまま。
+    /// </summary>
+    private void ApplyTagColor(TreeNode node, List<string> tagIds)
+    {
+        var color = ResolveTagColor(tagIds);
+        if (color != null)
+            node.ForeColor = color.Value;
     }
 
     //========================
@@ -162,13 +284,11 @@ public class StageExplorerControl : UserControl
                 var isCurrent = ReferenceEquals(tag.Stage, _currentStage)
                              && ReferenceEquals(tag.Page, _currentPage);
 
-                pageNode.NodeFont = isCurrent
-                    ? new Font(_treeView.Font, FontStyle.Bold)
-                    : null;
+                pageNode.NodeFont = isCurrent ? _currentPageFont : null;
 
                 pageNode.ForeColor = isCurrent
                     ? SystemColors.Highlight
-                    : _treeView.ForeColor;
+                    : ResolveTagColor(tag.Page.TagIds) ?? _treeView.ForeColor;
 
                 // WinForms の TreeView は太字変更後にテキスト幅を再計算しないため
                 // 末尾スペースを付与して右端の欠けを防ぐ
@@ -178,6 +298,15 @@ public class StageExplorerControl : UserControl
         }
 
         _treeView.EndUpdate();
+        _treeView.Invalidate();
+    }
+
+    private Color? ResolveTagColor(List<string> tagIds)
+    {
+        var tag = TagDisplayHelper.ResolveRepresentativeTag(_project, tagIds);
+        if (tag == null) return null;
+
+        return TagDisplayHelper.GetReadableTextColor(ColorTranslator.FromHtml(tag.Color));
     }
 
     //========================
@@ -187,43 +316,62 @@ public class StageExplorerControl : UserControl
     {
         if (e.Button == MouseButtons.Right)
         {
-            _treeView.SelectedNode = e.Node;
             if (e.Node != null)
             {
+                // 右クリックでのノード選択はページ切り替えを伴わせたくないので抑制
+                _suppressSelectEvent = true;
+                _treeView.SelectedNode = e.Node;
+                _suppressSelectEvent = false;
+
                 ShowContextMenu(e.Node, e.Location);
             }
             return;
         }
 
-        if (e.Button == MouseButtons.Left && e.Node?.Tag is NodeTag tag)
-        {
-            if (tag.Kind == NodeKind.Page && tag.Page != null)
-            {
-                _currentStage = tag.Stage;
-                _currentPage = tag.Page;
-                RefreshHighlight();
-                PageSelected?.Invoke(tag.Stage, tag.Page);
-            }
-        }
+        // 左クリックの選択自体はTreeViewが自動でSelectedNodeを更新するため
+        // ページ切り替えロジックはOnAfterSelectに一本化する
     }
 
     private void OnBeforeLabelEdit(object? sender, NodeLabelEditEventArgs e)
     {
         // ラベル編集は右クリックメニューの Rename からのみ許可
         // 直接ダブルクリック編集はキャンセル
-        if (e.Node?.Tag is NodeTag tag && tag.Kind == NodeKind.Stage)
+        if (e.Node?.Tag is NodeTag tag && (tag.Kind == NodeKind.Stage || tag.Kind == NodeKind.Page))
         {
-            // Stage のみ編集許可（Rename メニュー経由でも同じ処理）
+            // Stage / Page は編集許可（Rename メニュー経由でも同じ処理）
+            _isEditingLabel = true;
             return;
         }
         e.CancelEdit = true;
     }
 
+    private void OnAfterSelect(object? sender, TreeViewEventArgs e)
+    {
+        if (_suppressSelectEvent) return;
+        if (e.Node?.Tag is not NodeTag tag) return;
+
+        if (tag.Kind == NodeKind.Stage)
+        {
+            StageSelected?.Invoke(tag.Stage);
+            return;
+        }
+
+        if (tag.Kind != NodeKind.Page || tag.Page == null) return;
+
+        _currentStage = tag.Stage;
+        _currentPage = tag.Page;
+        RefreshHighlight();
+        PageSelected?.Invoke(tag.Stage, tag.Page);
+    }
+
     private void OnAfterLabelEdit(object? sender, NodeLabelEditEventArgs e)
     {
+        _isEditingLabel = false;
+
         if (e.Label == null || e.Node?.Tag is not NodeTag tag)
         {
             e.CancelEdit = true;
+            BeginInvoke(RebuildTree);
             return;
         }
 
@@ -231,41 +379,68 @@ public class StageExplorerControl : UserControl
         if (string.IsNullOrEmpty(newName))
         {
             e.CancelEdit = true;
+            BeginInvoke(RebuildTree);
             return;
         }
 
         if (tag.Kind == NodeKind.Stage)
         {
             tag.Stage.Name = newName;
+            tag.Stage.MarkDirty();
             StageListChanged?.Invoke();
+
+            e.CancelEdit = true;
+            BeginInvoke(RebuildTree);
         }
         else if (tag.Kind == NodeKind.Page && tag.Page != null)
         {
             tag.Page.Name = newName;
+            tag.Stage.MarkDirty();  // REVIEW: ページ名変更はステージの変更として扱う？
             PageListChanged?.Invoke(tag.Stage);
             // ページノードのテキストをラベル形式に合わせて更新
             e.CancelEdit = true;
-            RebuildTree();
+            BeginInvoke(RebuildTree);
         }
     }
 
     //========================
     // コンテキストメニュー表示
     //========================
+    /// <summary>読み取り専用状態。MainFormから同期される。</summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public bool IsReadOnly { get; set; }
+
     private void ShowContextMenu(TreeNode node, Point location)
     {
         if (node.Tag is not NodeTag tag) return;
+
+        _stageRenameMenuItem.Enabled    = !IsReadOnly;
+        _stageCloneMenuItem.Enabled     = !IsReadOnly;
+        _stageDeleteMenuItem.Enabled    = !IsReadOnly;
+        _pageRenameMenuItem.Enabled     = !IsReadOnly;
+        _pageDuplicateMenuItem.Enabled  = !IsReadOnly;
+        _pageDeleteMenuItem.Enabled     = !IsReadOnly;
 
         if (tag.Kind == NodeKind.Stage)
         {
             _stageMenu.Tag = tag;
             _stageMenu.Show(_treeView, location);
         }
-        else if (tag.Kind == NodeKind.Page)
+        else if (tag.Kind == NodeKind.Page && tag.Page != null)
         {
             _pageMenu.Tag = tag;
+            UpdateBookmarkMenuItemText(tag.Stage, tag.Page);
             _pageMenu.Show(_treeView, location);
         }
+    }
+
+    private void UpdateBookmarkMenuItemText(Stage stage, Page page)
+    {
+        var isBookmarked = _project?.Bookmarks
+            .Any(b => b.StageId == stage.Id && b.PageId == page.Id) ?? false;
+
+        _pageBookmarkMenuItem.Text = isBookmarked ? "ブックマークを削除" : "ブックマークを追加";
     }
 
     //========================
@@ -273,9 +448,13 @@ public class StageExplorerControl : UserControl
     //========================
     private void OnStageRename(object? sender, EventArgs e)
     {
-        if (_treeView.SelectedNode == null) return;
+        if (_treeView.SelectedNode is not { Tag: NodeTag { Kind: NodeKind.Stage } tag } node) return;
+
+        // 編集開始時は "*"（未保存マーク）を含まない生の名前を表示する
+        node.Text = tag.Stage.Name;
+
         _treeView.LabelEdit = true;
-        _treeView.SelectedNode.BeginEdit();
+        node.BeginEdit();
     }
 
     private void OnStageDelete(object? sender, EventArgs e)
@@ -291,17 +470,8 @@ public class StageExplorerControl : UserControl
 
         if (result != DialogResult.Yes) return;
 
-        _project.Stages.Remove(tag.Stage);
-
-        // 削除したステージが選択中だった場合はリセット
-        if (ReferenceEquals(_currentStage, tag.Stage))
-        {
-            _currentStage = null;
-            _currentPage = null;
-        }
-
-        RebuildTree();
-        StageListChanged?.Invoke();
+        // 実際の削除（ファイル削除・ブックマーク連動削除含む）は呼び出し側（MainForm）に委譲する
+        StageDeleteRequested?.Invoke(tag.Stage);
     }
 
     private void OnStageClone(object? sender, EventArgs e)
@@ -319,14 +489,24 @@ public class StageExplorerControl : UserControl
         StageListChanged?.Invoke();
     }
 
+    private void OnStageMapViewerLaunch(object? sender, EventArgs e)
+    {
+        if (_stageMenu.Tag is not NodeTag tag) return;
+        StageMapViewerRequested?.Invoke(tag.Stage);
+    }
+
     //========================
     // Page コンテキストメニュー操作
     //========================
     private void OnPageRename(object? sender, EventArgs e)
     {
-        if (_treeView.SelectedNode == null) return;
+        if (_treeView.SelectedNode is not { Tag: NodeTag { Kind: NodeKind.Page } tag } node) return;
+
+        // 編集開始時は "Page 00" 等のインデックス表記・ブックマーク記号を含まない生の名前を表示する
+        node.Text = tag.Page?.Name ?? string.Empty;
+
         _treeView.LabelEdit = true;
-        _treeView.SelectedNode.BeginEdit();
+        node.BeginEdit();
     }
 
     private void OnPageDelete(object? sender, EventArgs e)
@@ -339,37 +519,15 @@ public class StageExplorerControl : UserControl
             : tag.Page.Name;
 
         var result = MessageBox.Show(
-            $"ページ「{label}」を削除しますか？\nこの操作は元に戻せません。",
+            $"ページ「{label}」を削除しますか？",
             "ページの削除",
             MessageBoxButtons.YesNo,
             MessageBoxIcon.Warning);
 
         if (result != DialogResult.Yes) return;
 
-        // 削除後に表示すべきページを先に決定する
-        // 直前 → 直後 → null の優先順
-        var wasCurrentPage = ReferenceEquals(_currentPage, tag.Page);
-        Page? nextPage = null;
-
-        if (wasCurrentPage)
-        {
-            var pages = tag.Stage.Pages;
-            if (pageIndex > 0)
-                nextPage = pages[pageIndex - 1];
-            else if (pages.Count > 1)
-                nextPage = pages[1]; // 削除後に index 0 になるページ
-        }
-
-        tag.Stage.Pages.Remove(tag.Page);
-
-        if (wasCurrentPage)
-        {
-            _currentPage = nextPage;
-            PageDeleted?.Invoke(tag.Stage, nextPage);
-        }
-
-        RebuildTree();
-        PageListChanged?.Invoke(tag.Stage);
+        // 実際の削除・Undo登録は呼び出し側（MainForm）に委譲する
+        PageDeleteRequested?.Invoke(tag.Stage, tag.Page);
     }
 
     private void OnPageDuplicate(object? sender, EventArgs e)
@@ -380,9 +538,16 @@ public class StageExplorerControl : UserControl
 
         var insertIndex = tag.Stage.Pages.IndexOf(tag.Page) + 1;
         tag.Stage.Pages.Insert(insertIndex, clone);
+        tag.Stage.MarkDirty();
 
         RebuildTree();
         PageListChanged?.Invoke(tag.Stage);
+    }
+
+    private void OnPageNodeEditorLaunch(object? sender, EventArgs e)
+    {
+        if (_pageMenu.Tag is not NodeTag tag || tag.Page == null) return;
+        PageNodeEditorRequested?.Invoke(tag.Stage, tag.Page);
     }
 
     //========================
@@ -411,6 +576,7 @@ public class StageExplorerControl : UserControl
         };
 
         tv.NodeMouseClick += OnNodeMouseClick;
+        tv.AfterSelect += OnAfterSelect;
         tv.BeforeLabelEdit += OnBeforeLabelEdit;
         tv.AfterLabelEdit += OnAfterLabelEdit;
 
@@ -498,23 +664,55 @@ public class StageExplorerControl : UserControl
     private ContextMenuStrip CreateStageContextMenu()
     {
         var menu = new ContextMenuStrip();
-        menu.Items.Add("Rename", null, OnStageRename);
+
+        _stageRenameMenuItem = new ToolStripMenuItem("名前変更", null, OnStageRename);
+        _stageCloneMenuItem  = new ToolStripMenuItem("複製", null, OnStageClone);
+        _stageDeleteMenuItem = new ToolStripMenuItem("削除", null, OnStageDelete);
+
+        menu.Items.Add(_stageRenameMenuItem);
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("Clone",  null, OnStageClone);
+        menu.Items.Add(_stageCloneMenuItem);
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("Delete", null, OnStageDelete);
+        menu.Items.Add(_stageDeleteMenuItem);
+        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add("ステージマップビューアーを起動...", null, OnStageMapViewerLaunch);
         return menu;
     }
 
     private ContextMenuStrip CreatePageContextMenu()
     {
         var menu = new ContextMenuStrip();
-        menu.Items.Add("Rename",    null, OnPageRename);
+
+        _pageRenameMenuItem    = new ToolStripMenuItem("名前変更", null, OnPageRename);
+        _pageDuplicateMenuItem = new ToolStripMenuItem("複製", null, OnPageDuplicate);
+        _pageDeleteMenuItem    = new ToolStripMenuItem("削除", null, OnPageDelete);
+
+        menu.Items.Add(_pageRenameMenuItem);
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("Duplicate", null, OnPageDuplicate);
+        menu.Items.Add(_pageDuplicateMenuItem);
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("Delete",    null, OnPageDelete);
+        menu.Items.Add((ToolStripItem)_pageBookmarkMenuItem);
+        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add(_pageDeleteMenuItem);
+        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add("ページノードエディタを起動...", null, OnPageNodeEditorLaunch);
         return menu;
+    }
+
+    private void OnPageBookmarkToggle(object? sender, EventArgs e)
+    {
+        if (_pageMenu.Tag is not NodeTag tag || tag.Page == null) return;
+        BookmarkToggleRequested?.Invoke(tag.Stage, tag.Page);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _currentPageFont?.Dispose();
+        }
+
+        base.Dispose(disposing);
     }
 
     //========================

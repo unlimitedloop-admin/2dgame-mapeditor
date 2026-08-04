@@ -1,11 +1,16 @@
+using StageSmith.Application.Commands;
 using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
+using StageSmith.Editor.Forms;
+using StageSmith.Editor.Utilities;
 
 namespace StageSmith.Editor.Controls;
 
 public sealed class PropertyWindowControl : UserControl
 {
     private EditorContext? _context;
+
+    private NumberDisplayFormat _numberDisplayFormat = NumberDisplayFormat.Hex;
 
     private bool _isRefreshing;
 
@@ -15,11 +20,22 @@ public sealed class PropertyWindowControl : UserControl
     /// </summary>
     public event Action? DataChanged;
 
+    /// <summary>
+    /// プロパティ編集がコマンドとして確定したとき発火する。
+    /// 実際のCommandManager.Execute()はMainForm側で行う。
+    /// </summary>
+    public event Action<ICommand>? CommandRequested;
+
     private readonly TableLayoutPanel _table = new();
 
     private TextBox _projectNameTextBox = null!;
     private TextBox _stageNameTextBox = null!;
     private TextBox _pageNameTextBox = null!;
+
+    private FlowLayoutPanel _stageTagsBadgesPanel = null!;
+    private FlowLayoutPanel _pageTagsBadgesPanel = null!;
+
+    private const int TagIconSize = 16;
 
     private CheckBox _pageEnableCheckBox = null!;
     private CheckBox _pageReadOnlyCheckBox = null!;
@@ -72,6 +88,24 @@ public sealed class PropertyWindowControl : UserControl
         RefreshProperties();
     }
 
+    public void SetNumberDisplayFormat(NumberDisplayFormat format)
+    {
+        _numberDisplayFormat = format;
+
+        var hex = format == NumberDisplayFormat.Hex;
+
+        _roomIdNumeric.Hexadecimal = hex;
+        _leftPageNumeric.Hexadecimal = hex;
+        _rightPageNumeric.Hexadecimal = hex;
+        _upPageNumeric.Hexadecimal = hex;
+        _downPageNumeric.Hexadecimal = hex;
+        _frontPageNumeric.Hexadecimal = hex;
+        _backPageNumeric.Hexadecimal = hex;
+        _zNumeric.Hexadecimal = hex;
+
+        RefreshProperties();
+    }
+
     private void InitializeLayout()
     {
         _table.Dock = DockStyle.Fill;
@@ -89,12 +123,14 @@ public sealed class PropertyWindowControl : UserControl
 
         AddHeader("Stage", Color.FromArgb(200, 255, 200));
         _stageNameTextBox = AddTextRow("Name");
+        _stageTagsBadgesPanel = AddTagsRow("Tags", OnEditStageTagsClick);
 
         AddHeader("Page", Color.FromArgb(255, 200, 0));
         _pageNameTextBox = AddTextRow("Name");
         _pageEnableCheckBox = AddCheckRow("Enable");
         _pageReadOnlyCheckBox = AddCheckRow("ReadOnly");
         _pageRemarksTextBox = AddTextRow("Remarks");
+        _pageTagsBadgesPanel = AddTagsRow("Tags", OnEditPageTagsClick);
 
         AddHeader("Page Header", Color.FromArgb(255, 220, 120));
 
@@ -133,74 +169,42 @@ public sealed class PropertyWindowControl : UserControl
 
     private void BindEvents()
     {
-        _projectNameTextBox.TextChanged += (_, _) =>
+        TrackChange(_projectNameTextBox,
+            () => _projectNameTextBox.Text,
+            v => { if (_context?.Project != null) _context.Project.Name = v; });
+
+        TrackChange(_stageNameTextBox,
+            () => _stageNameTextBox.Text,
+            v => { if (_context?.CurrentStage != null) _context.CurrentStage.Name = v; });
+
+        TrackChange(_pageNameTextBox,
+            () => _pageNameTextBox.Text,
+            v => { if (_context?.CurrentPage != null) _context.CurrentPage.Name = v; });
+
+        TrackChange(_pageEnableCheckBox,
+            () => _pageEnableCheckBox.Checked,
+            v => { if (_context?.CurrentPage != null) _context.CurrentPage.Enable = v; });
+
+        TrackChange(_pageReadOnlyCheckBox,
+            () => _pageReadOnlyCheckBox.Checked,
+            v => { if (_context?.CurrentPage != null) _context.CurrentPage.ReadOnly = v; });
+
+        TrackChange(_pageRemarksTextBox,
+            () => _pageRemarksTextBox.Text,
+            v => { if (_context?.CurrentPage != null) _context.CurrentPage.Remarks = v; });
+
+        foreach (var control in new Control[]
         {
-            if (_context?.Project == null) return;
-            _context.Project.Name = _projectNameTextBox.Text;
-            DataChanged?.Invoke();
-        };
-
-        _stageNameTextBox.TextChanged += (_, _) =>
+            _roomIdNumeric, _flagWaterCheckBox, _flagWindCheckBox,
+            _leftPageNumeric, _rightPageNumeric, _upPageNumeric, _downPageNumeric,
+            _frontPageNumeric, _backPageNumeric, _zNumeric,
+            _scrollLeftCombo, _scrollRightCombo, _scrollUpCombo, _scrollDownCombo,
+            _scrollLeftNoEdgeCheck, _scrollRightNoEdgeCheck, _scrollUpNoEdgeCheck, _scrollDownNoEdgeCheck,
+            _scrollLeftLoopCheck, _scrollRightLoopCheck, _scrollUpLoopCheck, _scrollDownLoopCheck,
+        })
         {
-            if (_context?.CurrentStage == null) return;
-            _context.CurrentStage.Name = _stageNameTextBox.Text;
-            DataChanged?.Invoke();
-        };
-
-        _pageNameTextBox.TextChanged += (_, _) =>
-        {
-            if (_context?.CurrentPage == null) return;
-            _context.CurrentPage.Name = _pageNameTextBox.Text;
-            DataChanged?.Invoke();
-        };
-
-        _pageEnableCheckBox.CheckedChanged += (_, _) =>
-        {
-            if (_context?.CurrentPage == null) return;
-            _context.CurrentPage.Enable = _pageEnableCheckBox.Checked;
-            DataChanged?.Invoke();
-        };
-
-        _pageReadOnlyCheckBox.CheckedChanged += (_, _) =>
-        {
-            if (_context?.CurrentPage == null) return;
-            _context.CurrentPage.ReadOnly = _pageReadOnlyCheckBox.Checked;
-            DataChanged?.Invoke();
-        };
-
-        _pageRemarksTextBox.TextChanged += (_, _) =>
-        {
-            if (_context?.CurrentPage == null) return;
-            _context.CurrentPage.Remarks = _pageRemarksTextBox.Text;
-        };
-
-        _roomIdNumeric.ValueChanged += (_, _) => UpdatePageHeader();
-
-        _flagWaterCheckBox.CheckedChanged += (_, _) => UpdatePageHeader();
-        _flagWindCheckBox.CheckedChanged += (_, _) => UpdatePageHeader();
-
-        _leftPageNumeric.ValueChanged += (_, _) => UpdatePageHeader();
-        _rightPageNumeric.ValueChanged += (_, _) => UpdatePageHeader();
-        _upPageNumeric.ValueChanged += (_, _) => UpdatePageHeader();
-        _downPageNumeric.ValueChanged += (_, _) => UpdatePageHeader();
-        _frontPageNumeric.ValueChanged += (_, _) => UpdatePageHeader();
-        _backPageNumeric.ValueChanged += (_, _) => UpdatePageHeader();
-        _zNumeric.ValueChanged += (_, _) => UpdatePageHeader();
-
-        _scrollLeftCombo.SelectedIndexChanged += (_, _) => UpdatePageHeader();
-        _scrollRightCombo.SelectedIndexChanged += (_, _) => UpdatePageHeader();
-        _scrollUpCombo.SelectedIndexChanged += (_, _) => UpdatePageHeader();
-        _scrollDownCombo.SelectedIndexChanged += (_, _) => UpdatePageHeader();
-
-        _scrollLeftNoEdgeCheck.CheckedChanged += (_, _) => UpdatePageHeader();
-        _scrollRightNoEdgeCheck.CheckedChanged += (_, _) => UpdatePageHeader();
-        _scrollUpNoEdgeCheck.CheckedChanged += (_, _) => UpdatePageHeader();
-        _scrollDownNoEdgeCheck.CheckedChanged += (_, _) => UpdatePageHeader();
-
-        _scrollLeftLoopCheck.CheckedChanged += (_, _) => UpdatePageHeader();
-        _scrollRightLoopCheck.CheckedChanged += (_, _) => UpdatePageHeader();
-        _scrollUpLoopCheck.CheckedChanged += (_, _) => UpdatePageHeader();
-        _scrollDownLoopCheck.CheckedChanged += (_, _) => UpdatePageHeader();
+            control.Leave += (_, _) => UpdatePageHeader();
+        }
     }
 
     public void RefreshProperties()
@@ -212,6 +216,7 @@ public sealed class PropertyWindowControl : UserControl
 
         _projectNameTextBox.Text = _context.Project?.Name ?? "";
         _stageNameTextBox.Text = _context.CurrentStage?.Name ?? "";
+        RebuildTagBadges(_stageTagsBadgesPanel, _context.Project, _context.CurrentStage?.TagIds);
 
         var page = _context.CurrentPage;
 
@@ -219,6 +224,7 @@ public sealed class PropertyWindowControl : UserControl
         _pageEnableCheckBox.Checked = page?.Enable ?? false;
         _pageReadOnlyCheckBox.Checked = page?.ReadOnly ?? false;
         _pageRemarksTextBox.Text = page?.Remarks ?? "";
+        RebuildTagBadges(_pageTagsBadgesPanel, _context.Project, page?.TagIds);
 
         if (page != null)
         {
@@ -248,39 +254,170 @@ public sealed class PropertyWindowControl : UserControl
 
     private void UpdatePageHeader()
     {
-        if (_isRefreshing)
-            return;
+        if (_isRefreshing) return;
 
         var page = _context?.CurrentPage;
-        if (page == null)
+        if (page == null) return;
+
+        var oldHeader = page.Header;
+        var newHeader = BuildHeaderFromControls();
+
+        if (oldHeader.ToBytes().SequenceEqual(newHeader.ToBytes())) return;
+
+        CommandRequested?.Invoke(new ActionCommand(
+            () => { page.Header = newHeader; DataChanged?.Invoke(); },
+            () => { page.Header = oldHeader; DataChanged?.Invoke(); }
+        ));
+    }
+
+    /// <summary>
+    /// バッジ表示を再構築する。優先度昇順（Priority値が小さいほど先頭）で並べる。
+    /// 画像リソースはバッジ（PictureBox）のDisposeに追従して解放される。
+    /// </summary>
+    private static void RebuildTagBadges(FlowLayoutPanel container, EditorProject? project, List<string>? tagIds)
+    {
+        foreach (Control old in container.Controls)
+            old.Dispose();
+        container.Controls.Clear();
+
+        var tags = (project == null || tagIds == null)
+            ? Enumerable.Empty<Tag>()
+            : tagIds
+                .Select(idStr => Guid.TryParse(idStr, out var id) ? project.FindTag(id) : null)
+                .Where(t => t != null)
+                .Select(t => t!)
+                .OrderBy(t => t.Priority)
+                .ThenBy(t => t.Label);
+
+        var tagList = tags.ToList();
+
+        if (tagList.Count == 0)
+        {
+            container.Controls.Add(new Label { Text = "-", AutoSize = true, Padding = new Padding(0, 3, 0, 0) });
             return;
+        }
 
+        foreach (var tag in tagList)
+            container.Controls.Add(CreateTagBadge(tag, project!.BaseDirectory));
+    }
+
+    private static Control CreateTagBadge(Tag tag, string baseDirectory)
+    {
+        var badgeColor = ColorTranslator.FromHtml(tag.Color);
+
+        var badge = new Panel
+        {
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            BackColor = badgeColor,
+            Padding = new Padding(4, 2, 4, 2),
+            Margin = new Padding(0, 0, 4, 4),
+            BorderStyle = BorderStyle.FixedSingle,
+        };
+
+        var inner = new FlowLayoutPanel
+        {
+            FlowDirection = FlowDirection.LeftToRight,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            WrapContents = false,
+        };
+
+        var icon = TagIconRenderer.SafeLoad(
+            string.IsNullOrWhiteSpace(tag.IconPath) ? null : Path.Combine(baseDirectory, tag.IconPath));
+
+        if (icon != null)
+        {
+            inner.Controls.Add(new PictureBox
+            {
+                Image = icon,
+                Size = new Size(TagIconSize, TagIconSize),
+                SizeMode = PictureBoxSizeMode.Zoom,
+                Margin = new Padding(0, 0, 3, 0),
+            });
+        }
+
+        inner.Controls.Add(new Label
+        {
+            Text = tag.Label,
+            AutoSize = true,
+            ForeColor = IsLightColor(badgeColor) ? Color.Black : Color.White,
+            Margin = new Padding(0),
+        });
+
+        badge.Controls.Add(inner);
+        return badge;
+    }
+
+    private static bool IsLightColor(Color color)
+        => (color.R * 0.299 + color.G * 0.587 + color.B * 0.114) > 128;
+
+    private void OnEditStageTagsClick(object? sender, EventArgs e)
+    {
+        var stage = _context?.CurrentStage;
+        var project = _context?.Project;
+        if (stage == null || project == null) return;
+
+        var oldIds = stage.TagIds.ToList();
+        var oldGuids = oldIds.Where(s => Guid.TryParse(s, out _)).Select(Guid.Parse).ToList();
+
+        using var dialog = new TagAssignDialog(project.Tags, oldGuids);
+        if (dialog.ShowDialog(FindForm()) != DialogResult.OK) return;
+
+        var newIds = dialog.SelectedTagIds.Select(id => id.ToString()).ToList();
+        if (oldIds.SequenceEqual(newIds)) return;
+
+        CommandRequested?.Invoke(new ActionCommand(
+            () => { stage.TagIds = newIds; stage.MarkDirty(); DataChanged?.Invoke(); RefreshProperties(); },
+            () => { stage.TagIds = oldIds; stage.MarkDirty(); DataChanged?.Invoke(); RefreshProperties(); }
+        ));
+    }
+
+    private void OnEditPageTagsClick(object? sender, EventArgs e)
+    {
+        var page = _context?.CurrentPage;
+        var project = _context?.Project;
+        if (page == null || project == null) return;
+
+        var oldIds = page.TagIds.ToList();
+        var oldGuids = oldIds.Where(s => Guid.TryParse(s, out _)).Select(Guid.Parse).ToList();
+
+        using var dialog = new TagAssignDialog(project.Tags, oldGuids);
+        if (dialog.ShowDialog(FindForm()) != DialogResult.OK) return;
+
+        var newIds = dialog.SelectedTagIds.Select(id => id.ToString()).ToList();
+        if (oldIds.SequenceEqual(newIds)) return;
+
+        var stage = _context?.CurrentStage;
+
+        CommandRequested?.Invoke(new ActionCommand(
+            () => { page.TagIds = newIds; stage?.MarkDirty(); DataChanged?.Invoke(); RefreshProperties(); },
+            () => { page.TagIds = oldIds; stage?.MarkDirty(); DataChanged?.Invoke(); RefreshProperties(); }
+        ));
+    }
+
+    private PageHeader BuildHeaderFromControls()
+    {
         var flags = PageFlags.None;
-
         if (_flagWaterCheckBox.Checked) flags |= PageFlags.IsWater;
         if (_flagWindCheckBox.Checked) flags |= PageFlags.IsWind;
 
-        page.Header = new PageHeader
+        return new PageHeader
         {
             MagicStart = 0xA5,
             MagicEnd = 0x5A,
-
             RoomId = (byte)_roomIdNumeric.Value,
-
             Flags = flags,
-
             LeftPage = (byte)_leftPageNumeric.Value,
             RightPage = (byte)_rightPageNumeric.Value,
             UpPage = (byte)_upPageNumeric.Value,
             DownPage = (byte)_downPageNumeric.Value,
             FrontPage = (byte)_frontPageNumeric.Value,
             BackPage = (byte)_backPageNumeric.Value,
-
             ScrollLeft = GetScrollByte(_scrollLeftCombo, _scrollLeftNoEdgeCheck, _scrollLeftLoopCheck),
             ScrollRight = GetScrollByte(_scrollRightCombo, _scrollRightNoEdgeCheck, _scrollRightLoopCheck),
             ScrollUp = GetScrollByte(_scrollUpCombo, _scrollUpNoEdgeCheck, _scrollUpLoopCheck),
             ScrollDown = GetScrollByte(_scrollDownCombo, _scrollDownNoEdgeCheck, _scrollDownLoopCheck),
-
             Z = (byte)_zNumeric.Value,
         };
     }
@@ -329,6 +466,39 @@ public sealed class PropertyWindowControl : UserControl
 
         AddRow(CreateLabel(labelText), checkBox);
         return checkBox;
+    }
+
+    /// <summary>「タグバッジ群 + 編集...ボタン」の行を追加し、バッジ格納用パネルを返す。</summary>
+    private FlowLayoutPanel AddTagsRow(string labelText, EventHandler onEditClick)
+    {
+        var row = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = true,
+            AutoSize = true,
+        };
+
+        var badgesPanel = new FlowLayoutPanel
+        {
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = true,
+            AutoSize = true,
+            Margin = new Padding(0, 2, 6, 0),
+        };
+
+        var editButton = new Button
+        {
+            Text = "編集...",
+            AutoSize = true,
+        };
+        editButton.Click += onEditClick;
+
+        row.Controls.Add(badgesPanel);
+        row.Controls.Add(editButton);
+
+        AddRow(CreateLabel(labelText), row);
+        return badgesPanel;
     }
 
     private static Label CreateLabel(string text)
@@ -416,5 +586,34 @@ public sealed class PropertyWindowControl : UserControl
         if (loopCheck.Checked) flags |= ScrollFlags.Loop;
 
         return ScrollEncoding.Encode(type, flags);
+    }
+
+    /// <summary>
+    /// フォーカスイン時点の値を記録し、フォーカスアウト時に変化があれば
+    /// 1操作としてCommandRequestedを発火する汎用ヘルパー。
+    /// </summary>
+    private void TrackChange<TValue>(Control control, Func<TValue> getValue, Action<TValue> applyValue)
+    {
+        var before = getValue();
+
+        control.Enter += (_, _) =>
+        {
+            if (_isRefreshing) return;
+            before = getValue();
+        };
+
+        control.Leave += (_, _) =>
+        {
+            if (_isRefreshing) return;
+
+            var after = getValue();
+            if (EqualityComparer<TValue>.Default.Equals(before, after)) return;
+
+            var capturedBefore = before;
+            CommandRequested?.Invoke(new ActionCommand(
+                () => { applyValue(after); DataChanged?.Invoke(); },
+                () => { applyValue(capturedBefore); DataChanged?.Invoke(); }
+            ));
+        };
     }
 }

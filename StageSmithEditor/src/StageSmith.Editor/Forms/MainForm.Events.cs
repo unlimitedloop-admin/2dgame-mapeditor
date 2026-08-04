@@ -7,7 +7,7 @@ public partial class MainForm
 {
     protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
     {
-        // ── Ctrl 系（TextBox フォーカス中でも有効） ──────────────────
+        // ── Ctrl / Alt 系（TextBox フォーカス中でも有効） ──────────────────
         switch (keyData)
         {
             case Keys.Control | Keys.Shift | Keys.S:
@@ -16,20 +16,53 @@ public partial class MainForm
 
             case Keys.Control | Keys.Z:
                 _commandManager.Undo();
-                _mapView.Invalidate();
                 return true;
 
             case Keys.Control | Keys.Y:
                 _commandManager.Redo();
-                _mapView.Invalidate();
                 return true;
 
+            case Keys.Control | Keys.B:
+                if (_context.CurrentStage is { } stage && _context.CurrentPage is { } page)
+                    ToggleBookmark(stage, page);
+                return true;
+
+            case Keys.Control | Keys.M:
+                MoveToNextMarker();
+                return true;
+
+            case Keys.Control | Keys.Shift | Keys.M:
+                MoveToPreviousMarker();
+                return true;
+
+            case Keys.Control | Keys.J:
+                OpenJumpPageDialog();
+                return true;
+
+            // 隣接Room移動
             case Keys.Control | Keys.Left:
-                NavigatePage(NavAction.Prev);
+                NavigateAdjacentRoom(Direction.Left);
                 return true;
 
             case Keys.Control | Keys.Right:
-                NavigatePage(NavAction.Next);
+                NavigateAdjacentRoom(Direction.Right);
+                return true;
+
+            case Keys.Control | Keys.Up:
+                NavigateAdjacentRoom(Direction.Up);
+                return true;
+
+            case Keys.Control | Keys.Down:
+                NavigateAdjacentRoom(Direction.Down);
+                return true;
+
+            // Zレイヤー移動
+            case Keys.Alt | Keys.Left:
+                NavigateBack();
+                return true;
+
+            case Keys.Alt | Keys.Right:
+                NavigateForward();
                 return true;
 
             case Keys.Control | Keys.T:
@@ -40,8 +73,12 @@ public partial class MainForm
                 OpenProject();
                 return true;
 
-            case Keys.Control | Keys.N:
+            case Keys.Control | Keys.P:
                 NewProject();
+                return true;
+
+            case Keys.Control | Keys.N:
+                NewStage();
                 return true;
 
             case Keys.Control | Keys.C:
@@ -49,10 +86,11 @@ public partial class MainForm
                 return true;
 
             case Keys.Control | Keys.V:
-                if (_clipboard == null) return true;
-                var pos = _mapView.GetHoverTile();
-                if (pos.X < 0 || pos.Y < 0) return true;
-                PasteSelection(pos.X, pos.Y);
+                PasteSelection();
+                return true;
+
+            case Keys.Shift | Keys.Escape:
+                ClearSearchHighlight();
                 return true;
         }
 
@@ -76,12 +114,66 @@ public partial class MainForm
                 _mapView.Invalidate();
                 return true;
 
+            case Keys.Control | Keys.A:
+                SelectAllTiles();
+                return true;
+
+            case Keys.PageDown:
+                NavigatePage(NavAction.Next);
+                return true;
+
+            case Keys.PageUp:
+                NavigatePage(NavAction.Prev);
+                return true;
+
             case Keys.P:
                 SetToolMode(EditorToolMode.Pen);
                 return true;
 
             case Keys.S:
                 SetToolMode(EditorToolMode.Selection);
+                return true;
+
+            case Keys.K:
+                SetToolMode(EditorToolMode.Marker);
+                return true;
+
+            case Keys.B:
+                SetToolMode(EditorToolMode.Bucket);
+                return true;
+
+            case Keys.G:
+                _menuViewGridLines.Checked = !_menuViewGridLines.Checked;
+                return true;
+
+            case Keys.T:
+                _menuViewTilePreview.Checked = !_menuViewTilePreview.Checked;
+                return true;
+
+            case Keys.F:
+                FillSelection();
+                return true;
+
+            case Keys.M:
+                _menuViewMarkerOverlay.Checked = !_menuViewMarkerOverlay.Checked;
+                ToggleMarkerOverlay(_menuViewMarkerOverlay.Checked);
+                return true;
+
+            case Keys.L:
+                _menuViewShowTileNumbers.Checked = !_menuViewShowTileNumbers.Checked;
+                ToggleShowTileNumbers(_menuViewShowTileNumbers.Checked);
+                return true;
+
+            case Keys.R:
+                _menuViewRowNumbers.Checked = !_menuViewRowNumbers.Checked;
+                return true;
+
+            case Keys.C:
+                _menuViewColumnNumbers.Checked = !_menuViewColumnNumbers.Checked;
+                return true;
+
+            case Keys.I:
+                _menuViewTileInfo.Checked = !_menuViewTileInfo.Checked;
                 return true;
 
             case Keys.Insert:
@@ -105,21 +197,19 @@ public partial class MainForm
             case Keys.Control | Keys.NumPad2:
                 SetToolMode(EditorToolMode.Selection);
                 return true;
+
+            case Keys.Control | Keys.D3:
+            case Keys.Control | Keys.NumPad3:
+                SetToolMode(EditorToolMode.Bucket);
+                return true;
+
+            case Keys.Control | Keys.D4:
+            case Keys.Control | Keys.NumPad4:
+                SetToolMode(EditorToolMode.Marker);
+                return true;
         }
 
         return base.ProcessCmdKey(ref msg, keyData);
-    }
-
-    private void btnGrid_Click(object? sender, EventArgs e)
-    {
-        _showGrid = !_showGrid;
-        _mapView.SetShowGrid(_showGrid);
-    }
-
-    private void btnTilePreview_Click(object sender, EventArgs e)
-    {
-        _mapView.ShowPreview = !_mapView.ShowPreview;
-        UpdateTilePreviewIcon();
     }
 
     private void UpdateTilePreviewIcon()
@@ -134,16 +224,52 @@ public partial class MainForm
         }
     }
 
+    private void ApplyTilePreviewState(bool visible)
+    {
+        _mapView.ShowPreview = visible;
+        _tilePreviewButton.Checked = visible;
+        UpdateTilePreviewIcon();
+    }
+
+    private void ApplyGridState(bool visible)
+    {
+        _showGrid = visible;
+        _mapView.SetShowGrid(_showGrid);
+        _showGridButton.Checked = visible;
+    }
+
+    private void ToggleShowTileNumbers(bool show)
+    {
+        _mapView.SetShowTileNumbers(show);
+        _numberLabelButton.Checked = show;
+    }
+
+    private void ApplyRowNumberState(bool show)
+    {
+        _mapView.SetShowRowNumbers(show);
+    }
+
+    private void ApplyColumnNumberState(bool show)
+    {
+        _mapView.SetShowColumnNumbers(show);
+    }
+
+    private void ToggleMarkerOverlay(bool show)
+    {
+        _markerState.ShowOverlay = show;
+        _mapView.Invalidate();
+    }
+
     private void CancelDrag()
     {
         _currentDragCommand = null;
         _mapView.Invalidate();
     }
 
-    private static bool IsFocusedOnTextBox()
+    private bool IsFocusedOnTextBox()
     {
         var focused = GetFocusedControl(Form.ActiveForm);
-        return focused is TextBox;
+        return focused is TextBox || _stageExplorer.IsEditingLabel;
     }
 
     private static Control? GetFocusedControl(Control? parent)

@@ -118,6 +118,18 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="ai_前を検索_40" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resource\material\icon8\ai_前を検索_40.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="ai_検索結果を削除_40" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resource\material\icon8\ai_検索結果を削除_40.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="ai_次を検索_40" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resource\material\icon8\ai_次を検索_40.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="icons8-delete-file-30" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resource\material\icon8\icons8-delete-file-30.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="icons8-やり直す-30" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resource\material\icon8\icons8-やり直す-30.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -127,14 +139,23 @@
   <data name="icons8-バイナリファイル-30" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resource\material\icon8\icons8-バイナリファイル-30.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="icons8-バケツ-24" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resource\material\icon8\icons8-バケツ-24.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="icons8-ファイルを開く-30" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resource\material\icon8\icons8-ファイルを開く-30.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="icons8-ファイル追加-30" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resource\material\icon8\icons8-ファイル追加-30.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="icons8-ブックマーク-32" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resource\material\icon8\icons8-ブックマーク-32.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="icons8-プロジェクト-30" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resource\material\icon8\icons8-プロジェクト-30.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="icons8-マーカー-24" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resource\material\icon8\icons8-マーカー-24.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="icons8-上書き保存-30" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resource\material\icon8\icons8-上書き保存-30.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -145,11 +166,20 @@
   <data name="icons8-名前を付けて保存-30" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resource\material\icon8\icons8-名前を付けて保存-30.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="icons8-数字-30" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resource\material\icon8\icons8-数字-30.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="icons8-検索-30" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resource\material\icon8\icons8-検索-30.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="icons8-目に見えない-24" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resource\material\icon8\icons8-目に見えない-24.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="icons8-目に見える-24" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resource\material\icon8\icons8-目に見える-24.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="icons8-置換-30" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resource\material\icon8\icons8-置換-30.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="icons8-選択-24" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resource\material\icon8\icons8-選択-24.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>

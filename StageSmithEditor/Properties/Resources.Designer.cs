@@ -63,6 +63,46 @@ namespace StageSmithEditor.Properties {
         /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
+        internal static System.Drawing.Bitmap ai_前を検索_40 {
+            get {
+                object obj = ResourceManager.GetObject("ai_前を検索_40", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
+        internal static System.Drawing.Bitmap ai_検索結果を削除_40 {
+            get {
+                object obj = ResourceManager.GetObject("ai_検索結果を削除_40", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
+        internal static System.Drawing.Bitmap ai_次を検索_40 {
+            get {
+                object obj = ResourceManager.GetObject("ai_次を検索_40", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
+        internal static System.Drawing.Bitmap icons8_delete_file_30 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-delete-file-30", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
         internal static System.Drawing.Bitmap icons8_グリッド_24 {
             get {
                 object obj = ResourceManager.GetObject("icons8-グリッド-24", resourceCulture);
@@ -76,6 +116,16 @@ namespace StageSmithEditor.Properties {
         internal static System.Drawing.Bitmap icons8_バイナリファイル_30 {
             get {
                 object obj = ResourceManager.GetObject("icons8-バイナリファイル-30", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
+        internal static System.Drawing.Bitmap icons8_バケツ_24 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-バケツ-24", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -103,9 +153,29 @@ namespace StageSmithEditor.Properties {
         /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
+        internal static System.Drawing.Bitmap icons8_ブックマーク_32 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-ブックマーク-32", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
         internal static System.Drawing.Bitmap icons8_プロジェクト_30 {
             get {
                 object obj = ResourceManager.GetObject("icons8-プロジェクト-30", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
+        internal static System.Drawing.Bitmap icons8_マーカー_24 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-マーカー-24", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -153,6 +223,26 @@ namespace StageSmithEditor.Properties {
         /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
+        internal static System.Drawing.Bitmap icons8_数字_30 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-数字-30", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
+        internal static System.Drawing.Bitmap icons8_検索_30 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-検索-30", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
         internal static System.Drawing.Bitmap icons8_画像を開く_30 {
             get {
                 object obj = ResourceManager.GetObject("icons8_画像を開く_30", resourceCulture);
@@ -176,6 +266,16 @@ namespace StageSmithEditor.Properties {
         internal static System.Drawing.Bitmap icons8_目に見える_24 {
             get {
                 object obj = ResourceManager.GetObject("icons8-目に見える-24", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
+        internal static System.Drawing.Bitmap icons8_置換_30 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-置換-30", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

@@ -8,9 +8,8 @@ public static class ViewerConstants
     public static readonly Size MainFormClientSize = new(1200, 900);
 
     /// <summary>
-    /// エディタ上でのタイル描画サイズ（ピクセル）。
-    /// MapConstants.DefaultTileSize はゲーム側の論理サイズなので変更不可。
-    /// ズーム倍率を変えたい場合はここだけ変更する。
+    /// 1.0x時のタイル描画サイズ。
+    /// 実際の描画サイズは MapViewControl.CurrentTileRenderSize で決定する。
     /// </summary>
     public const int TileRenderSize = 32; // 16 × 2倍
 
@@ -28,6 +27,12 @@ public static class ViewerConstants
     public const int MapViewMargin = 32;
 
     /// <summary>
+    /// MapView 上段領域の追加余白。
+    /// 下側の隣接ページナビゲーションが見切れないようにするためのレイアウト調整値。
+    /// </summary>
+    public const int MapViewPanelExtraHeight = 12;
+
+    /// <summary>
     /// マップビューの描画解像度（タイル数 × TileRenderSize）。
     /// </summary>
     public static readonly Size MapViewRenderSize = new(
@@ -43,4 +48,14 @@ public static class ViewerConstants
         MapViewRenderSize.Width  + MapViewMargin * 2,   // 512 + 64 = 576
         MapViewRenderSize.Height + MapViewMargin * 2    // 480 + 64 = 544
     );
+
+    /// <summary>
+    /// 行番号用の帯幅（px）。
+    /// </summary>
+    public const int RowNumberBandWidth = 16;       // 左側：行番号用の帯幅
+
+    /// <summary>
+    /// 列番号用の帯高さ（px）。
+    /// </summary>
+    public const int ColumnNumberBandHeight = 16;   // 上側：列番号用の帯高さ
 }

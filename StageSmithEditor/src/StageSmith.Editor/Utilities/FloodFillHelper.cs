@@ -1,6 +1,6 @@
 using StageSmith.Core.Models;
 
-namespace StageSmith.Editor.Tools;
+namespace StageSmith.Editor.Utilities;
 
 public static class FloodFillHelper
 {

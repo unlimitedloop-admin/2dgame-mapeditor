@@ -14,8 +14,8 @@ public sealed class TileMap
     [JsonPropertyName("Tiles")]
     public int[] TilesForJson
     {
-        get => Tiles.Select(b => (int)b).ToArray();
-        set => Tiles = value.Select(i => (byte)i).ToArray();
+        get => [.. Tiles.Select(b => (int)b)];
+        set => Tiles = [.. value.Select(i => (byte)i)];
     }
 
     public TileMap()
@@ -63,7 +63,7 @@ public sealed class TileMap
         Fill(0);
     }
 
-    // TODO: もし頻繁にアクセスするなら、座標からインデックスへの変換をメソッド化してもいいかも
+    // HACK: もし頻繁にアクセスするなら、座標からインデックスへの変換をメソッド化してもいいかも
     private int ToIndex(int x, int y)
     {
         return y * Width + x;
