@@ -11,8 +11,8 @@ public partial class MainForm
         if (dialog.ShowDialog(this) == DialogResult.OK)
         {
             _config = dialog.Result;
-
             ApplyNumberDisplayFormat();
+            _nodeEditorForm?.SetShowPreview(_config.ShowNodePreview);
         }
     }
 }

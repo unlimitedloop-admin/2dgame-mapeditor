@@ -77,6 +77,8 @@ public partial class PageNodeEditorForm : Form
         _nodeEditView.SetNumberDisplayFormat(format);
     }
 
+    public void SetShowPreview(bool show) => _nodeEditView.SetShowPreview(show);
+
     //========================
     // 初期化
     //========================

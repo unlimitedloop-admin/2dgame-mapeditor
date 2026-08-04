@@ -48,6 +48,7 @@ public class IniConfigRepository : IConfigRepository
 
         config.NumberDisplayFormat = GetEnum(values, nameof(config.NumberDisplayFormat), config.NumberDisplayFormat);
         config.KeepSelectedTileOnPageChange = GetBool(values, nameof(config.KeepSelectedTileOnPageChange), config.KeepSelectedTileOnPageChange);
+        config.ShowNodePreview = GetBool(values, nameof(config.ShowNodePreview), config.ShowNodePreview);
         config.UseStageSubFolder = GetBool(values, nameof(config.UseStageSubFolder), config.UseStageSubFolder);
         config.UseProjectSubDirectory = GetBool(values, nameof(config.UseProjectSubDirectory), config.UseProjectSubDirectory);
         config.DefaultProjectSaveDirectory = GetString(values, nameof(config.DefaultProjectSaveDirectory), config.DefaultProjectSaveDirectory);
@@ -89,6 +90,7 @@ public class IniConfigRepository : IConfigRepository
             "[Properties]",
             $"{nameof(config.NumberDisplayFormat)}={config.NumberDisplayFormat}",
             $"{nameof(config.KeepSelectedTileOnPageChange)}={config.KeepSelectedTileOnPageChange}",
+            $"{nameof(config.ShowNodePreview)}={config.ShowNodePreview}",
             $"{nameof(config.UseStageSubFolder)}={config.UseStageSubFolder}",
             $"{nameof(config.UseProjectSubDirectory)}={config.UseProjectSubDirectory}",
             $"{nameof(config.DefaultProjectSaveDirectory)}={config.DefaultProjectSaveDirectory}",

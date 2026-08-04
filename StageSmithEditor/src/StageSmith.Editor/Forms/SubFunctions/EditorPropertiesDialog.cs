@@ -16,6 +16,7 @@ public sealed class EditorPropertiesDialog : Form
     private readonly RadioButton _hexRadio;
     private readonly RadioButton _decimalRadio;
     private readonly CheckBox _keepSelectedTileCheckBox;
+    private readonly CheckBox _showNodePreviewCheckBox;
     private readonly NumericUpDown _defaultClearTileIdUpDown;
 
     // ---- Project タブ ----
@@ -87,16 +88,24 @@ public sealed class EditorPropertiesDialog : Form
             Checked  = Result.KeepSelectedTileOnPageChange,
         };
 
+        _showNodePreviewCheckBox = new CheckBox
+        {
+            Text     = "ページノードエディタでタイルプレビューを表示する",
+            Location = new Point(16, 116),
+            AutoSize = true,
+            Checked  = Result.ShowNodePreview,
+        };
+
         var clearTileLabel = new Label
         {
             Text     = "タイルクリア時のデフォルトタイル番号 (0-255):",
-            Location = new Point(16, 130),
+            Location = new Point(16, 154),
             AutoSize = true,
         };
 
         _defaultClearTileIdUpDown = new NumericUpDown
         {
-            Location = new Point(16, 150),
+            Location = new Point(16, 174),
             Width    = 80,
             Minimum  = 0,
             Maximum  = 255,
@@ -105,6 +114,7 @@ public sealed class EditorPropertiesDialog : Form
 
         generalTab.Controls.Add(displayFormatGroup);
         generalTab.Controls.Add(_keepSelectedTileCheckBox);
+        generalTab.Controls.Add(_showNodePreviewCheckBox);
         generalTab.Controls.Add(clearTileLabel);
         generalTab.Controls.Add(_defaultClearTileIdUpDown);
 
@@ -220,6 +230,7 @@ public sealed class EditorPropertiesDialog : Form
             : NumberDisplayFormat.Decimal;
 
         Result.KeepSelectedTileOnPageChange = _keepSelectedTileCheckBox.Checked;
+        Result.ShowNodePreview = _showNodePreviewCheckBox.Checked;
         Result.DefaultClearTileId = (byte)_defaultClearTileIdUpDown.Value;
 
         Result.UseStageSubFolder = _useStageSubFolderCheckBox.Checked;

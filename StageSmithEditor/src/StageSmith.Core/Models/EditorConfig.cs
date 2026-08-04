@@ -40,6 +40,7 @@ public class EditorConfig
     //========================
     public NumberDisplayFormat NumberDisplayFormat { get; set; } = NumberDisplayFormat.Hex;
     public bool KeepSelectedTileOnPageChange { get; set; } = false;
+    public bool ShowNodePreview { get; set; } = true;
     public bool UseStageSubFolder { get; set; } = false;
     public bool UseProjectSubDirectory { get; set; } = false;
     public string? DefaultProjectSaveDirectory { get; set; }

@@ -140,6 +140,19 @@ public class NodeEditView : Panel
         Invalidate();
     }
 
+    /// <summary>
+    /// falseの場合、ズーム倍率に関わらずタイルプレビューを描画しない（常に色+RoomIDテキスト表示）。
+    /// </summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public bool ShowPreview { get; set; } = true;
+
+    public void SetShowPreview(bool show)
+    {
+        ShowPreview = show;
+        Invalidate();
+    }
+
     //========================
     // タイルプレビューキャッシュ
     //========================
@@ -406,7 +419,7 @@ public class NodeEditView : Panel
         using var brush = new SolidBrush(color);
         g.FillRectangle(brush, rect);
 
-        if (_zoom >= PreviewZoomThreshold && _previewCache.TryGetValue(page.Id, out var preview))
+        if (ShowPreview && _zoom >= PreviewZoomThreshold && _previewCache.TryGetValue(page.Id, out var preview))
         {
             // 1.5x以上 → タイルプレビュー画像をノード内に描画
             g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
