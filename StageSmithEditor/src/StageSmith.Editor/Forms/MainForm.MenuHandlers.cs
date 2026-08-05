@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using StageSmith.Core.Constants;
 using StageSmith.Editor.Controls;
 using WeifenLuo.WinFormsUI.Docking;
@@ -109,6 +110,8 @@ public partial class MainForm
         // ========================
         // Help
         // ========================
+        _menuHelpContents.Click += (_, _) => OpenHelpContents();
+
         _menuHelpAbout.Click += (_, _) =>
             MessageBox.Show(
                 "StageSmith Editor\nVersion 0.9",
@@ -204,4 +207,26 @@ public partial class MainForm
     private void ZoomIn() => _mapView.ZoomIn();
     private void ZoomOut() => _mapView.ZoomOut();
     private void ResetZoom() => _mapView.ResetZoom();
+
+    // ========================
+    // ヘルプメニュー
+    // ========================
+    private const string HelpContentsUrl = "https://www.loopunlimited-rootone.com/40000/sse.help/ja/index.html";
+
+    private void OpenHelpContents()
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo(HelpContentsUrl) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"ヘルプページを開けませんでした。\n{ex.Message}",
+                "エラー",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning
+            );
+        }
+    }
 }

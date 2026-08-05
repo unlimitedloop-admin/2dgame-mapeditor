@@ -6,7 +6,6 @@ using StageSmith.Editor.Controls;
 using StageSmith.Editor.DockContents;
 using StageSmith.Editor.Forms;
 using StageSmith.Editor.Tools;
-using System.Runtime.CompilerServices;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace StageSmith.Editor;
