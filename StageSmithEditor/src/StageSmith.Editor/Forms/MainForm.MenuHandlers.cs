@@ -113,6 +113,12 @@ public partial class MainForm
         // ========================
         _menuHelpContents.Click += (_, _) => OpenHelpContents();
 
+        _menuHelpShortcuts.Click += (_, _) =>
+        {
+            using var dialog = new ShortcutsDialog(_menuStrip);
+            dialog.ShowDialog(this);
+        };
+
         _menuHelpAbout.Click += (_, _) =>
             MessageBox.Show(
                 "StageSmith Editor\nVersion 0.9",
