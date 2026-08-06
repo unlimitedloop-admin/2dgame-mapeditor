@@ -2,6 +2,9 @@ using StageSmith.Core.Models;
 
 namespace StageSmith.Application.Commands;
 
+/// <summary>
+/// ブックマークを追加するコマンドです。
+/// </summary>
 public sealed class AddBookmarkCommand : ICommand
 {
     private readonly EditorProject _project;

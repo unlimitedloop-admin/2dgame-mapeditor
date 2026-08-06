@@ -2,6 +2,9 @@ using StageSmith.Core.Models;
 
 namespace StageSmith.Application.Commands;
 
+/// <summary>
+/// ドラッグ塗りつぶし操作を表すコマンドです。
+/// </summary>
 public class DragPaintCommand : ICommand
 {
     private readonly TileMap _tileMap;
@@ -20,7 +23,7 @@ public class DragPaintCommand : ICommand
         if (oldValue == newValue)
             return;
 
-        // 同じ座標を重複登録しない
+        // 同じ座標を重複登録しないようにする
         if (_changes.Any(c => c.x == x && c.y == y))
             return;
 

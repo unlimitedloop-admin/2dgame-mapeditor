@@ -2,6 +2,9 @@ using StageSmith.Core.Models;
 
 namespace StageSmith.Application.Commands;
 
+/// <summary>
+/// ページを追加するコマンドです。
+/// </summary>
 public sealed class AddPageCommand : ICommand
 {
     private readonly Stage _stage;

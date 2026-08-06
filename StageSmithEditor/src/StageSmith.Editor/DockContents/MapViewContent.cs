@@ -135,4 +135,19 @@ public class MapViewContent : DockContent
     {
         Text = $"Map View ({zoomScale:0.0}x)";
     }
+
+    /// <summary>
+    /// MapViewへフォーカスを移す。
+    /// AutoScroll=trueのパネル内でFocus()を呼ぶと、WinForms標準の
+    /// ScrollControlIntoView（フォーカスしたコントロールが見える位置へ強制スクロール）が
+    /// 働いてスクロール位置が左上へ巻き戻ってしまうため、直前の位置を退避・復元する。
+    /// </summary>
+    public void FocusMapView()
+    {
+        var pos = _mapScrollPanel.AutoScrollPosition; // getterは負値で返る仕様
+
+        MapView.Focus();
+
+        _mapScrollPanel.AutoScrollPosition = new Point(-pos.X, -pos.Y);
+    }
 }

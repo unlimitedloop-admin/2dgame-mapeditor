@@ -2,20 +2,27 @@ using StageSmith.Core.Models;
 
 namespace StageSmith.Application.Commands;
 
+/// <summary>
+/// 選択範囲を移動するコマンドです。
+/// </summary>
 public class MoveSelectionCommand : ICommand
 {
+    // REVIEW: このコマンドは現在どこからも参照されていないが、将来的に選択範囲の移動機能を独立化する可能性が考えられるため、残しておく。
+
     private readonly TileMap _tileMap;
     private readonly Rectangle _srcRect;
     private readonly Rectangle _dstRect;
     private readonly byte[,] _movedTiles;
     private readonly byte[,] _originalSrcTiles;
     private readonly byte[,] _originalDstTiles;
+    private readonly byte _clearTileId;
 
-    public MoveSelectionCommand(TileMap tileMap, Rectangle srcRect, Rectangle dstRect)
+    public MoveSelectionCommand(TileMap tileMap, Rectangle srcRect, Rectangle dstRect, byte clearTileId = 0)
     {
         _tileMap = tileMap;
         _srcRect = srcRect;
         _dstRect = dstRect;
+        _clearTileId = clearTileId;
 
         // 実行前にスナップショットを取っておく
         _movedTiles = Snapshot(tileMap, srcRect);
@@ -25,14 +32,14 @@ public class MoveSelectionCommand : ICommand
 
     public void Execute()
     {
-        Fill(_tileMap, _srcRect, 0);               // 元位置を0に
-        Paste(_tileMap, _dstRect, _movedTiles);    // 新位置に書き込む
+        Fill(_tileMap, _srcRect, _clearTileId);
+        Paste(_tileMap, _dstRect, _movedTiles);
     }
 
     public void Undo()
     {
-        Paste(_tileMap, _dstRect, _originalDstTiles); // 新位置を元に戻す
-        Paste(_tileMap, _srcRect, _originalSrcTiles); // 元位置を復元
+        Paste(_tileMap, _dstRect, _originalDstTiles);
+        Paste(_tileMap, _srcRect, _originalSrcTiles);
     }
 
     private static byte[,] Snapshot(TileMap map, Rectangle rect)

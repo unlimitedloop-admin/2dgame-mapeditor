@@ -121,7 +121,7 @@ public partial class MainForm : Form
         };
 
         // クリック時のフォーカス設定
-        _mapView.Click += (s, e) => _mapView.Focus();
+        _mapView.Click += (s, e) => _mapViewContent.FocusMapView();
         _tilePalette.Click += (s, e) => _tilePalette.Focus();
         _metaTilePalette.Click += (s, e) => _metaTilePalette.Focus();
         Click += (s, e) => _mapView.Focus();

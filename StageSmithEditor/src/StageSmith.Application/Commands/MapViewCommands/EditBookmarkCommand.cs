@@ -2,6 +2,9 @@ using StageSmith.Core.Models;
 
 namespace StageSmith.Application.Commands;
 
+/// <summary>
+/// ブックマークのラベルと説明を編集するコマンドです。
+/// </summary>
 public sealed class EditBookmarkCommand : ICommand
 {
     private readonly Bookmark _bookmark;

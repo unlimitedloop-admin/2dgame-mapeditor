@@ -2,6 +2,9 @@ using StageSmith.Core.Models;
 
 namespace StageSmith.Application.Commands;
 
+/// <summary>
+/// 指定されたページを削除するコマンドです。
+/// </summary>
 public sealed class RemovePageCommand : ICommand
 {
     private readonly Stage _stage;
