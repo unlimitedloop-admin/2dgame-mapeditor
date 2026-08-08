@@ -147,14 +147,6 @@ public partial class MainForm : Form
         _propertyWindow.Bind(_context);
         _propertyWindow.CommandRequested += cmd => _commandManager.Execute(cmd);
 
-        // プロパティ変更 → エクスプローラー即時更新
-        _propertyWindow.DataChanged += () =>
-        {
-            // REVIEW: 無限更新バグの温床？
-            //_stageExplorer.RebuildTree();
-            //SyncExplorerHighlight();
-        };
-
         _propertyWindow.TreeRelevantDataChanged += () =>
         {
             _stageExplorer.RebuildTree();

@@ -15,12 +15,6 @@ public sealed class PropertyWindowControl : UserControl
     private bool _isRefreshing;
 
     /// <summary>
-    /// プロパティ上のデータが変更されたとき発火する。
-    /// ステージエクスプローラーの更新など外部への通知に使用する。
-    /// </summary>
-    public event Action? DataChanged;
-    
-    /// <summary>
     /// ステージエクスプローラーの更新に関連するデータが変更されたとき発火する。
     /// </summary>
     public event Action? TreeRelevantDataChanged;
@@ -168,11 +162,11 @@ public sealed class PropertyWindowControl : UserControl
 
         TrackChange(_stageNameTextBox,
             () => _stageNameTextBox.Text,
-            v => { if (_context?.CurrentStage != null) _context.CurrentStage.Name = v; TreeRelevantDataChanged?.Invoke(); });
+            v => { if (_context?.CurrentStage != null) _context.CurrentStage.Name = v; });
 
         TrackChange(_pageNameTextBox,
             () => _pageNameTextBox.Text,
-            v => { if (_context?.CurrentPage != null) _context.CurrentPage.Name = v; TreeRelevantDataChanged?.Invoke(); });
+            v => { if (_context?.CurrentPage != null) _context.CurrentPage.Name = v; });
 
         TrackChange(_pageEnableCheckBox,
             () => _pageEnableCheckBox.Checked,
@@ -256,8 +250,8 @@ public sealed class PropertyWindowControl : UserControl
         if (oldHeader.ToBytes().SequenceEqual(newHeader.ToBytes())) return;
 
         CommandRequested?.Invoke(new ActionCommand(
-            () => { page.Header = newHeader; DataChanged?.Invoke(); },
-            () => { page.Header = oldHeader; DataChanged?.Invoke(); }
+            () => { page.Header = newHeader; },
+            () => { page.Header = oldHeader; }
         ));
     }
 
@@ -359,8 +353,8 @@ public sealed class PropertyWindowControl : UserControl
         if (oldIds.SequenceEqual(newIds)) return;
 
         CommandRequested?.Invoke(new ActionCommand(
-            () => { stage.TagIds = newIds; stage.MarkDirty(); DataChanged?.Invoke(); RefreshProperties(); },
-            () => { stage.TagIds = oldIds; stage.MarkDirty(); DataChanged?.Invoke(); RefreshProperties(); }
+            () => { stage.TagIds = newIds; stage.MarkDirty(); TreeRelevantDataChanged?.Invoke(); RefreshProperties(); },
+            () => { stage.TagIds = oldIds; stage.MarkDirty(); TreeRelevantDataChanged?.Invoke(); RefreshProperties(); }
         ));
     }
 
@@ -382,8 +376,8 @@ public sealed class PropertyWindowControl : UserControl
         var stage = _context?.CurrentStage;
 
         CommandRequested?.Invoke(new ActionCommand(
-            () => { page.TagIds = newIds; stage?.MarkDirty(); DataChanged?.Invoke(); RefreshProperties(); },
-            () => { page.TagIds = oldIds; stage?.MarkDirty(); DataChanged?.Invoke(); RefreshProperties(); }
+            () => { page.TagIds = newIds; stage?.MarkDirty(); TreeRelevantDataChanged?.Invoke(); RefreshProperties(); },
+            () => { page.TagIds = oldIds; stage?.MarkDirty(); TreeRelevantDataChanged?.Invoke(); RefreshProperties(); }
         ));
     }
 
@@ -579,8 +573,8 @@ public sealed class PropertyWindowControl : UserControl
 
             var capturedBefore = before;
             CommandRequested?.Invoke(new ActionCommand(
-                () => { applyValue(after); DataChanged?.Invoke(); },
-                () => { applyValue(capturedBefore); DataChanged?.Invoke(); }
+                () => { applyValue(after); },
+                () => { applyValue(capturedBefore); }
             ));
         };
     }
