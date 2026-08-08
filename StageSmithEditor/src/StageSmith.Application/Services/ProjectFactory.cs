@@ -3,6 +3,9 @@ using StageSmith.Core.Models;
 
 namespace StageSmith.Application.Services;
 
+/// <summary>
+/// プロジェクトの新規作成を担当するファクトリクラス
+/// </summary>
 public static class ProjectFactory
 {
     public static EditorProject CreateNewProject()
