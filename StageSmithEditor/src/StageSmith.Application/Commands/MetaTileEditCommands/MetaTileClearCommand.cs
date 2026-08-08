@@ -2,6 +2,9 @@ using StageSmith.Core.Models;
 
 namespace StageSmith.Application.Commands;
 
+/// <summary>
+/// MetaTileの全セルをクリアするコマンド。
+/// </summary>
 public sealed class MetaTileClearCommand : ICommand
 {
     private readonly MetaTile _metaTile;
