@@ -62,10 +62,10 @@ public static class DefExporter
             },
             Scrolling = new DefScrolling
             {
-                Left  = ScrollEncoding.GetType(h.ScrollLeft).ToString().ToLower(),
-                Right = ScrollEncoding.GetType(h.ScrollRight).ToString().ToLower(),
-                Up    = ScrollEncoding.GetType(h.ScrollUp).ToString().ToLower(),
-                Down  = ScrollEncoding.GetType(h.ScrollDown).ToString().ToLower(),
+                Left  = ((ScrollType)h.ScrollLeft).ToString().ToLower(),
+                Right = ((ScrollType)h.ScrollRight).ToString().ToLower(),
+                Up    = ((ScrollType)h.ScrollUp).ToString().ToLower(),
+                Down  = ((ScrollType)h.ScrollDown).ToString().ToLower(),
             },
             Flags = new DefFlags
             {
@@ -91,7 +91,7 @@ public static class DefExporter
         public DefStage Stage { get; set; } = new();
 
         [JsonPropertyName("nodes")]
-        public List<DefNode> Nodes { get; set; } = new();
+        public List<DefNode> Nodes { get; set; } = [];
     }
 
     private sealed class DefStage

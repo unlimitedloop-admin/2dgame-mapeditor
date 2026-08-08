@@ -224,7 +224,7 @@ public partial class MainForm
     // ========================
     private const string HelpContentsUrl = "https://www.loopunlimited-rootone.com/40000/sse.help/ja/index.html";
 
-    private void OpenHelpContents()
+    private static void OpenHelpContents()
     {
         try
         {

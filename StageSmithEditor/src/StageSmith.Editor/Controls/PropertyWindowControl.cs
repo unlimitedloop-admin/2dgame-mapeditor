@@ -62,16 +62,6 @@ public sealed class PropertyWindowControl : UserControl
     private ComboBox _scrollUpCombo = null!;
     private ComboBox _scrollDownCombo = null!;
 
-    private CheckBox _scrollLeftNoEdgeCheck = null!;
-    private CheckBox _scrollRightNoEdgeCheck = null!;
-    private CheckBox _scrollUpNoEdgeCheck = null!;
-    private CheckBox _scrollDownNoEdgeCheck = null!;
-
-    private CheckBox _scrollLeftLoopCheck = null!;
-    private CheckBox _scrollRightLoopCheck = null!;
-    private CheckBox _scrollUpLoopCheck = null!;
-    private CheckBox _scrollDownLoopCheck = null!;
-
     public PropertyWindowControl()
     {
         Dock = DockStyle.Right;
@@ -147,20 +137,9 @@ public sealed class PropertyWindowControl : UserControl
         _backPageNumeric = AddByteRow("Back Page");
 
         _scrollLeftCombo = AddScrollTypeRow("Left Scroll");
-        _scrollLeftNoEdgeCheck = AddCheckRow("Left NoEdge");
-        _scrollLeftLoopCheck = AddCheckRow("Left Loop");
-
         _scrollRightCombo = AddScrollTypeRow("Right Scroll");
-        _scrollRightNoEdgeCheck = AddCheckRow("Right NoEdge");
-        _scrollRightLoopCheck = AddCheckRow("Right Loop");
-
         _scrollUpCombo = AddScrollTypeRow("Up Scroll");
-        _scrollUpNoEdgeCheck = AddCheckRow("Up NoEdge");
-        _scrollUpLoopCheck = AddCheckRow("Up Loop");
-
         _scrollDownCombo = AddScrollTypeRow("Down Scroll");
-        _scrollDownNoEdgeCheck = AddCheckRow("Down NoEdge");
-        _scrollDownLoopCheck = AddCheckRow("Down Loop");
 
         _zNumeric = AddByteRow("Z");
 
@@ -199,8 +178,6 @@ public sealed class PropertyWindowControl : UserControl
             _leftPageNumeric, _rightPageNumeric, _upPageNumeric, _downPageNumeric,
             _frontPageNumeric, _backPageNumeric, _zNumeric,
             _scrollLeftCombo, _scrollRightCombo, _scrollUpCombo, _scrollDownCombo,
-            _scrollLeftNoEdgeCheck, _scrollRightNoEdgeCheck, _scrollUpNoEdgeCheck, _scrollDownNoEdgeCheck,
-            _scrollLeftLoopCheck, _scrollRightLoopCheck, _scrollUpLoopCheck, _scrollDownLoopCheck,
         })
         {
             control.Leave += (_, _) => UpdatePageHeader();
@@ -243,10 +220,10 @@ public sealed class PropertyWindowControl : UserControl
             _backPageNumeric.Value = header.BackPage;
             _zNumeric.Value = header.Z;
 
-            SetScrollControls(header.ScrollLeft, _scrollLeftCombo, _scrollLeftNoEdgeCheck, _scrollLeftLoopCheck);
-            SetScrollControls(header.ScrollRight, _scrollRightCombo, _scrollRightNoEdgeCheck, _scrollRightLoopCheck);
-            SetScrollControls(header.ScrollUp, _scrollUpCombo, _scrollUpNoEdgeCheck, _scrollUpLoopCheck);
-            SetScrollControls(header.ScrollDown, _scrollDownCombo, _scrollDownNoEdgeCheck, _scrollDownLoopCheck);
+            _scrollLeftCombo.SelectedItem = (ScrollType)header.ScrollLeft;
+            _scrollRightCombo.SelectedItem = (ScrollType)header.ScrollRight;
+            _scrollUpCombo.SelectedItem = (ScrollType)header.ScrollUp;
+            _scrollDownCombo.SelectedItem = (ScrollType)header.ScrollDown;
         }
 
         _isRefreshing = false;
@@ -301,7 +278,7 @@ public sealed class PropertyWindowControl : UserControl
             container.Controls.Add(CreateTagBadge(tag, project!.BaseDirectory));
     }
 
-    private static Control CreateTagBadge(Tag tag, string baseDirectory)
+    private static Panel CreateTagBadge(Tag tag, string baseDirectory)
     {
         var badgeColor = ColorTranslator.FromHtml(tag.Color);
 
@@ -414,10 +391,10 @@ public sealed class PropertyWindowControl : UserControl
             DownPage = (byte)_downPageNumeric.Value,
             FrontPage = (byte)_frontPageNumeric.Value,
             BackPage = (byte)_backPageNumeric.Value,
-            ScrollLeft = GetScrollByte(_scrollLeftCombo, _scrollLeftNoEdgeCheck, _scrollLeftLoopCheck),
-            ScrollRight = GetScrollByte(_scrollRightCombo, _scrollRightNoEdgeCheck, _scrollRightLoopCheck),
-            ScrollUp = GetScrollByte(_scrollUpCombo, _scrollUpNoEdgeCheck, _scrollUpLoopCheck),
-            ScrollDown = GetScrollByte(_scrollDownCombo, _scrollDownNoEdgeCheck, _scrollDownLoopCheck),
+            ScrollLeft = GetScrollByte(_scrollLeftCombo),
+            ScrollRight = GetScrollByte(_scrollRightCombo),
+            ScrollUp = GetScrollByte(_scrollUpCombo),
+            ScrollDown = GetScrollByte(_scrollDownCombo),
             Z = (byte)_zNumeric.Value,
         };
     }
@@ -557,35 +534,13 @@ public sealed class PropertyWindowControl : UserControl
         return combo;
     }
 
-    private static void SetScrollControls(
-        byte value,
-        ComboBox combo,
-        CheckBox noEdgeCheck,
-        CheckBox loopCheck)
-    {
-        var type = ScrollEncoding.GetType(value);
-        var flags = ScrollEncoding.GetFlags(value);
-
-        combo.SelectedItem = type;
-        noEdgeCheck.Checked = flags.HasFlag(ScrollFlags.NoEdge);
-        loopCheck.Checked = flags.HasFlag(ScrollFlags.Loop);
-    }
-
-    private static byte GetScrollByte(
-        ComboBox combo,
-        CheckBox noEdgeCheck,
-        CheckBox loopCheck)
+    private static byte GetScrollByte(ComboBox combo)
     {
         var type = combo.SelectedItem is ScrollType scrollType
             ? scrollType
             : ScrollType.None;
 
-        var flags = ScrollFlags.None;
-
-        if (noEdgeCheck.Checked) flags |= ScrollFlags.NoEdge;
-        if (loopCheck.Checked) flags |= ScrollFlags.Loop;
-
-        return ScrollEncoding.Encode(type, flags);
+        return (byte)type;
     }
 
     /// <summary>

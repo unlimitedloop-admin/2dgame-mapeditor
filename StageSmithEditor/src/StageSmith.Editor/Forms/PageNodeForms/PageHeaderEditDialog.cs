@@ -163,10 +163,10 @@ public class PageHeaderEditDialog : Form
         scrollTable.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
         scrollTable.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
 
-        _cmbScrollLeft  = CreateScrollCombo(ScrollEncoding.GetType(h.ScrollLeft));
-        _cmbScrollRight = CreateScrollCombo(ScrollEncoding.GetType(h.ScrollRight));
-        _cmbScrollUp    = CreateScrollCombo(ScrollEncoding.GetType(h.ScrollUp));
-        _cmbScrollDown  = CreateScrollCombo(ScrollEncoding.GetType(h.ScrollDown));
+        _cmbScrollLeft  = CreateScrollCombo((ScrollType)h.ScrollLeft);
+        _cmbScrollRight = CreateScrollCombo((ScrollType)h.ScrollRight);
+        _cmbScrollUp    = CreateScrollCombo((ScrollType)h.ScrollUp);
+        _cmbScrollDown  = CreateScrollCombo((ScrollType)h.ScrollDown);
 
         AddLabelAndControl(scrollTable, "上:", _cmbScrollUp,    0, 0);
         AddLabelAndControl(scrollTable, "下:", _cmbScrollDown,  0, 2);
@@ -272,10 +272,10 @@ public class PageHeaderEditDialog : Form
         h.BackPage  = back;
         h.FrontPage = front;
 
-        h.ScrollLeft  = ScrollEncoding.Encode(GetScrollType(_cmbScrollLeft),  ScrollFlags.None);
-        h.ScrollRight = ScrollEncoding.Encode(GetScrollType(_cmbScrollRight), ScrollFlags.None);
-        h.ScrollUp    = ScrollEncoding.Encode(GetScrollType(_cmbScrollUp),    ScrollFlags.None);
-        h.ScrollDown  = ScrollEncoding.Encode(GetScrollType(_cmbScrollDown),  ScrollFlags.None);
+        h.ScrollLeft  = (byte)GetScrollType(_cmbScrollLeft);
+        h.ScrollRight = (byte)GetScrollType(_cmbScrollRight);
+        h.ScrollUp    = (byte)GetScrollType(_cmbScrollUp);
+        h.ScrollDown  = (byte)GetScrollType(_cmbScrollDown);
 
         h.Flags = flags;
 
