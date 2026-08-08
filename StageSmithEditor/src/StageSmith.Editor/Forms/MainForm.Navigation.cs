@@ -156,13 +156,7 @@ public partial class MainForm
     private void MoveToPageIndex(int pageIndex)
     {
         _context.SetPage(pageIndex);
-
-        ApplyContextToView();
-        _stageExplorer.RebuildTree();
-        SyncExplorerHighlight();
         _pageNavBar.UpdateDisplay(_context);
-
-        _nodeEditorForm?.SyncPageSelection(_context.CurrentPageIndex);
     }
 
     // ========================

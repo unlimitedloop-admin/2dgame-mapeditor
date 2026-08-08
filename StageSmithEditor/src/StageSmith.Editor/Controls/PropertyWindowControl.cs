@@ -19,6 +19,11 @@ public sealed class PropertyWindowControl : UserControl
     /// ステージエクスプローラーの更新など外部への通知に使用する。
     /// </summary>
     public event Action? DataChanged;
+    
+    /// <summary>
+    /// ステージエクスプローラーの更新に関連するデータが変更されたとき発火する。
+    /// </summary>
+    public event Action? TreeRelevantDataChanged;
 
     /// <summary>
     /// プロパティ編集がコマンドとして確定したとき発火する。
@@ -163,11 +168,11 @@ public sealed class PropertyWindowControl : UserControl
 
         TrackChange(_stageNameTextBox,
             () => _stageNameTextBox.Text,
-            v => { if (_context?.CurrentStage != null) _context.CurrentStage.Name = v; });
+            v => { if (_context?.CurrentStage != null) _context.CurrentStage.Name = v; TreeRelevantDataChanged?.Invoke(); });
 
         TrackChange(_pageNameTextBox,
             () => _pageNameTextBox.Text,
-            v => { if (_context?.CurrentPage != null) _context.CurrentPage.Name = v; });
+            v => { if (_context?.CurrentPage != null) _context.CurrentPage.Name = v; TreeRelevantDataChanged?.Invoke(); });
 
         TrackChange(_pageEnableCheckBox,
             () => _pageEnableCheckBox.Checked,
