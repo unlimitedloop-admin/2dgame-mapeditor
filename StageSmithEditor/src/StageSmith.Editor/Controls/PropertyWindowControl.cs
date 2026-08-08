@@ -26,6 +26,7 @@ public sealed class PropertyWindowControl : UserControl
     /// </summary>
     public event Action<ICommand>? CommandRequested;
 
+    private readonly Panel _scrollPanel = new();
     private readonly TableLayoutPanel _table = new();
 
     private TextBox _projectNameTextBox = null!;
@@ -98,15 +99,23 @@ public sealed class PropertyWindowControl : UserControl
 
     private void InitializeLayout()
     {
-        _table.Dock = DockStyle.Fill;
+        _scrollPanel.Dock = DockStyle.Fill;
+        _scrollPanel.AutoScroll = true;
+
+        // AutoSize + Dock=Top にすることで、パネルの実際の高さが
+        // コンテンツ量に合わせて計算されるようになり、外側の _scrollPanel の
+        // AutoScroll が「収まりきらない」ことを正しく検知できるようになる。
+        _table.Dock = DockStyle.Top;
+        _table.AutoSize = true;
+        _table.AutoSizeMode = AutoSizeMode.GrowAndShrink;
         _table.ColumnCount = 2;
         _table.RowCount = 0;
-        _table.AutoScroll = true;
 
         _table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
         _table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
-        Controls.Add(_table);
+        _scrollPanel.Controls.Add(_table);
+        Controls.Add(_scrollPanel);
 
         AddHeader("Project", Color.FromArgb(200, 195, 245));
         _projectNameTextBox = AddTextRow("Name");
@@ -445,7 +454,6 @@ public sealed class PropertyWindowControl : UserControl
         return checkBox;
     }
 
-    /// <summary>「タグバッジ群 + 編集...ボタン」の行を追加し、バッジ格納用パネルを返す。</summary>
     private FlowLayoutPanel AddTagsRow(string labelText, EventHandler onEditClick)
     {
         var row = new FlowLayoutPanel
