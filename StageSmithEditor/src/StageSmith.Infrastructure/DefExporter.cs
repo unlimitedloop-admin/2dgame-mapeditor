@@ -51,22 +51,6 @@ public static class DefExporter
             X      = page.NodeX,
             Y      = page.NodeY,
             Z      = h.Z,
-            Connections = new DefConnections
-            {
-                Left  = h.LeftPage  == 0xFF ? null : h.LeftPage,
-                Right = h.RightPage == 0xFF ? null : h.RightPage,
-                Up    = h.UpPage    == 0xFF ? null : h.UpPage,
-                Down  = h.DownPage  == 0xFF ? null : h.DownPage,
-                Back  = h.BackPage  == 0xFF ? null : h.BackPage,
-                Front = h.FrontPage == 0xFF ? null : h.FrontPage,
-            },
-            Scrolling = new DefScrolling
-            {
-                Left  = ((ScrollType)h.ScrollLeft).ToString().ToLower(),
-                Right = ((ScrollType)h.ScrollRight).ToString().ToLower(),
-                Up    = ((ScrollType)h.ScrollUp).ToString().ToLower(),
-                Down  = ((ScrollType)h.ScrollDown).ToString().ToLower(),
-            },
             Flags = new DefFlags
             {
                 Enabled = page.Enable,
@@ -117,53 +101,11 @@ public static class DefExporter
         [JsonPropertyName("z")]
         public int Z { get; set; }
 
-        [JsonPropertyName("connections")]
-        public DefConnections Connections { get; set; } = new();
-
-        [JsonPropertyName("scrolling")]
-        public DefScrolling Scrolling { get; set; } = new();
-
         [JsonPropertyName("flags")]
         public DefFlags Flags { get; set; } = new();
 
         [JsonPropertyName("remarks")]
         public string? Remarks { get; set; }
-    }
-
-    private sealed class DefConnections
-    {
-        [JsonPropertyName("left")]
-        public byte? Left { get; set; }
-
-        [JsonPropertyName("right")]
-        public byte? Right { get; set; }
-
-        [JsonPropertyName("up")]
-        public byte? Up { get; set; }
-
-        [JsonPropertyName("down")]
-        public byte? Down { get; set; }
-
-        [JsonPropertyName("back")]
-        public byte? Back { get; set; }
-
-        [JsonPropertyName("front")]
-        public byte? Front { get; set; }
-    }
-
-    private sealed class DefScrolling
-    {
-        [JsonPropertyName("left")]
-        public string Left { get; set; } = "none";
-
-        [JsonPropertyName("right")]
-        public string Right { get; set; } = "none";
-
-        [JsonPropertyName("up")]
-        public string Up { get; set; } = "none";
-
-        [JsonPropertyName("down")]
-        public string Down { get; set; } = "none";
     }
 
     private sealed class DefFlags
