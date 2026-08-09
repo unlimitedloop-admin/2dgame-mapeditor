@@ -120,6 +120,8 @@ public partial class MainForm : Form
             RefreshViewMenuState();
         };
 
+        _mapView.ContextMenuRequested += OnMapViewContextMenuRequested;
+
         // クリック時のフォーカス設定
         _mapView.Click += (s, e) => _mapViewContent.FocusMapView();
         _tilePalette.Click += (s, e) => _tilePalette.Focus();

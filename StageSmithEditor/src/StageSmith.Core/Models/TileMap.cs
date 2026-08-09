@@ -3,9 +3,15 @@ using System.Text.Json.Serialization;
 
 namespace StageSmith.Core.Models;
 
+/// <summary>
+/// ステージの1ページ分のタイルマップを表すクラス。
+/// </summary>
 public sealed class TileMap
 {
+    // ページ単体のタイルマップ列数
     public int Width { get; } = MapConstants.PageTileWidth;
+    
+    // ページ単体のタイルマップ行数
     public int Height { get; } = MapConstants.PageTileHeight;
 
     [JsonIgnore]
@@ -58,9 +64,14 @@ public sealed class TileMap
         Array.Fill(Tiles, tileId);
     }
 
-    public void Clear()
+    /// <summary>
+    /// 全タイルを指定したクリアタイルIDで埋める。
+    /// クリアタイルIDはエディタ設定（EditorConfig.DefaultClearTileId）に依存するため、
+    /// TileMap自体は設定を参照せず、呼び出し側から値を受け取る。
+    /// </summary>
+    public void Clear(byte clearTileId = 0)
     {
-        Fill(0);
+        Fill(clearTileId);
     }
 
     // HACK: もし頻繁にアクセスするなら、座標からインデックスへの変換をメソッド化してもいいかも

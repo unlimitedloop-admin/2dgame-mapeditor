@@ -560,6 +560,8 @@ public class MapViewControl : DoubleBufferedPanel
     // =========================
     protected override void OnMouseDown(MouseEventArgs e)
     {
+        // NOTE: コンテキストメニュー要求はMouseUp側で発火するため、MouseDown側では処理しない。
+
         base.OnMouseDown(e);
 
         if (_tileMap == null) return;
