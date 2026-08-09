@@ -112,6 +112,19 @@ public sealed class EditorPropertiesDialog : Form
             Value    = Result.DefaultClearTileId,
         };
 
+        void UpdateClearTileIdFormat()
+        {
+            var hex = _hexRadio.Checked;
+            _defaultClearTileIdUpDown.Hexadecimal = hex;
+            clearTileLabel.Text = hex
+                ? "タイルクリア時のデフォルトタイル番号 (00-FF):"
+                : "タイルクリア時のデフォルトタイル番号 (0-255):";
+        }
+
+        _hexRadio.CheckedChanged += (_, _) => UpdateClearTileIdFormat();
+        _decimalRadio.CheckedChanged += (_, _) => UpdateClearTileIdFormat();
+        UpdateClearTileIdFormat();
+
         generalTab.Controls.Add(displayFormatGroup);
         generalTab.Controls.Add(_keepSelectedTileCheckBox);
         generalTab.Controls.Add(_showNodePreviewCheckBox);
