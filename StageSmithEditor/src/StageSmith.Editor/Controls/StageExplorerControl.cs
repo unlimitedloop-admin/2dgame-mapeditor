@@ -86,6 +86,7 @@ public class StageExplorerControl : UserControl
     private ToolStripMenuItem _stageRenameMenuItem = null!;
     private ToolStripMenuItem _stageCloneMenuItem  = null!;
     private ToolStripMenuItem _stageDeleteMenuItem = null!;
+    private ToolStripMenuItem _stageSetKeyMenuItem = null!;
     private ToolStripMenuItem _pageRenameMenuItem    = null!;
     private ToolStripMenuItem _pageDuplicateMenuItem = null!;
     private ToolStripMenuItem _pageDeleteMenuItem    = null!;
@@ -418,6 +419,7 @@ public class StageExplorerControl : UserControl
         _stageRenameMenuItem.Enabled    = !IsReadOnly;
         _stageCloneMenuItem.Enabled     = !IsReadOnly;
         _stageDeleteMenuItem.Enabled    = !IsReadOnly;
+        _stageSetKeyMenuItem.Enabled    = !IsReadOnly;
         _pageRenameMenuItem.Enabled     = !IsReadOnly;
         _pageDuplicateMenuItem.Enabled  = !IsReadOnly;
         _pageDeleteMenuItem.Enabled     = !IsReadOnly;
@@ -493,6 +495,20 @@ public class StageExplorerControl : UserControl
     {
         if (_stageMenu.Tag is not NodeTag tag) return;
         StageMapViewerRequested?.Invoke(tag.Stage);
+    }
+
+    private void OnStageSetKey(object? sender, EventArgs e)
+    {
+        if (_stageMenu.Tag is not NodeTag tag) return;
+
+        using var dialog = new StageKeyEditDialog(tag.Stage.Name, tag.Stage.Key);
+        if (dialog.ShowDialog(FindForm()) != DialogResult.OK) return;
+
+        if (dialog.ResultKey == tag.Stage.Key) return;
+
+        tag.Stage.Key = dialog.ResultKey;
+        tag.Stage.MarkDirty();
+        StageListChanged?.Invoke();
     }
 
     //========================
@@ -668,6 +684,7 @@ public class StageExplorerControl : UserControl
         _stageRenameMenuItem = new ToolStripMenuItem("名前変更", null, OnStageRename);
         _stageCloneMenuItem  = new ToolStripMenuItem("複製", null, OnStageClone);
         _stageDeleteMenuItem = new ToolStripMenuItem("削除", null, OnStageDelete);
+        _stageSetKeyMenuItem = new ToolStripMenuItem("Key を設定...", null, OnStageSetKey);
 
         menu.Items.Add(_stageRenameMenuItem);
         menu.Items.Add(new ToolStripSeparator());
@@ -676,6 +693,8 @@ public class StageExplorerControl : UserControl
         menu.Items.Add(_stageDeleteMenuItem);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("ステージマップビューアーを起動...", null, OnStageMapViewerLaunch);
+        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add(_stageSetKeyMenuItem);
         return menu;
     }
 

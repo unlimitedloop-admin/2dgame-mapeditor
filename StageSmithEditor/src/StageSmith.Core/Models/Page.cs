@@ -24,11 +24,6 @@ public sealed class Page
     /// </summary>
     public int NodeY { get; set; } = 0;
 
-    /// <summary>
-    /// スクロール属性などは後で拡張
-    /// </summary>
-    public string ScrollType { get; set; } = "None";
-
     public TileMap TileMap { get; set; } = new();
 
     public int Width => TileMap.Width;
@@ -50,7 +45,6 @@ public sealed class Page
             TagIds = new List<string>(TagIds),
             NodeX = NodeX,
             NodeY = NodeY,
-            ScrollType = ScrollType,
             Header = Header.Clone(),
             TileMap = TileMap.Clone()
         };
