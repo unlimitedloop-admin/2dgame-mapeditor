@@ -9,7 +9,6 @@ public sealed class Page
     public string Name { get; set; } = "New Page";
 
     public bool Enable { get; set; } = true;
-    public bool ReadOnly { get; set; }
     public string Remarks { get; set; } = "";
 
     /// <summary>付与されているTag.Idの一覧。マスターはEditorProject.Tagsが持つ。</summary>
@@ -47,7 +46,6 @@ public sealed class Page
         {
             Name = Name,
             Enable = Enable,
-            ReadOnly = ReadOnly,
             Remarks = Remarks,
             TagIds = new List<string>(TagIds),
             NodeX = NodeX,

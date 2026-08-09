@@ -40,7 +40,6 @@ public sealed class PropertyWindowControl : UserControl
     private const int TagIconSize = 16;
 
     private CheckBox _pageEnableCheckBox = null!;
-    private CheckBox _pageReadOnlyCheckBox = null!;
 
     private TextBox _pageRemarksTextBox = null!;
 
@@ -132,7 +131,6 @@ public sealed class PropertyWindowControl : UserControl
         AddHeader("Page", Color.FromArgb(255, 200, 0));
         _pageNameTextBox = AddTextRow("Name");
         _pageEnableCheckBox = AddCheckRow("Enable");
-        _pageReadOnlyCheckBox = AddCheckRow("ReadOnly");
         _pageRemarksTextBox = AddTextRow("Remarks");
         _pageTagsBadgesPanel = AddTagsRow("Tags", OnEditPageTagsClick);
 
@@ -182,10 +180,6 @@ public sealed class PropertyWindowControl : UserControl
             () => _pageEnableCheckBox.Checked,
             v => { if (_context?.CurrentPage != null) _context.CurrentPage.Enable = v; });
 
-        TrackChange(_pageReadOnlyCheckBox,
-            () => _pageReadOnlyCheckBox.Checked,
-            v => { if (_context?.CurrentPage != null) _context.CurrentPage.ReadOnly = v; });
-
         TrackChange(_pageRemarksTextBox,
             () => _pageRemarksTextBox.Text,
             v => { if (_context?.CurrentPage != null) _context.CurrentPage.Remarks = v; });
@@ -193,36 +187,14 @@ public sealed class PropertyWindowControl : UserControl
         foreach (var control in new Control[]
         {
             _roomIdNumeric,
-            _leftPageNumeric, _rightPageNumeric, _upPageNumeric, _downPageNumeric,
-            _frontPageNumeric, _backPageNumeric, _zNumeric,
-        })
-        {
-            control.Leave += (_, _) => UpdatePageHeader();
-        }
-
-        // CheckBox系フラグはクリックした時点で編集が完結する（TextBox/NumericUpDownと違い
-        // 「入力途中」の状態が存在しない）ため、Leave（フォーカスアウト）を待つ理由がない。
-        // Leave依存のままだと、フラグをクリックした直後にメニュー操作（Export BIN等）へ
-        // 進んだ場合、パネル内の他コントロールへフォーカス移動しないままLeaveが発火せず、
-        // 変更がPageHeaderへ反映されないまま出力されてしまう。CheckedChangedで即時確定する。
-        foreach (var flagCheckBox in new[]
-        {
             _flagContinuePointCheckBox, _flagNoScrollBackCheckBox, _flagPostEffectsCheckBox,
             _flagDarknessCheckBox, _flagWindCheckBox, _flagGravityModifierCheckBox,
-        })
-        {
-            flagCheckBox.CheckedChanged += (_, _) => UpdatePageHeader();
-        }
-
-        // ScrollType系ComboBox（DropDownList）も同様に、ドロップダウンから選択した時点で
-        // 編集が完結する。選択直後にメニュー操作へ進むとLeaveが発火せず反映されない
-        // ケースがあったため、SelectedIndexChangedで即時確定する。
-        foreach (var scrollCombo in new[]
-        {
+            _leftPageNumeric, _rightPageNumeric, _upPageNumeric, _downPageNumeric,
+            _frontPageNumeric, _backPageNumeric, _zNumeric,
             _scrollLeftCombo, _scrollRightCombo, _scrollUpCombo, _scrollDownCombo,
         })
         {
-            scrollCombo.SelectedIndexChanged += (_, _) => UpdatePageHeader();
+            control.Leave += (_, _) => UpdatePageHeader();
         }
 
         foreach (var numeric in new[]
@@ -250,7 +222,6 @@ public sealed class PropertyWindowControl : UserControl
 
         _pageNameTextBox.Text = page?.Name ?? "";
         _pageEnableCheckBox.Checked = page?.Enable ?? false;
-        _pageReadOnlyCheckBox.Checked = page?.ReadOnly ?? false;
         _pageRemarksTextBox.Text = page?.Remarks ?? "";
         RebuildTagBadges(_pageTagsBadgesPanel, _context.Project, page?.TagIds);
 
