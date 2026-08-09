@@ -45,8 +45,12 @@ public sealed class PropertyWindowControl : UserControl
     private TextBox _pageRemarksTextBox = null!;
 
     // Page Header - Flags
-    private CheckBox _flagWaterCheckBox = null!;
+    private CheckBox _flagContinuePointCheckBox = null!;
+    private CheckBox _flagNoScrollBackCheckBox = null!;
+    private CheckBox _flagPostEffectsCheckBox = null!;
+    private CheckBox _flagDarknessCheckBox = null!;
     private CheckBox _flagWindCheckBox = null!;
+    private CheckBox _flagGravityModifierCheckBox = null!;
 
     // Page Header - Room
     private NumericUpDown _roomIdNumeric = null!;
@@ -136,8 +140,12 @@ public sealed class PropertyWindowControl : UserControl
 
         _roomIdNumeric = AddByteRow("Room ID");
 
-        _flagWaterCheckBox = AddCheckRow("Water");
+        _flagContinuePointCheckBox = AddCheckRow("Continue Point");
+        _flagNoScrollBackCheckBox = AddCheckRow("No Scroll Back");
+        _flagPostEffectsCheckBox = AddCheckRow("Post Effects");
+        _flagDarknessCheckBox = AddCheckRow("Darkness");
         _flagWindCheckBox = AddCheckRow("Wind");
+        _flagGravityModifierCheckBox = AddCheckRow("Gravity Modifier");
 
         _leftPageNumeric = AddByteRow("Left Page");
         _rightPageNumeric = AddByteRow("Right Page");
@@ -184,13 +192,37 @@ public sealed class PropertyWindowControl : UserControl
 
         foreach (var control in new Control[]
         {
-            _roomIdNumeric, _flagWaterCheckBox, _flagWindCheckBox,
+            _roomIdNumeric,
             _leftPageNumeric, _rightPageNumeric, _upPageNumeric, _downPageNumeric,
             _frontPageNumeric, _backPageNumeric, _zNumeric,
-            _scrollLeftCombo, _scrollRightCombo, _scrollUpCombo, _scrollDownCombo,
         })
         {
             control.Leave += (_, _) => UpdatePageHeader();
+        }
+
+        // CheckBox系フラグはクリックした時点で編集が完結する（TextBox/NumericUpDownと違い
+        // 「入力途中」の状態が存在しない）ため、Leave（フォーカスアウト）を待つ理由がない。
+        // Leave依存のままだと、フラグをクリックした直後にメニュー操作（Export BIN等）へ
+        // 進んだ場合、パネル内の他コントロールへフォーカス移動しないままLeaveが発火せず、
+        // 変更がPageHeaderへ反映されないまま出力されてしまう。CheckedChangedで即時確定する。
+        foreach (var flagCheckBox in new[]
+        {
+            _flagContinuePointCheckBox, _flagNoScrollBackCheckBox, _flagPostEffectsCheckBox,
+            _flagDarknessCheckBox, _flagWindCheckBox, _flagGravityModifierCheckBox,
+        })
+        {
+            flagCheckBox.CheckedChanged += (_, _) => UpdatePageHeader();
+        }
+
+        // ScrollType系ComboBox（DropDownList）も同様に、ドロップダウンから選択した時点で
+        // 編集が完結する。選択直後にメニュー操作へ進むとLeaveが発火せず反映されない
+        // ケースがあったため、SelectedIndexChangedで即時確定する。
+        foreach (var scrollCombo in new[]
+        {
+            _scrollLeftCombo, _scrollRightCombo, _scrollUpCombo, _scrollDownCombo,
+        })
+        {
+            scrollCombo.SelectedIndexChanged += (_, _) => UpdatePageHeader();
         }
 
         foreach (var numeric in new[]
@@ -228,8 +260,12 @@ public sealed class PropertyWindowControl : UserControl
 
             _roomIdNumeric.Value = header.RoomId;
 
-            _flagWaterCheckBox.Checked = header.Flags.HasFlag(PageFlags.IsWater);
-            _flagWindCheckBox.Checked = header.Flags.HasFlag(PageFlags.IsWind);
+            _flagContinuePointCheckBox.Checked = header.Flags.HasFlag(PageFlags.ContinuePoint);
+            _flagNoScrollBackCheckBox.Checked = header.Flags.HasFlag(PageFlags.NoScrollBack);
+            _flagPostEffectsCheckBox.Checked = header.Flags.HasFlag(PageFlags.PostEffects);
+            _flagDarknessCheckBox.Checked = header.Flags.HasFlag(PageFlags.Darkness);
+            _flagWindCheckBox.Checked = header.Flags.HasFlag(PageFlags.Wind);
+            _flagGravityModifierCheckBox.Checked = header.Flags.HasFlag(PageFlags.GravityModifier);
 
             _leftPageNumeric.Value = header.LeftPage;
             _rightPageNumeric.Value = header.RightPage;
@@ -395,8 +431,12 @@ public sealed class PropertyWindowControl : UserControl
     private PageHeader BuildHeaderFromControls()
     {
         var flags = PageFlags.None;
-        if (_flagWaterCheckBox.Checked) flags |= PageFlags.IsWater;
-        if (_flagWindCheckBox.Checked) flags |= PageFlags.IsWind;
+        if (_flagContinuePointCheckBox.Checked) flags |= PageFlags.ContinuePoint;
+        if (_flagNoScrollBackCheckBox.Checked) flags |= PageFlags.NoScrollBack;
+        if (_flagPostEffectsCheckBox.Checked) flags |= PageFlags.PostEffects;
+        if (_flagDarknessCheckBox.Checked) flags |= PageFlags.Darkness;
+        if (_flagWindCheckBox.Checked) flags |= PageFlags.Wind;
+        if (_flagGravityModifierCheckBox.Checked) flags |= PageFlags.GravityModifier;
 
         return new PageHeader
         {

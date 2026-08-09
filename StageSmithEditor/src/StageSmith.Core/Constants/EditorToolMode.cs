@@ -4,6 +4,6 @@ public enum EditorToolMode
 {
     Pen,
     Selection,
-    Marker,
-    Bucket
+    Bucket,
+    Marker
 }

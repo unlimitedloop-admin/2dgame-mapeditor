@@ -4,14 +4,45 @@ namespace StageSmith.Core.Constants;
 /// ページヘッダーのフラグ定義。
 /// binファイル $0D に対応する。
 /// ゲームアプリ側が参照する演出・状態フラグ。
+///
+/// NOTE: 旧版の IsWater は廃止した。タイル単位の水中判定（泳ぎ物理）は
+/// ページ単位のフラグでは表現できない（同一ページ内で地上/水中が混在する
+/// ケースがあるため）。これはステージ単位の tileAttributes（タイルID範囲
+/// →属性）側に一本化する。C++側は BGTileManager::SetTileAttribute /
+/// GetTileAttribute を通じてタイル単位で参照する想定。
+///
+/// 各ビットは性質によって3分類できる。この分類が「なぜDarknessだけ
+/// PostEffectsと統合しなかったのか」の判断基準になっている。
+///   - ゲームロジック系: ContinuePoint, NoScrollBack
+///     （プレイの進行管理そのものに関わる）
+///   - 装飾演出系: PostEffects
+///     （画面に見えるだけで、操作性・判断には影響しない）
+///   - 知覚メカニクス系: Darkness
+///     （見た目の変化が視認性＝立ち回りに直結する。PostEffectsとは性質が違うため独立ビット）
+///   - 物理干渉系: Wind, GravityModifier
+///     （オブジェクトの挙動そのものに介入する）
 /// </summary>
 [Flags]
 public enum PageFlags : byte
 {
     None = 0,
-    IsWater = 1 << 0,  // bit0: 水中の場面
-    IsWind = 1 << 1,  // bit1: 風が吹く場面
-    // bit2〜7: 将来拡張用
+
+    // --- ゲームロジック系 ---
+    ContinuePoint = 1 << 0,    // bit0: この部屋を通過したらミス後再開する分岐点になる
+    NoScrollBack = 1 << 1,    // bit1: 一方通行（後戻り不可）
+
+    // --- 装飾演出系 ---
+    PostEffects = 1 << 2,    // bit2: 画面全体に視覚エフェクトを掛ける（雨など。操作性には影響しない）
+
+    // --- 知覚メカニクス系 ---
+    Darkness = 1 << 3,    // bit3: 暗闇演出（視認性そのものに影響する立ち回りメカニクス）
+
+    // --- 物理干渉系 ---
+    Wind = 1 << 4,    // bit4: 風。オブジェクトの挙動に直接影響する
+    GravityModifier = 1 << 5,    // bit5: 重力(等)の変化エリア。名称・詳細仕様は今後変更前提
+                                        //       （水中の低速移動演出もこの系統に統合される可能性あり）
+
+    // bit6〜7: 将来拡張用（未使用）
 }
 
 /// <summary>
@@ -29,13 +60,13 @@ public enum PageFlags : byte
 /// </summary>
 public enum ScrollType : byte
 {
-    None = 0,          // スクロール不可／隣接部屋なし
-    Free = 1,          // 自由スクロール（8方向スクロールも上下左右をFreeにすることで実現）
-    Page = 2,          // ページ単位スクロール（画面端到達で隣室へ）
-    Auto = 3,          // オートスクロール（時間駆動）
+    None         = 0,  // スクロール不可／隣接部屋なし
+    Free         = 1,  // 自由スクロール（8方向スクロールも上下左右をFreeにすることで実現）
+    Page         = 2,  // ページ単位スクロール（画面端到達で隣室へ）
+    Auto         = 3,  // オートスクロール（時間駆動）
     ObjectFollow = 4,  // オブジェクト依存スクロール（プレイヤー以外の座標基準）
-    EventDriven = 5,   // イベント駆動型（詳細はゲームロジック/.def側に委ねる）
-    Loop = 6,          // ループ部屋（水平/垂直はフィールド位置で決まる）
+    EventDriven  = 5,  // イベント駆動型（詳細はゲームロジック/.def側に委ねる）
+    Loop         = 6,  // ループ部屋（水平/垂直はフィールド位置で決まる）
 }
 
 /// <summary>
@@ -91,22 +122,22 @@ public struct PageHeader
         return new PageHeader
         {
             MagicStart = 0xA5,
-            MagicEnd = 0x5A,
+            MagicEnd   = 0x5A,
 
-            RoomId = 0xFF,
-            LeftPage = 0xFF,
+            RoomId    = 0xFF,
+            LeftPage  = 0xFF,
             RightPage = 0xFF,
-            UpPage = 0xFF,
-            DownPage = 0xFF,
+            UpPage    = 0xFF,
+            DownPage  = 0xFF,
             FrontPage = 0xFF,
-            BackPage = 0xFF,
+            BackPage  = 0xFF,
 
-            ScrollLeft = (byte)ScrollType.None,
+            ScrollLeft  = (byte)ScrollType.None,
             ScrollRight = (byte)ScrollType.None,
-            ScrollUp = (byte)ScrollType.None,
-            ScrollDown = (byte)ScrollType.None,
+            ScrollUp    = (byte)ScrollType.None,
+            ScrollDown  = (byte)ScrollType.None,
 
-            Z = 0,
+            Z     = 0,
             Flags = PageFlags.None,
         };
     }

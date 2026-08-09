@@ -1,6 +1,5 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
 
 namespace StageSmith.Infrastructure;
@@ -47,16 +46,11 @@ public static class DefExporter
 
         return new DefNode
         {
-            RoomId = h.RoomId,
-            X      = page.NodeX,
-            Y      = page.NodeY,
-            Z      = h.Z,
-            Flags = new DefFlags
-            {
-                Enabled = page.Enable,
-                Water   = h.Flags.HasFlag(PageFlags.IsWater),
-                Wind    = h.Flags.HasFlag(PageFlags.IsWind),
-            },
+            RoomId  = h.RoomId,
+            X       = page.NodeX,
+            Y       = page.NodeY,
+            Z       = h.Z,
+            Enabled = page.Enable,
             Remarks = string.IsNullOrEmpty(page.Remarks) ? null : page.Remarks,
         };
     }
@@ -101,22 +95,10 @@ public static class DefExporter
         [JsonPropertyName("z")]
         public int Z { get; set; }
 
-        [JsonPropertyName("flags")]
-        public DefFlags Flags { get; set; } = new();
-
-        [JsonPropertyName("remarks")]
-        public string? Remarks { get; set; }
-    }
-
-    private sealed class DefFlags
-    {
         [JsonPropertyName("enabled")]
         public bool Enabled { get; set; } = true;
 
-        [JsonPropertyName("water")]
-        public bool Water { get; set; }
-
-        [JsonPropertyName("wind")]
-        public bool Wind { get; set; }
+        [JsonPropertyName("remarks")]
+        public string? Remarks { get; set; }
     }
 }

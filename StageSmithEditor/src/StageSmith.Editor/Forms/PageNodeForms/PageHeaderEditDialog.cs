@@ -42,8 +42,12 @@ public class PageHeaderEditDialog : Form
     // その他
     //========================
     private readonly CheckBox _chkEnable;
-    private readonly CheckBox _chkWater;
+    private readonly CheckBox _chkContinuePoint;
+    private readonly CheckBox _chkNoScrollBack;
+    private readonly CheckBox _chkPostEffects;
+    private readonly CheckBox _chkDarkness;
     private readonly CheckBox _chkWind;
+    private readonly CheckBox _chkGravityModifier;
     private readonly TextBox  _txtRemarks;
     private readonly Label    _lblZValue;
     private readonly NumberDisplayFormat _format;
@@ -62,7 +66,7 @@ public class PageHeaderEditDialog : Form
         StartPosition   = FormStartPosition.CenterParent;
         MaximizeBox     = false;
         MinimizeBox     = false;
-        Size            = new Size(420, 500);
+        Size            = new Size(420, 560);
 
         var layout = new TableLayoutPanel
         {
@@ -192,10 +196,18 @@ public class PageHeaderEditDialog : Form
         };
         otherTable.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80));
         otherTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        otherTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));   // Enable
+        otherTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));   // Flags（6個・折り返しあり）
+        otherTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));   // Remarks
+        otherTable.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // 余白吸収
 
-        _chkEnable = new CheckBox { Text = "有効", Checked = page.Enable, Dock = DockStyle.Fill };
-        _chkWater  = new CheckBox { Text = "Water", Checked = h.Flags.HasFlag(PageFlags.IsWater), Dock = DockStyle.Fill };
-        _chkWind   = new CheckBox { Text = "Wind", Checked = h.Flags.HasFlag(PageFlags.IsWind), Dock = DockStyle.Fill };
+        _chkEnable          = new CheckBox { Text = "有効",           Checked = page.Enable, Dock = DockStyle.Fill };
+        _chkContinuePoint   = new CheckBox { Text = "Continue Point", Checked = h.Flags.HasFlag(PageFlags.ContinuePoint),   Dock = DockStyle.Fill };
+        _chkNoScrollBack    = new CheckBox { Text = "No Scroll Back", Checked = h.Flags.HasFlag(PageFlags.NoScrollBack),    Dock = DockStyle.Fill };
+        _chkPostEffects     = new CheckBox { Text = "Post Effects",   Checked = h.Flags.HasFlag(PageFlags.PostEffects),     Dock = DockStyle.Fill };
+        _chkDarkness        = new CheckBox { Text = "Darkness",       Checked = h.Flags.HasFlag(PageFlags.Darkness),        Dock = DockStyle.Fill };
+        _chkWind            = new CheckBox { Text = "Wind",           Checked = h.Flags.HasFlag(PageFlags.Wind),            Dock = DockStyle.Fill };
+        _chkGravityModifier = new CheckBox { Text = "Gravity Mod.",   Checked = h.Flags.HasFlag(PageFlags.GravityModifier), Dock = DockStyle.Fill };
         _txtRemarks = new TextBox
         {
             Text      = page.Remarks,
@@ -206,8 +218,8 @@ public class PageHeaderEditDialog : Form
         otherTable.Controls.Add(new Label { Text = "Enable:", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 0);
         otherTable.Controls.Add(_chkEnable, 1, 0);
         otherTable.Controls.Add(new Label { Text = "Flags:", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 1);
-        var flagsFlow = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight };
-        flagsFlow.Controls.AddRange([_chkWater, _chkWind]);
+        var flagsFlow = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = true, AutoSize = true };
+        flagsFlow.Controls.AddRange([_chkContinuePoint, _chkNoScrollBack, _chkPostEffects, _chkDarkness, _chkWind, _chkGravityModifier]);
         otherTable.Controls.Add(flagsFlow, 1, 1);
         otherTable.Controls.Add(new Label { Text = "Remarks:", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 2);
         otherTable.Controls.Add(_txtRemarks, 1, 2);
@@ -260,8 +272,12 @@ public class PageHeaderEditDialog : Form
         }
 
         var flags = PageFlags.None;
-        if (_chkWater.Checked) flags |= PageFlags.IsWater;
-        if (_chkWind.Checked)  flags |= PageFlags.IsWind;
+        if (_chkContinuePoint.Checked)   flags |= PageFlags.ContinuePoint;
+        if (_chkNoScrollBack.Checked)    flags |= PageFlags.NoScrollBack;
+        if (_chkPostEffects.Checked)     flags |= PageFlags.PostEffects;
+        if (_chkDarkness.Checked)        flags |= PageFlags.Darkness;
+        if (_chkWind.Checked)            flags |= PageFlags.Wind;
+        if (_chkGravityModifier.Checked) flags |= PageFlags.GravityModifier;
 
         // 元のHeaderをベースに、変更点だけ組み立てる（_page.Headerには触れない）
         var h = _page.Header;
