@@ -2,6 +2,9 @@ using System.Text.Json.Serialization;
 
 namespace StageSmith.Core.Models;
 
+/// <summary>
+/// ステージ定義ファイル(.ssestage)の内容を表すクラス。
+/// </summary>
 public sealed class Stage
 {
     public Guid Id { get; init; } = Guid.NewGuid();
@@ -191,7 +194,7 @@ public sealed class Stage
             Description = Description,
             Key = Key,
             TilesetImagePath = TilesetImagePath,
-            TagIds = new List<string>(TagIds),
+            TagIds = [.. TagIds],
             FilePath = null,   // 複製は未保存扱い
             IsDirty = true      // 保存されるまでダーティ扱い
         };

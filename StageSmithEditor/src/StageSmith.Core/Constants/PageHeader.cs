@@ -93,6 +93,8 @@ public enum ScrollType : byte
 /// </summary>
 public struct PageHeader
 {
+    public const int Size = 0x10; // 16byte
+
     public byte MagicStart { get; set; }  // $00 固定値 0xA5
 
     public byte RoomId { get; set; }      // $01 自分自身の部屋番号
