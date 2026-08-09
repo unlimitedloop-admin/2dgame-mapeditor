@@ -12,6 +12,7 @@ public class MarkerTool : ITool
 {
     private readonly MarkerState _markerState;
     private readonly Func<int> _getCurrentPageIndex;
+    private readonly Func<Guid> _getCurrentStageId;
     private readonly Action _invalidate;
 
     private bool _isDragging;
@@ -19,10 +20,12 @@ public class MarkerTool : ITool
     public MarkerTool(
         MarkerState markerState,
         Func<int> getCurrentPageIndex,
+        Func<Guid> getCurrentStageId,
         Action invalidate)
     {
         _markerState = markerState;
         _getCurrentPageIndex = getCurrentPageIndex;
+        _getCurrentStageId = getCurrentStageId;
         _invalidate = invalidate;
     }
 
@@ -31,7 +34,8 @@ public class MarkerTool : ITool
         _isDragging = true;
 
         var pageIndex = _getCurrentPageIndex();
-        _markerState.Toggle(pageIndex, x, y);
+        var stageId = _getCurrentStageId();
+        _markerState.Toggle(stageId, pageIndex, x, y);
 
         _invalidate();
     }
@@ -41,10 +45,11 @@ public class MarkerTool : ITool
         if (!_isDragging) return;
 
         var pageIndex = _getCurrentPageIndex();
+        var stageId = _getCurrentStageId();
 
         // ドラッグ中は「無ければ追加」のみ。
         // Toggleにすると、ドラッグの軌跡が既存マーカーの上を通過した瞬間に消えてしまうため。
-        _markerState.Add(pageIndex, x, y);
+        _markerState.Add(stageId, pageIndex, x, y);
 
         _invalidate();
     }
@@ -60,7 +65,8 @@ public class MarkerTool : ITool
     public void OnRightMouseDown(int x, int y)
     {
         var pageIndex = _getCurrentPageIndex();
-        _markerState.Remove(pageIndex, x, y);
+        var stageId = _getCurrentStageId();
+        _markerState.Remove(stageId, pageIndex, x, y);
 
         _invalidate();
     }

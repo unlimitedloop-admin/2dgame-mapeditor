@@ -301,6 +301,7 @@ public partial class MainForm
         _markerTool = new MarkerTool(
             _markerState,
             () => _context.CurrentPageIndex,
+            () => _context.CurrentStage?.Id ?? Guid.Empty,
             () => _mapView.Invalidate()
         );
 

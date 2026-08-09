@@ -52,6 +52,9 @@ public partial class MainForm
         _menuEditClearSearchHighlight.Click += (_, _) => ClearSearchHighlight();
         _menuEditToggleBookmark.Click       += (_, _) => ToggleBookmarkForCurrentPage();
         _menuEditClearAllBookmarks.Click    += (_, _) => ClearAllBookmarks();
+        _menuEditClearPageMarkers.Click     += (_, _) => ClearPageMarkers();
+        _menuEditClearStageMarkers.Click    += (_, _) => ClearStageMarkers();
+        _menuEditClearAllMarkers.Click      += (_, _) => ClearAllMarkers();
         _menuEditToggleReadOnly.CheckedChanged += (_, _) => ApplyReadOnlyState(_menuEditToggleReadOnly.Checked);
 
         // ========================
@@ -174,6 +177,9 @@ public partial class MainForm
         _menuEditFill.Enabled   = _context.HasPage && !isReadOnly;
         _menuEditToggleBookmark.Enabled = _context.HasPage && !isReadOnly;
         _menuEditClearAllBookmarks.Enabled = _context.Project?.Bookmarks.Count > 0 && !isReadOnly;
+        _menuEditClearPageMarkers.Enabled = _context.HasPage && !isReadOnly && _markerState.HasMarkers;
+        _menuEditClearStageMarkers.Enabled = _context.HasStage && !isReadOnly && _markerState.HasMarkers;
+        _menuEditClearAllMarkers.Enabled = !isReadOnly && _markerState.HasMarkers;
 
         // NOTE: ブックマークの有無に応じてメニューのテキストを切り替える
         if (_context.CurrentStage is { } stage && _context.CurrentPage is { } page && _context.Project != null)

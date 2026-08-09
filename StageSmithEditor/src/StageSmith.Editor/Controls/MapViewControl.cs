@@ -36,6 +36,7 @@ public class MapViewControl : DoubleBufferedPanel
     }
 
     private int _currentPageIndex = -1;
+    private Guid _currentStageId = Guid.Empty;
 
     public MapViewControl()
     {
@@ -277,6 +278,13 @@ public class MapViewControl : DoubleBufferedPanel
     {
         if (_currentPageIndex == pageIndex) return;
         _currentPageIndex = pageIndex;
+        Invalidate();
+    }
+
+    public void SetCurrentStageId(Guid stageId)
+    {
+        if (_currentStageId == stageId) return;
+        _currentStageId = stageId;
         Invalidate();
     }
 
@@ -1034,12 +1042,12 @@ public class MapViewControl : DoubleBufferedPanel
 
         using var brush = new SolidBrush(Color.FromArgb(128, _markerColor));
 
-        foreach (var marker in MarkerState.GetMarkersForPage(_currentPageIndex))
+        foreach (var marker in MarkerState.GetMarkersForPage(_currentStageId, _currentPageIndex))
         {
             g.FillRectangle(brush, GetTileRect(marker.X, marker.Y));
         }
 
-        if (MarkerState.CurrentMarker is { } current && current.PageIndex == _currentPageIndex)
+        if (MarkerState.CurrentMarker is { } current && current.StageId == _currentStageId && current.PageIndex == _currentPageIndex)
         {
             using var pen = new Pen(_markerColor, 2);
             g.DrawRectangle(pen, GetTileRect(current.X, current.Y));
