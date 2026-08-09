@@ -3,6 +3,8 @@ using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
 using StageSmith.Editor.Forms;
 using StageSmith.Editor.Utilities;
+using System.Globalization;
+using System.Media;
 
 namespace StageSmith.Editor.Controls;
 
@@ -189,6 +191,15 @@ public sealed class PropertyWindowControl : UserControl
         })
         {
             control.Leave += (_, _) => UpdatePageHeader();
+        }
+
+        foreach (var numeric in new[]
+        {
+            _roomIdNumeric, _leftPageNumeric, _rightPageNumeric, _upPageNumeric,
+            _downPageNumeric, _frontPageNumeric, _backPageNumeric, _zNumeric,
+        })
+        {
+            EnableValidatedPaste(numeric);
         }
     }
 
@@ -577,5 +588,58 @@ public sealed class PropertyWindowControl : UserControl
                 () => { applyValue(capturedBefore); }
             ));
         };
+    }
+
+    /// <summary>
+    /// NumericUpDown に対して Ctrl+V を横取りし、値として妥当なテキストの場合のみ反映する。
+    /// 数値として解釈できない場合は Beep を鳴らして何もしない（既定の直接入力と挙動を揃える）。
+    /// </summary>
+    private static void EnableValidatedPaste(NumericUpDown numeric)
+    {
+        numeric.KeyDown += (_, e) =>
+        {
+            if (!e.Control || e.KeyCode != Keys.V) return;
+
+            // 既定のペースト処理（無検証でテキスト挿入される）を止める
+            e.SuppressKeyPress = true;
+            e.Handled = true;
+
+            if (TryParseClipboardValue(numeric, out var value))
+            {
+                numeric.Value = value;
+            }
+            else
+            {
+                SystemSounds.Beep.Play();
+            }
+        };
+    }
+
+    private static bool TryParseClipboardValue(NumericUpDown numeric, out decimal value)
+    {
+        value = 0;
+
+        if (!Clipboard.ContainsText()) return false;
+
+        var text = Clipboard.GetText().Trim();
+        if (string.IsNullOrEmpty(text)) return false;
+
+        if (numeric.Hexadecimal)
+        {
+            if (text.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+                text = text[2..];
+
+            if (!int.TryParse(text, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var hexValue))
+                return false;
+
+            value = hexValue;
+        }
+        else
+        {
+            if (!decimal.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out value))
+                return false;
+        }
+
+        return value >= numeric.Minimum && value <= numeric.Maximum;
     }
 }
