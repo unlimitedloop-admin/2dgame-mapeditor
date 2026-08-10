@@ -8,6 +8,9 @@ using System.Media;
 
 namespace StageSmith.Editor.Controls;
 
+/// <summary>
+/// ステージエディタの右側に表示するプロパティウィンドウ。
+/// </summary>
 public sealed class PropertyWindowControl : UserControl
 {
     private EditorContext? _context;

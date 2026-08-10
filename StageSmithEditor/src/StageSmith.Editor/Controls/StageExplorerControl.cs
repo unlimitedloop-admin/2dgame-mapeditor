@@ -407,7 +407,9 @@ public class StageExplorerControl : UserControl
     //========================
     // コンテキストメニュー表示
     //========================
-    /// <summary>読み取り専用状態。MainFormから同期される。</summary>
+    /// <summary>
+    /// 読み取り専用状態。MainFormから同期される。
+    /// </summary>
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool IsReadOnly { get; set; }

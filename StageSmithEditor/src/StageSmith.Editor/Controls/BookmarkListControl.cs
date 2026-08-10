@@ -2,6 +2,9 @@ using StageSmith.Core.Models;
 
 namespace StageSmith.Editor.Controls;
 
+/// <summary>
+/// ブックマークの一覧を表示するコントロールです。
+/// </summary>
 public class BookmarkListControl : UserControl
 {
     public event Action<Stage, Page>? PageJumpRequested;

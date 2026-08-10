@@ -251,7 +251,9 @@ public class PageNavBarControl : UserControl
     }
 }
 
-/// <summary>ナビゲーション操作の種類。</summary>
+/// <summary>
+/// ナビゲーション操作の種類。
+/// </summary>
 public enum NavAction
 {
     First,

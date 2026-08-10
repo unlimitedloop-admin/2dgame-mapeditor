@@ -1,6 +1,7 @@
 using StageSmith.Application.Commands;
 using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
+using StageSmith.Editor.Controls;
 
 namespace StageSmith.Editor;
 

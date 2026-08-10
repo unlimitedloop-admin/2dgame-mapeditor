@@ -1,5 +1,8 @@
 namespace StageSmith.Editor.Controls;
 
+/// <summary>
+/// ダブルバッファリングされたパネルコントロールです。描画のちらつきを抑えるために使用します。
+/// </summary>
 public class DoubleBufferedPanel : Panel
 {
     public DoubleBufferedPanel()
