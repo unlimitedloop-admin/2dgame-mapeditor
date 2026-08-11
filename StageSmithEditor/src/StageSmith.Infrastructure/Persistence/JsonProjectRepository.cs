@@ -5,6 +5,9 @@ using StageSmith.Core.Models;
 
 namespace StageSmith.Infrastructure.Persistence;
 
+/// <summary>
+/// JSON形式でプロジェクト・ステージを永続化するリポジトリ。
+/// </summary>
 public sealed class JsonProjectRepository : IProjectRepository
 {
     private readonly JsonSerializerOptions _options;

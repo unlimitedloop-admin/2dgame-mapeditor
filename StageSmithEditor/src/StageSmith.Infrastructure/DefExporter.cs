@@ -26,6 +26,9 @@ public static class DefExporter
         File.WriteAllText(filePath, json);
     }
 
+    /// <summary>
+    /// ステージからDefRootオブジェクトを構築する。
+    /// </summary>
     private static DefRoot BuildDefRoot(Stage stage)
     {
         return new DefRoot
@@ -40,6 +43,9 @@ public static class DefExporter
         };
     }
 
+    /// <summary>
+    /// ページからDefNodeオブジェクトを構築する。
+    /// </summary>
     private static DefNode BuildDefNode(Page page)
     {
         var h = page.Header;
