@@ -4,6 +4,9 @@ using Timer = System.Windows.Forms.Timer;
 
 namespace StageSmith.Editor.Tools;
 
+/// <summary>
+/// 選択ツール。矩形選択、複数選択、移動/コピー、Shift+クリック拡張などをサポートする。
+/// </summary>
 public class SelectionTool : ITool, IDisposable
 {
     // ===== 選択状態 =====
@@ -30,6 +33,10 @@ public class SelectionTool : ITool, IDisposable
     private Point _currentOffset;
     private byte[,]? _moveBuffer;   // 移動中のタイルデータを一時的に保持するバッファ
 
+    /// <summary>
+    /// 選択矩形の移動が要求されたときに発生するイベント。
+    /// 引数は移動対象の矩形、移動量のオフセット、コピーかどうかを示すフラグ。
+    /// </summary>
     public event Action<Rectangle, Point, bool>? MoveRequested;
 
     // ===== マーチングアント =====

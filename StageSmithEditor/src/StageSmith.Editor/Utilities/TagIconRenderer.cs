@@ -14,7 +14,9 @@ public static class TagIconRenderer
         g.DrawImage(icon, destRect);
     }
 
-    /// <summary>アイコン画像を安全に読み込む。存在しない/壊れている場合はnull。</summary>
+    /// <summary>
+    /// アイコン画像を安全に読み込む。存在しない/壊れている場合はnull。
+    /// </summary>
     public static Image? SafeLoad(string? fullPath)
     {
         if (string.IsNullOrWhiteSpace(fullPath) || !File.Exists(fullPath))
