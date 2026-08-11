@@ -3,9 +3,14 @@ using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
 using StageSmith.Editor.Forms;
 using StageSmith.Editor.Utilities;
+using System.Globalization;
+using System.Media;
 
 namespace StageSmith.Editor.Controls;
 
+/// <summary>
+/// ステージエディタの右側に表示するプロパティウィンドウ。
+/// </summary>
 public sealed class PropertyWindowControl : UserControl
 {
     private EditorContext? _context;
@@ -15,10 +20,9 @@ public sealed class PropertyWindowControl : UserControl
     private bool _isRefreshing;
 
     /// <summary>
-    /// プロパティ上のデータが変更されたとき発火する。
-    /// ステージエクスプローラーの更新など外部への通知に使用する。
+    /// ステージエクスプローラーの更新に関連するデータが変更されたとき発火する。
     /// </summary>
-    public event Action? DataChanged;
+    public event Action? TreeRelevantDataChanged;
 
     /// <summary>
     /// プロパティ編集がコマンドとして確定したとき発火する。
@@ -26,6 +30,7 @@ public sealed class PropertyWindowControl : UserControl
     /// </summary>
     public event Action<ICommand>? CommandRequested;
 
+    private readonly Panel _scrollPanel = new();
     private readonly TableLayoutPanel _table = new();
 
     private TextBox _projectNameTextBox = null!;
@@ -38,13 +43,16 @@ public sealed class PropertyWindowControl : UserControl
     private const int TagIconSize = 16;
 
     private CheckBox _pageEnableCheckBox = null!;
-    private CheckBox _pageReadOnlyCheckBox = null!;
 
     private TextBox _pageRemarksTextBox = null!;
 
     // Page Header - Flags
-    private CheckBox _flagWaterCheckBox = null!;
+    private CheckBox _flagContinuePointCheckBox = null!;
+    private CheckBox _flagNoScrollBackCheckBox = null!;
+    private CheckBox _flagPostEffectsCheckBox = null!;
+    private CheckBox _flagDarknessCheckBox = null!;
     private CheckBox _flagWindCheckBox = null!;
+    private CheckBox _flagGravityModifierCheckBox = null!;
 
     // Page Header - Room
     private NumericUpDown _roomIdNumeric = null!;
@@ -61,16 +69,6 @@ public sealed class PropertyWindowControl : UserControl
     private ComboBox _scrollRightCombo = null!;
     private ComboBox _scrollUpCombo = null!;
     private ComboBox _scrollDownCombo = null!;
-
-    private CheckBox _scrollLeftNoEdgeCheck = null!;
-    private CheckBox _scrollRightNoEdgeCheck = null!;
-    private CheckBox _scrollUpNoEdgeCheck = null!;
-    private CheckBox _scrollDownNoEdgeCheck = null!;
-
-    private CheckBox _scrollLeftLoopCheck = null!;
-    private CheckBox _scrollRightLoopCheck = null!;
-    private CheckBox _scrollUpLoopCheck = null!;
-    private CheckBox _scrollDownLoopCheck = null!;
 
     public PropertyWindowControl()
     {
@@ -108,15 +106,23 @@ public sealed class PropertyWindowControl : UserControl
 
     private void InitializeLayout()
     {
-        _table.Dock = DockStyle.Fill;
+        _scrollPanel.Dock = DockStyle.Fill;
+        _scrollPanel.AutoScroll = true;
+
+        // AutoSize + Dock=Top にすることで、パネルの実際の高さが
+        // コンテンツ量に合わせて計算されるようになり、外側の _scrollPanel の
+        // AutoScroll が「収まりきらない」ことを正しく検知できるようになる。
+        _table.Dock = DockStyle.Top;
+        _table.AutoSize = true;
+        _table.AutoSizeMode = AutoSizeMode.GrowAndShrink;
         _table.ColumnCount = 2;
         _table.RowCount = 0;
-        _table.AutoScroll = true;
 
         _table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
         _table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
-        Controls.Add(_table);
+        _scrollPanel.Controls.Add(_table);
+        Controls.Add(_scrollPanel);
 
         AddHeader("Project", Color.FromArgb(200, 195, 245));
         _projectNameTextBox = AddTextRow("Name");
@@ -128,7 +134,6 @@ public sealed class PropertyWindowControl : UserControl
         AddHeader("Page", Color.FromArgb(255, 200, 0));
         _pageNameTextBox = AddTextRow("Name");
         _pageEnableCheckBox = AddCheckRow("Enable");
-        _pageReadOnlyCheckBox = AddCheckRow("ReadOnly");
         _pageRemarksTextBox = AddTextRow("Remarks");
         _pageTagsBadgesPanel = AddTagsRow("Tags", OnEditPageTagsClick);
 
@@ -136,8 +141,12 @@ public sealed class PropertyWindowControl : UserControl
 
         _roomIdNumeric = AddByteRow("Room ID");
 
-        _flagWaterCheckBox = AddCheckRow("Water");
+        _flagContinuePointCheckBox = AddCheckRow("Continue Point");
+        _flagNoScrollBackCheckBox = AddCheckRow("No Scroll Back");
+        _flagPostEffectsCheckBox = AddCheckRow("Post Effects");
+        _flagDarknessCheckBox = AddCheckRow("Darkness");
         _flagWindCheckBox = AddCheckRow("Wind");
+        _flagGravityModifierCheckBox = AddCheckRow("Gravity Modifier");
 
         _leftPageNumeric = AddByteRow("Left Page");
         _rightPageNumeric = AddByteRow("Right Page");
@@ -147,20 +156,9 @@ public sealed class PropertyWindowControl : UserControl
         _backPageNumeric = AddByteRow("Back Page");
 
         _scrollLeftCombo = AddScrollTypeRow("Left Scroll");
-        _scrollLeftNoEdgeCheck = AddCheckRow("Left NoEdge");
-        _scrollLeftLoopCheck = AddCheckRow("Left Loop");
-
         _scrollRightCombo = AddScrollTypeRow("Right Scroll");
-        _scrollRightNoEdgeCheck = AddCheckRow("Right NoEdge");
-        _scrollRightLoopCheck = AddCheckRow("Right Loop");
-
         _scrollUpCombo = AddScrollTypeRow("Up Scroll");
-        _scrollUpNoEdgeCheck = AddCheckRow("Up NoEdge");
-        _scrollUpLoopCheck = AddCheckRow("Up Loop");
-
         _scrollDownCombo = AddScrollTypeRow("Down Scroll");
-        _scrollDownNoEdgeCheck = AddCheckRow("Down NoEdge");
-        _scrollDownLoopCheck = AddCheckRow("Down Loop");
 
         _zNumeric = AddByteRow("Z");
 
@@ -185,25 +183,30 @@ public sealed class PropertyWindowControl : UserControl
             () => _pageEnableCheckBox.Checked,
             v => { if (_context?.CurrentPage != null) _context.CurrentPage.Enable = v; });
 
-        TrackChange(_pageReadOnlyCheckBox,
-            () => _pageReadOnlyCheckBox.Checked,
-            v => { if (_context?.CurrentPage != null) _context.CurrentPage.ReadOnly = v; });
-
         TrackChange(_pageRemarksTextBox,
             () => _pageRemarksTextBox.Text,
             v => { if (_context?.CurrentPage != null) _context.CurrentPage.Remarks = v; });
 
         foreach (var control in new Control[]
         {
-            _roomIdNumeric, _flagWaterCheckBox, _flagWindCheckBox,
+            _roomIdNumeric,
+            _flagContinuePointCheckBox, _flagNoScrollBackCheckBox, _flagPostEffectsCheckBox,
+            _flagDarknessCheckBox, _flagWindCheckBox, _flagGravityModifierCheckBox,
             _leftPageNumeric, _rightPageNumeric, _upPageNumeric, _downPageNumeric,
             _frontPageNumeric, _backPageNumeric, _zNumeric,
             _scrollLeftCombo, _scrollRightCombo, _scrollUpCombo, _scrollDownCombo,
-            _scrollLeftNoEdgeCheck, _scrollRightNoEdgeCheck, _scrollUpNoEdgeCheck, _scrollDownNoEdgeCheck,
-            _scrollLeftLoopCheck, _scrollRightLoopCheck, _scrollUpLoopCheck, _scrollDownLoopCheck,
         })
         {
             control.Leave += (_, _) => UpdatePageHeader();
+        }
+
+        foreach (var numeric in new[]
+        {
+            _roomIdNumeric, _leftPageNumeric, _rightPageNumeric, _upPageNumeric,
+            _downPageNumeric, _frontPageNumeric, _backPageNumeric, _zNumeric,
+        })
+        {
+            EnableValidatedPaste(numeric);
         }
     }
 
@@ -222,7 +225,6 @@ public sealed class PropertyWindowControl : UserControl
 
         _pageNameTextBox.Text = page?.Name ?? "";
         _pageEnableCheckBox.Checked = page?.Enable ?? false;
-        _pageReadOnlyCheckBox.Checked = page?.ReadOnly ?? false;
         _pageRemarksTextBox.Text = page?.Remarks ?? "";
         RebuildTagBadges(_pageTagsBadgesPanel, _context.Project, page?.TagIds);
 
@@ -232,8 +234,12 @@ public sealed class PropertyWindowControl : UserControl
 
             _roomIdNumeric.Value = header.RoomId;
 
-            _flagWaterCheckBox.Checked = header.Flags.HasFlag(PageFlags.IsWater);
-            _flagWindCheckBox.Checked = header.Flags.HasFlag(PageFlags.IsWind);
+            _flagContinuePointCheckBox.Checked = header.Flags.HasFlag(PageFlags.ContinuePoint);
+            _flagNoScrollBackCheckBox.Checked = header.Flags.HasFlag(PageFlags.NoScrollBack);
+            _flagPostEffectsCheckBox.Checked = header.Flags.HasFlag(PageFlags.PostEffects);
+            _flagDarknessCheckBox.Checked = header.Flags.HasFlag(PageFlags.Darkness);
+            _flagWindCheckBox.Checked = header.Flags.HasFlag(PageFlags.Wind);
+            _flagGravityModifierCheckBox.Checked = header.Flags.HasFlag(PageFlags.GravityModifier);
 
             _leftPageNumeric.Value = header.LeftPage;
             _rightPageNumeric.Value = header.RightPage;
@@ -243,10 +249,10 @@ public sealed class PropertyWindowControl : UserControl
             _backPageNumeric.Value = header.BackPage;
             _zNumeric.Value = header.Z;
 
-            SetScrollControls(header.ScrollLeft, _scrollLeftCombo, _scrollLeftNoEdgeCheck, _scrollLeftLoopCheck);
-            SetScrollControls(header.ScrollRight, _scrollRightCombo, _scrollRightNoEdgeCheck, _scrollRightLoopCheck);
-            SetScrollControls(header.ScrollUp, _scrollUpCombo, _scrollUpNoEdgeCheck, _scrollUpLoopCheck);
-            SetScrollControls(header.ScrollDown, _scrollDownCombo, _scrollDownNoEdgeCheck, _scrollDownLoopCheck);
+            _scrollLeftCombo.SelectedItem = (ScrollType)header.ScrollLeft;
+            _scrollRightCombo.SelectedItem = (ScrollType)header.ScrollRight;
+            _scrollUpCombo.SelectedItem = (ScrollType)header.ScrollUp;
+            _scrollDownCombo.SelectedItem = (ScrollType)header.ScrollDown;
         }
 
         _isRefreshing = false;
@@ -265,8 +271,8 @@ public sealed class PropertyWindowControl : UserControl
         if (oldHeader.ToBytes().SequenceEqual(newHeader.ToBytes())) return;
 
         CommandRequested?.Invoke(new ActionCommand(
-            () => { page.Header = newHeader; DataChanged?.Invoke(); },
-            () => { page.Header = oldHeader; DataChanged?.Invoke(); }
+            () => { page.Header = newHeader; },
+            () => { page.Header = oldHeader; }
         ));
     }
 
@@ -301,7 +307,7 @@ public sealed class PropertyWindowControl : UserControl
             container.Controls.Add(CreateTagBadge(tag, project!.BaseDirectory));
     }
 
-    private static Control CreateTagBadge(Tag tag, string baseDirectory)
+    private static Panel CreateTagBadge(Tag tag, string baseDirectory)
     {
         var badgeColor = ColorTranslator.FromHtml(tag.Color);
 
@@ -368,8 +374,8 @@ public sealed class PropertyWindowControl : UserControl
         if (oldIds.SequenceEqual(newIds)) return;
 
         CommandRequested?.Invoke(new ActionCommand(
-            () => { stage.TagIds = newIds; stage.MarkDirty(); DataChanged?.Invoke(); RefreshProperties(); },
-            () => { stage.TagIds = oldIds; stage.MarkDirty(); DataChanged?.Invoke(); RefreshProperties(); }
+            () => { stage.TagIds = newIds; stage.MarkDirty(); TreeRelevantDataChanged?.Invoke(); RefreshProperties(); },
+            () => { stage.TagIds = oldIds; stage.MarkDirty(); TreeRelevantDataChanged?.Invoke(); RefreshProperties(); }
         ));
     }
 
@@ -391,21 +397,25 @@ public sealed class PropertyWindowControl : UserControl
         var stage = _context?.CurrentStage;
 
         CommandRequested?.Invoke(new ActionCommand(
-            () => { page.TagIds = newIds; stage?.MarkDirty(); DataChanged?.Invoke(); RefreshProperties(); },
-            () => { page.TagIds = oldIds; stage?.MarkDirty(); DataChanged?.Invoke(); RefreshProperties(); }
+            () => { page.TagIds = newIds; stage?.MarkDirty(); TreeRelevantDataChanged?.Invoke(); RefreshProperties(); },
+            () => { page.TagIds = oldIds; stage?.MarkDirty(); TreeRelevantDataChanged?.Invoke(); RefreshProperties(); }
         ));
     }
 
     private PageHeader BuildHeaderFromControls()
     {
         var flags = PageFlags.None;
-        if (_flagWaterCheckBox.Checked) flags |= PageFlags.IsWater;
-        if (_flagWindCheckBox.Checked) flags |= PageFlags.IsWind;
+        if (_flagContinuePointCheckBox.Checked) flags |= PageFlags.ContinuePoint;
+        if (_flagNoScrollBackCheckBox.Checked) flags |= PageFlags.NoScrollBack;
+        if (_flagPostEffectsCheckBox.Checked) flags |= PageFlags.PostEffects;
+        if (_flagDarknessCheckBox.Checked) flags |= PageFlags.Darkness;
+        if (_flagWindCheckBox.Checked) flags |= PageFlags.Wind;
+        if (_flagGravityModifierCheckBox.Checked) flags |= PageFlags.GravityModifier;
 
         return new PageHeader
         {
-            MagicStart = 0xA5,
-            MagicEnd = 0x5A,
+            MagicStart = PageHeaderMagic.Start,
+            MagicEnd = PageHeaderMagic.End,
             RoomId = (byte)_roomIdNumeric.Value,
             Flags = flags,
             LeftPage = (byte)_leftPageNumeric.Value,
@@ -414,10 +424,10 @@ public sealed class PropertyWindowControl : UserControl
             DownPage = (byte)_downPageNumeric.Value,
             FrontPage = (byte)_frontPageNumeric.Value,
             BackPage = (byte)_backPageNumeric.Value,
-            ScrollLeft = GetScrollByte(_scrollLeftCombo, _scrollLeftNoEdgeCheck, _scrollLeftLoopCheck),
-            ScrollRight = GetScrollByte(_scrollRightCombo, _scrollRightNoEdgeCheck, _scrollRightLoopCheck),
-            ScrollUp = GetScrollByte(_scrollUpCombo, _scrollUpNoEdgeCheck, _scrollUpLoopCheck),
-            ScrollDown = GetScrollByte(_scrollDownCombo, _scrollDownNoEdgeCheck, _scrollDownLoopCheck),
+            ScrollLeft = GetScrollByte(_scrollLeftCombo),
+            ScrollRight = GetScrollByte(_scrollRightCombo),
+            ScrollUp = GetScrollByte(_scrollUpCombo),
+            ScrollDown = GetScrollByte(_scrollDownCombo),
             Z = (byte)_zNumeric.Value,
         };
     }
@@ -468,7 +478,6 @@ public sealed class PropertyWindowControl : UserControl
         return checkBox;
     }
 
-    /// <summary>「タグバッジ群 + 編集...ボタン」の行を追加し、バッジ格納用パネルを返す。</summary>
     private FlowLayoutPanel AddTagsRow(string labelText, EventHandler onEditClick)
     {
         var row = new FlowLayoutPanel
@@ -557,35 +566,13 @@ public sealed class PropertyWindowControl : UserControl
         return combo;
     }
 
-    private static void SetScrollControls(
-        byte value,
-        ComboBox combo,
-        CheckBox noEdgeCheck,
-        CheckBox loopCheck)
-    {
-        var type = ScrollEncoding.GetType(value);
-        var flags = ScrollEncoding.GetFlags(value);
-
-        combo.SelectedItem = type;
-        noEdgeCheck.Checked = flags.HasFlag(ScrollFlags.NoEdge);
-        loopCheck.Checked = flags.HasFlag(ScrollFlags.Loop);
-    }
-
-    private static byte GetScrollByte(
-        ComboBox combo,
-        CheckBox noEdgeCheck,
-        CheckBox loopCheck)
+    private static byte GetScrollByte(ComboBox combo)
     {
         var type = combo.SelectedItem is ScrollType scrollType
             ? scrollType
             : ScrollType.None;
 
-        var flags = ScrollFlags.None;
-
-        if (noEdgeCheck.Checked) flags |= ScrollFlags.NoEdge;
-        if (loopCheck.Checked) flags |= ScrollFlags.Loop;
-
-        return ScrollEncoding.Encode(type, flags);
+        return (byte)type;
     }
 
     /// <summary>
@@ -611,9 +598,62 @@ public sealed class PropertyWindowControl : UserControl
 
             var capturedBefore = before;
             CommandRequested?.Invoke(new ActionCommand(
-                () => { applyValue(after); DataChanged?.Invoke(); },
-                () => { applyValue(capturedBefore); DataChanged?.Invoke(); }
+                () => { applyValue(after); },
+                () => { applyValue(capturedBefore); }
             ));
         };
+    }
+
+    /// <summary>
+    /// NumericUpDown に対して Ctrl+V を横取りし、値として妥当なテキストの場合のみ反映する。
+    /// 数値として解釈できない場合は Beep を鳴らして何もしない（既定の直接入力と挙動を揃える）。
+    /// </summary>
+    private static void EnableValidatedPaste(NumericUpDown numeric)
+    {
+        numeric.KeyDown += (_, e) =>
+        {
+            if (!e.Control || e.KeyCode != Keys.V) return;
+
+            // 既定のペースト処理（無検証でテキスト挿入される）を止める
+            e.SuppressKeyPress = true;
+            e.Handled = true;
+
+            if (TryParseClipboardValue(numeric, out var value))
+            {
+                numeric.Value = value;
+            }
+            else
+            {
+                SystemSounds.Beep.Play();
+            }
+        };
+    }
+
+    private static bool TryParseClipboardValue(NumericUpDown numeric, out decimal value)
+    {
+        value = 0;
+
+        if (!Clipboard.ContainsText()) return false;
+
+        var text = Clipboard.GetText().Trim();
+        if (string.IsNullOrEmpty(text)) return false;
+
+        if (numeric.Hexadecimal)
+        {
+            if (text.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+                text = text[2..];
+
+            if (!int.TryParse(text, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var hexValue))
+                return false;
+
+            value = hexValue;
+        }
+        else
+        {
+            if (!decimal.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out value))
+                return false;
+        }
+
+        return value >= numeric.Minimum && value <= numeric.Maximum;
     }
 }

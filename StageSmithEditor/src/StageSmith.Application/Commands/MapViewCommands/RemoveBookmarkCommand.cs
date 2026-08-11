@@ -2,6 +2,9 @@ using StageSmith.Core.Models;
 
 namespace StageSmith.Application.Commands;
 
+/// <summary>
+/// ブックマークを削除するコマンドです。
+/// </summary>
 public sealed class RemoveBookmarkCommand : ICommand
 {
     private readonly EditorProject _project;

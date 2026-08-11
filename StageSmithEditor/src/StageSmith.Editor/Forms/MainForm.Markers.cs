@@ -33,4 +33,32 @@ public partial class MainForm
 
         _mapViewContent.ScrollToTile(marker.X, marker.Y);
     }
+
+    /// <summary>
+    /// 現在のステージ・現在のページに属するマーカーのみを削除する。
+    /// </summary>
+    private void ClearPageMarkers()
+    {
+        if (_context.CurrentStage is not { } stage) return;
+
+        _markerState.ClearForPage(stage.Id, _context.CurrentPageIndex);
+    }
+
+    /// <summary>
+    /// 現在のステージに属するマーカーをすべて削除する。
+    /// </summary>
+    private void ClearStageMarkers()
+    {
+        if (_context.CurrentStage is not { } stage) return;
+
+        _markerState.ClearForStage(stage.Id);
+    }
+
+    /// <summary>
+    /// プロジェクト全体のマーカーをすべて削除する。
+    /// </summary>
+    private void ClearAllMarkers()
+    {
+        _markerState.Clear();
+    }
 }

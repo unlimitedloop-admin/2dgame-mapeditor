@@ -5,6 +5,9 @@ using StageSmith.Editor.Controls;
 
 namespace StageSmith.Editor.Controllers;
 
+/// <summary>
+/// ページナビゲーションの制御を行うコントローラークラスです。
+/// </summary>
 public sealed class PageNavigationController
 {
     private const byte NoRoom = 0xFF;

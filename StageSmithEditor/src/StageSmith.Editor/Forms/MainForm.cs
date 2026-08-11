@@ -6,7 +6,6 @@ using StageSmith.Editor.Controls;
 using StageSmith.Editor.DockContents;
 using StageSmith.Editor.Forms;
 using StageSmith.Editor.Tools;
-using System.Runtime.CompilerServices;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace StageSmith.Editor;
@@ -121,8 +120,10 @@ public partial class MainForm : Form
             RefreshViewMenuState();
         };
 
+        _mapView.ContextMenuRequested += OnMapViewContextMenuRequested;
+
         // クリック時のフォーカス設定
-        _mapView.Click += (s, e) => _mapView.Focus();
+        _mapView.Click += (s, e) => _mapViewContent.FocusMapView();
         _tilePalette.Click += (s, e) => _tilePalette.Focus();
         _metaTilePalette.Click += (s, e) => _metaTilePalette.Focus();
         Click += (s, e) => _mapView.Focus();
@@ -148,8 +149,7 @@ public partial class MainForm : Form
         _propertyWindow.Bind(_context);
         _propertyWindow.CommandRequested += cmd => _commandManager.Execute(cmd);
 
-        // プロパティ変更 → エクスプローラー即時更新
-        _propertyWindow.DataChanged += () =>
+        _propertyWindow.TreeRelevantDataChanged += () =>
         {
             _stageExplorer.RebuildTree();
             SyncExplorerHighlight();
@@ -174,13 +174,22 @@ public partial class MainForm : Form
             _undoButton.Enabled = _commandManager.CanUndo && !_commandManager.IsReadOnly;
             _redoButton.Enabled = _commandManager.CanRedo && !_commandManager.IsReadOnly;
 
-            _mapView.Invalidate();
-            UpdateTitle();
-            _stageExplorer?.RebuildTree();
-            _bookmarkList?.RefreshList();
-            _pageNavBar?.UpdateDisplay(_context);
-            _propertyWindow?.RefreshProperties();
-            _nodeEditorForm?.SyncPageSelection(_context.CurrentPageIndex);
+            // NOTE: このイベントはコントロールのLeave等、フォーカス遷移の"最中"に
+            // 同期的に発火することがある。ここでTreeViewの再構築やコンボの値再代入を
+            // 同期的に行うと、遷移元/遷移先コントロールが自分の入力処理中に
+            // 横から状態を書き換えられる形になり、WinForms側のメッセージ処理と
+            // 競合してハング・描画崩壊を起こす。
+            // → 現在のメッセージ処理が完全に終わった後に回すことで回避する。
+            BeginInvoke(() =>
+            {
+                _mapView.Invalidate();
+                UpdateTitle();
+                _stageExplorer?.RebuildTree();
+                _bookmarkList?.RefreshList();
+                _pageNavBar?.UpdateDisplay(_context);
+                _propertyWindow?.RefreshProperties();
+                _nodeEditorForm?.SyncPageSelection(_context.CurrentPageIndex);
+            });
         };
 
         InitializeSearch();

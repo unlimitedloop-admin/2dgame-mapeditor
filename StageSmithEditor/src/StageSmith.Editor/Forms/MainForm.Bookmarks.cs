@@ -9,7 +9,6 @@ public partial class MainForm
     private void InitializeBookmarkEvents()
     {
         _stageExplorer.BookmarkToggleRequested += ToggleBookmark;
-        _mapView.ContextMenuRequested += OnMapViewContextMenuRequested;
 
         _bookmarkList.PageJumpRequested += (stage, page) =>
         {
@@ -53,7 +52,35 @@ public partial class MainForm
             null,
             (_, _) => ToggleBookmark(stage, page));
 
+        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add(
+            "ページのタイルをクリア",
+            null,
+            (_, _) => ClearCurrentPageTiles());
+
         menu.Show(e.ScreenLocation);
+    }
+
+    private void ClearCurrentPageTiles()
+    {
+        if (_page == null) return;
+
+        var tileMap = _page.TileMap;
+        var clearTileId = _config.DefaultClearTileId;
+
+        var positions = new List<(int x, int y)>();
+        for (var y = 0; y < tileMap.Height; y++)
+        {
+            for (var x = 0; x < tileMap.Width; x++)
+            {
+                positions.Add((x, y));
+            }
+        }
+
+        var command = new TilePaintCommand(tileMap, positions, clearTileId);
+        _commandManager.Execute(command);
+
+        _mapView.Invalidate();
     }
 
     private void ToggleBookmark(Stage stage, Page page)

@@ -4,6 +4,9 @@ using StageSmith.Editor.Utilities;
 
 namespace StageSmith.Editor.Controls;
 
+/// <summary>
+/// メタタイルのプレビューを表示するコントロールです。
+/// </summary>
 public sealed class MetaTilePreviewControl : DoubleBufferedPanel
 {
     private MetaTile? _metaTile;
@@ -14,7 +17,10 @@ public sealed class MetaTilePreviewControl : DoubleBufferedPanel
     private const int DefaultPreviewScale = 3;
 
     private int _previewScale = DefaultPreviewScale;
-
+    
+    /// <summary>
+    /// プレビューのズームを取得します。
+    /// </summary>
     public int PreviewScale
     {
         get => _previewScale;
@@ -31,7 +37,10 @@ public sealed class MetaTilePreviewControl : DoubleBufferedPanel
             PreviewScaleChanged?.Invoke(_previewScale);
         }
     }
-
+    
+    /// <summary>
+    /// プレビューのズームが変更されたときに発生します。
+    /// </summary>
     public event Action<int>? PreviewScaleChanged;
 
     public MetaTilePreviewControl()
@@ -44,6 +53,10 @@ public sealed class MetaTilePreviewControl : DoubleBufferedPanel
         UpdateContentSize();
     }
 
+    /// <summary>
+    /// メタタイルを設定します。
+    /// </summary>
+    /// <param name="metaTile">設定するメタタイル。</param>
     public void SetMetaTile(MetaTile? metaTile)
     {
         _metaTile = metaTile;
@@ -51,22 +64,35 @@ public sealed class MetaTilePreviewControl : DoubleBufferedPanel
         Invalidate();
     }
 
+    /// <summary>
+    /// タイルセットを設定します。
+    /// </summary>
+    /// <param name="tileset">設定するタイルセット。</param>
     public void SetTileset(Bitmap? tileset)
     {
         _tilesetHolder.Replace(tileset);
         Invalidate();
     }
 
+    /// <summary>
+    /// プレビューを拡大します。
+    /// </summary>
     public void ZoomIn()
     {
         PreviewScale++;
     }
 
+    /// <summary>
+    /// プレビューを縮小します。
+    /// </summary>
     public void ZoomOut()
     {
         PreviewScale--;
     }
 
+    /// <summary>
+    /// プレビューのズームをリセットします。
+    /// </summary>
     public void ResetZoom()
     {
         PreviewScale = DefaultPreviewScale;

@@ -45,6 +45,7 @@ namespace StageSmith.Editor
             _menuFileNewProject     = new ToolStripMenuItem("New Project")      { ShortcutKeys = Keys.Control | Keys.P };
             _menuFileOpenProject    = new ToolStripMenuItem("Open Project")     { ShortcutKeys = Keys.Control | Keys.Shift | Keys.O };
             _menuFileSaveProject    = new ToolStripMenuItem("Save Project")     { ShortcutKeys = Keys.Control | Keys.Shift | Keys.S };
+            _menuFileSaveProjectAs  = new ToolStripMenuItem("Save Project As...");
             _menuFileCloseProject   = new ToolStripMenuItem("Close Project");
             _menuFileNewStage       = new ToolStripMenuItem("New Stage")        { ShortcutKeys = Keys.Control | Keys.N };
             _menuFileImportStage    = new ToolStripMenuItem("Import Stage...");
@@ -63,6 +64,7 @@ namespace StageSmith.Editor
                 _menuFileNewProject,
                 _menuFileOpenProject,
                 _menuFileSaveProject,
+                _menuFileSaveProjectAs,
                 _menuFileCloseProject,
                 new ToolStripSeparator(),
                 _menuFileNewStage,
@@ -105,6 +107,9 @@ namespace StageSmith.Editor
             _menuEditClearSearchHighlight = new ToolStripMenuItem("Clear Search Highlight") { ShortcutKeyDisplayString = "Shift+Esc" };
             _menuEditToggleBookmark     = new ToolStripMenuItem("Add Bookmark")             { ShortcutKeyDisplayString = "Ctrl+B" };
             _menuEditClearAllBookmarks  = new ToolStripMenuItem("Clear All Bookmarks");
+            _menuEditClearPageMarkers   = new ToolStripMenuItem("Clear Page Markers");
+            _menuEditClearStageMarkers  = new ToolStripMenuItem("Clear Stage Markers");
+            _menuEditClearAllMarkers    = new ToolStripMenuItem("Clear All Markers");
             _menuEditToggleReadOnly     = new ToolStripMenuItem("Read-Only Mode")           { CheckOnClick = true };
 
             _menuEdit.DropDownItems.AddRange([
@@ -132,6 +137,10 @@ namespace StageSmith.Editor
                 new ToolStripSeparator(),
                 _menuEditToggleBookmark,
                 _menuEditClearAllBookmarks,
+                new ToolStripSeparator(),
+                _menuEditClearPageMarkers,
+                _menuEditClearStageMarkers,
+                _menuEditClearAllMarkers,
                 new ToolStripSeparator(),
                 _menuEditToggleReadOnly
             ]);
@@ -310,6 +319,7 @@ namespace StageSmith.Editor
         private ToolStripMenuItem _menuFileNewProject     = null!;
         private ToolStripMenuItem _menuFileOpenProject    = null!;
         private ToolStripMenuItem _menuFileSaveProject    = null!;
+        private ToolStripMenuItem _menuFileSaveProjectAs  = null!;
         private ToolStripMenuItem _menuFileCloseProject   = null!;
         private ToolStripMenuItem _menuFileNewStage       = null!;
         private ToolStripMenuItem _menuFileSaveStage      = null!;
@@ -345,6 +355,9 @@ namespace StageSmith.Editor
         private ToolStripMenuItem _menuEditClearSearchHighlight = null!;
         private ToolStripMenuItem _menuEditToggleBookmark       = null!;
         private ToolStripMenuItem _menuEditClearAllBookmarks    = null!;
+        private ToolStripMenuItem _menuEditClearPageMarkers     = null!;
+        private ToolStripMenuItem _menuEditClearStageMarkers    = null!;
+        private ToolStripMenuItem _menuEditClearAllMarkers      = null!;
         private ToolStripMenuItem _menuEditToggleReadOnly       = null!;
 
         // View

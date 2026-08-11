@@ -2,6 +2,9 @@ using StageSmith.Core.Models;
 
 namespace StageSmith.Editor.Utilities;
 
+/// <summary>
+/// 指定したタイルマップの中で、指定座標から同じタイルIDの領域を探索するFlood Fillアルゴリズム。
+/// </summary>
 public static class FloodFillHelper
 {
     public static List<(int x, int y)> Execute(TileMap tileMap, int startX, int startY)

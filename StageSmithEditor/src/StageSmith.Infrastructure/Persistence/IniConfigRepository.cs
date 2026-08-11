@@ -4,6 +4,9 @@ using StageSmith.Core.Models;
 
 namespace StageSmith.Infrastructure.Persistence;
 
+/// <summary>
+/// INI形式でエディタ設定を永続化するリポジトリ。
+/// </summary>
 public class IniConfigRepository : IConfigRepository
 {
     private const string DefaultFileName = "SSE_Config.ini";
@@ -14,7 +17,11 @@ public class IniConfigRepository : IConfigRepository
     {
         _filePath = filePath ?? Path.Combine(AppContext.BaseDirectory, DefaultFileName);
     }
-
+    
+    /// <summary>
+    /// エディタ設定を読み込む。
+    /// </summary>
+    /// <returns>読み込まれたエディタ設定。</returns>
     public EditorConfig Load()
     {
         var config = new EditorConfig();
@@ -58,6 +65,10 @@ public class IniConfigRepository : IConfigRepository
         return config;
     }
 
+    /// <summary>
+    /// エディタ設定を保存する。
+    /// </summary>
+    /// <param name="config">保存するエディタ設定。</param>
     public void Save(EditorConfig config)
     {
         var lines = new List<string>
@@ -100,7 +111,12 @@ public class IniConfigRepository : IConfigRepository
 
         File.WriteAllLines(_filePath, lines);
     }
-
+    
+    /// <summary>
+    /// INIファイルからキーと値のペアを読み込む。
+    /// </summary>
+    /// <param name="path">INIファイルのパス。</param>
+    /// <returns>キーと値のペアの辞書。</returns>
     private static Dictionary<string, string> ReadIniValues(string path)
     {
         var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);

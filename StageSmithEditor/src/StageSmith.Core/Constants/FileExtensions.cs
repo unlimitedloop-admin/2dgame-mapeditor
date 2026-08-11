@@ -1,11 +1,14 @@
 namespace StageSmith.Core.Constants;
 
+/// <summary>
+/// ファイル拡張子やフィルタに関する定数をまとめたクラス。
+/// </summary>
 public static class FileExtensions
 {
-    public const string Project = ".sseproj";
+    public const string Project   = ".sseproj";
     public const string StageFile = ".ssestage";
 
-    public const string StageMapBinary = ".bin";
+    public const string StageMapBinary  = ".bin";
     public const string StageDefinition = ".def";
 
     public const string ProjectFilter =

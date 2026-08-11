@@ -1,5 +1,8 @@
 namespace StageSmith.Core.Models;
 
+/// <summary>
+/// メタタイル（複数のタイルをまとめた1つのタイル）のデータを表すクラス。
+/// </summary>
 public sealed class MetaTile
 {
     public const byte EmptyTile = 0xFF;

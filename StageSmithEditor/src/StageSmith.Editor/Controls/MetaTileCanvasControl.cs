@@ -4,6 +4,9 @@ using StageSmith.Editor.Utilities;
 
 namespace StageSmith.Editor.Controls;
 
+/// <summary>
+/// メタタイルを表示するキャンバスコントロールです。
+/// </summary>
 public sealed class MetaTileCanvasControl : DoubleBufferedPanel
 {
     private MetaTile? _metaTile;
@@ -13,9 +16,24 @@ public sealed class MetaTileCanvasControl : DoubleBufferedPanel
     private const int CellSize = 32;
     private const int MarginSize = 16;
 
+    /// <summary>
+    /// タイルが選択されたときに発生します。
+    /// </summary>
     public event Action<int>? TilePicked;
+
+    /// <summary>
+    /// 編集が開始されたときに発生します。
+    /// </summary>
     public event Action? EditStarted;
+
+    /// <summary>
+    /// タイルのペイントが要求されたときに発生します。
+    /// </summary>
     public event Action<int, int, byte>? TilePaintRequested;
+
+    /// <summary>
+    /// 編集が終了したときに発生します。
+    /// </summary>
     public event Action? EditFinished;
 
     public MetaTileCanvasControl()
@@ -234,8 +252,6 @@ public sealed class MetaTileCanvasControl : DoubleBufferedPanel
             TilePicked?.Invoke(tileId);
         }
     }
-
-    private Bitmap? GetUsableTileset() => _tilesetHolder.Current;
 
     protected override void Dispose(bool disposing)
     {

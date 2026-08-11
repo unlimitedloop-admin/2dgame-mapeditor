@@ -2,6 +2,10 @@ using StageSmith.Editor.Utilities;
 
 namespace StageSmith.Editor.Tools;
 
+/// <summary>
+/// ピッカーツール。
+/// 選択された座標のタイルIDを取得し、指定されたコールバックに渡す。
+/// </summary>
 public class PickerTool : ITool
 {
     private readonly Func<int, int, int> _pick;

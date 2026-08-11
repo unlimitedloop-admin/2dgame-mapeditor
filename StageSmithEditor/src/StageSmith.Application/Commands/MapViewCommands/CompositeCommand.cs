@@ -1,5 +1,8 @@
 namespace StageSmith.Application.Commands;
 
+/// <summary>
+/// 複数のコマンドをまとめて実行するためのコマンドです。
+/// </summary>
 public class CompositeCommand : ICommand
 {
     private readonly List<ICommand> _commands;

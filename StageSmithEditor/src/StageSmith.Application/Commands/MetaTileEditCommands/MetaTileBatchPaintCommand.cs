@@ -9,6 +9,9 @@ public readonly record struct MetaTileCellChange(
     byte AfterTileId
 );
 
+/// <summary>
+/// MetaTileの複数セルをまとめて塗り替えるコマンド。
+/// </summary>
 public sealed class MetaTileBatchPaintCommand : ICommand
 {
     private readonly MetaTile _metaTile;

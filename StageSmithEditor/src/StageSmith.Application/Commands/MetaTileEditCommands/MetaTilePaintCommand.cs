@@ -2,6 +2,9 @@ using StageSmith.Core.Models;
 
 namespace StageSmith.Application.Commands;
 
+/// <summary>
+/// MetaTileの1セルを塗り替えるコマンド。
+/// </summary>
 public sealed class MetaTilePaintCommand : ICommand
 {
     private readonly MetaTile _metaTile;

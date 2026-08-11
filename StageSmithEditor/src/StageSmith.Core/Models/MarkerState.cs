@@ -37,9 +37,9 @@ public sealed class MarkerState
     /// 追加した場合はそのマーカーを現在位置にする。
     /// </summary>
     /// <returns>追加した場合 true、削除した場合 false。</returns>
-    public bool Toggle(int pageIndex, int x, int y)
+    public bool Toggle(Guid stageId, int pageIndex, int x, int y)
     {
-        var index = _markers.FindIndex(m => m.PageIndex == pageIndex && m.X == x && m.Y == y);
+        var index = _markers.FindIndex(m => m.StageId == stageId && m.PageIndex == pageIndex && m.X == x && m.Y == y);
 
         if (index >= 0)
         {
@@ -52,7 +52,7 @@ public sealed class MarkerState
             return false;
         }
 
-        _markers.Add(new Marker(pageIndex, x, y));
+        _markers.Add(new Marker(stageId, pageIndex, x, y));
         CurrentIndex = _markers.Count - 1;
 
         NotifyChanged();
@@ -62,9 +62,9 @@ public sealed class MarkerState
     /// <summary>
     /// 指定位置のマーカーを明示的に削除する（右クリック用）。既に無ければ何もしない。
     /// </summary>
-    public void Remove(int pageIndex, int x, int y)
+    public void Remove(Guid stageId, int pageIndex, int x, int y)
     {
-        var index = _markers.FindIndex(m => m.PageIndex == pageIndex && m.X == x && m.Y == y);
+        var index = _markers.FindIndex(m => m.StageId == stageId && m.PageIndex == pageIndex && m.X == x && m.Y == y);
         if (index < 0) return;
 
         _markers.RemoveAt(index);
@@ -78,24 +78,55 @@ public sealed class MarkerState
     /// <summary>
     /// 指定位置にマーカーが既にあれば追加せず false を返す（範囲設置での重複防止用）。
     /// </summary>
-    public bool Add(int pageIndex, int x, int y)
+    public bool Add(Guid stageId, int pageIndex, int x, int y)
     {
-        if (_markers.Any(m => m.PageIndex == pageIndex && m.X == x && m.Y == y))
+        if (_markers.Any(m => m.StageId == stageId && m.PageIndex == pageIndex && m.X == x && m.Y == y))
             return false;
 
-        _markers.Add(new Marker(pageIndex, x, y));
+        _markers.Add(new Marker(stageId, pageIndex, x, y));
         CurrentIndex = _markers.Count - 1;
 
         NotifyChanged();
         return true;
     }
 
+    /// <summary>
+    /// プロジェクト全体の全マーカーを削除する。
+    /// </summary>
     public void Clear()
     {
         if (_markers.Count == 0) return;
 
         _markers.Clear();
         CurrentIndex = -1;
+
+        NotifyChanged();
+    }
+
+    /// <summary>
+    /// 指定ステージ・ページに属するマーカーのみを削除する（ページ単位削除）。
+    /// </summary>
+    public void ClearForPage(Guid stageId, int pageIndex)
+    {
+        var removed = _markers.RemoveAll(m => m.StageId == stageId && m.PageIndex == pageIndex);
+        if (removed == 0) return;
+
+        if (CurrentIndex >= _markers.Count)
+            CurrentIndex = _markers.Count - 1;
+
+        NotifyChanged();
+    }
+
+    /// <summary>
+    /// 指定ステージに属するマーカーのみを削除する（ステージ単位削除）。
+    /// </summary>
+    public void ClearForStage(Guid stageId)
+    {
+        var removed = _markers.RemoveAll(m => m.StageId == stageId);
+        if (removed == 0) return;
+
+        if (CurrentIndex >= _markers.Count)
+            CurrentIndex = _markers.Count - 1;
 
         NotifyChanged();
     }
@@ -143,10 +174,10 @@ public sealed class MarkerState
     }
 
     /// <summary>
-    /// 指定ページに属するマーカーのみを取得する（MapViewControlのオーバーレイ描画用）。
+    /// 指定ステージの指定ページに属するマーカーのみを取得する（MapViewControlのオーバーレイ描画用）。
     /// </summary>
-    public IEnumerable<Marker> GetMarkersForPage(int pageIndex)
+    public IEnumerable<Marker> GetMarkersForPage(Guid stageId, int pageIndex)
     {
-        return _markers.Where(m => m.PageIndex == pageIndex);
+        return _markers.Where(m => m.StageId == stageId && m.PageIndex == pageIndex);
     }
 }

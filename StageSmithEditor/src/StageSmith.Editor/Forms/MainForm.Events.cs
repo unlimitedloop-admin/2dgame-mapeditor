@@ -81,14 +81,6 @@ public partial class MainForm
                 NewStage();
                 return true;
 
-            case Keys.Control | Keys.C:
-                CopySelection();
-                return true;
-
-            case Keys.Control | Keys.V:
-                PasteSelection();
-                return true;
-
             case Keys.Shift | Keys.Escape:
                 ClearSearchHighlight();
                 return true;
@@ -103,7 +95,24 @@ public partial class MainForm
 
         // ── TextBox フォーカス中はここで終了 ─────────────────────────
         if (IsFocusedOnTextBox())
+        {
+            // Copy/Paste/Cut/Delete は Edit メニューにも同じショートカットが
+            // 割り当てられているため、base.ProcessCmdKey へそのまま渡すと
+            // メニュー側(ToolStripMenuItem.ShortcutKeys)に横取りされ、
+            // TextBox標準のクリップボード操作まで届かない。
+            // この4キーだけは base を経由させず、そのままコントロールへ渡す
+            // （マウスでのメニュークリックには影響しない）。
+            switch (keyData)
+            {
+                case Keys.Control | Keys.C:
+                case Keys.Control | Keys.V:
+                case Keys.Control | Keys.X:
+                case Keys.Delete:
+                    return false;
+            }
+
             return base.ProcessCmdKey(ref msg, keyData);
+        }
 
         // ── 単体キー（TextBox 以外のとき有効） ───────────────────────
         switch (keyData)
@@ -116,6 +125,14 @@ public partial class MainForm
 
             case Keys.Control | Keys.A:
                 SelectAllTiles();
+                return true;
+
+            case Keys.Control | Keys.C:
+                CopySelection();
+                return true;
+
+            case Keys.Control | Keys.V:
+                PasteSelection();
                 return true;
 
             case Keys.PageDown:

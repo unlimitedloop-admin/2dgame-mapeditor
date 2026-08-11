@@ -2,6 +2,9 @@ using StageSmith.Core.Constants;
 
 namespace StageSmith.Core.Models;
 
+/// <summary>
+/// ステージの1ページ分のデータ。
+/// </summary>
 public sealed class Page
 {
     public Guid Id { get; init; } = Guid.NewGuid();
@@ -9,7 +12,6 @@ public sealed class Page
     public string Name { get; set; } = "New Page";
 
     public bool Enable { get; set; } = true;
-    public bool ReadOnly { get; set; }
     public string Remarks { get; set; } = "";
 
     /// <summary>付与されているTag.Idの一覧。マスターはEditorProject.Tagsが持つ。</summary>
@@ -24,11 +26,6 @@ public sealed class Page
     /// ノードエディタ上のY配置座標。エディタ専用（bin/def出力対象外）。
     /// </summary>
     public int NodeY { get; set; } = 0;
-
-    /// <summary>
-    /// スクロール属性などは後で拡張
-    /// </summary>
-    public string ScrollType { get; set; } = "None";
 
     public TileMap TileMap { get; set; } = new();
 
@@ -47,12 +44,10 @@ public sealed class Page
         {
             Name = Name,
             Enable = Enable,
-            ReadOnly = ReadOnly,
             Remarks = Remarks,
-            TagIds = new List<string>(TagIds),
+            TagIds = [.. TagIds],
             NodeX = NodeX,
             NodeY = NodeY,
-            ScrollType = ScrollType,
             Header = Header.Clone(),
             TileMap = TileMap.Clone()
         };
@@ -62,19 +57,18 @@ public sealed class Page
 
     public byte[] ToBinary()
     {
-        // ヘッダ16バイト + タイルデータ(幅×高さ)
-        // ページは最大16x15なので、合計256バイトで固定
-        var buffer = new byte[0x100];
+        var buffer = new byte[MapConstants.PageSize];
 
         var headerBytes = Header.ToBytes();
-        if (headerBytes.Length != 0x10)
+        if (headerBytes.Length != PageHeader.Size)
         {
-            throw new InvalidOperationException($"PageHeader must be 16 bytes, but was {headerBytes.Length} bytes.");
+            throw new InvalidOperationException($"PageHeader must be {PageHeader.Size} bytes, but was {headerBytes.Length} bytes.");
         }
 
-        Array.Copy(headerBytes, 0, buffer, 0x00, 0x10);
+        Array.Copy(headerBytes, 0, buffer, 0x00, PageHeader.Size);
 
-        var index = 0x10;
+        // NOTE: indexをPageHeader.Sizeから始めることで、ヘッダーの後にタイルデータを書き込む
+        var index = PageHeader.Size;
 
         for (var y = 0; y < TileMap.Height; y++)
         {

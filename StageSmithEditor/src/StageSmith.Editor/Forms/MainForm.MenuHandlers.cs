@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using StageSmith.Core.Constants;
 using StageSmith.Editor.Controls;
 using WeifenLuo.WinFormsUI.Docking;
@@ -14,6 +15,7 @@ public partial class MainForm
         _menuFileNewProject.Click    += (_, _) => NewProject();
         _menuFileOpenProject.Click   += (_, _) => OpenProject();
         _menuFileSaveProject.Click   += (_, _) => SaveProject();
+        _menuFileSaveProjectAs.Click += (_, _) => SaveProjectAs();
         _menuFileCloseProject.Click  += (_, _) => CloseProject();
         _menuFileNewStage.Click      += (_, _) => NewStage();
         _menuFileImportStage.Click   += (_, _) => ImportStage();
@@ -50,6 +52,9 @@ public partial class MainForm
         _menuEditClearSearchHighlight.Click += (_, _) => ClearSearchHighlight();
         _menuEditToggleBookmark.Click       += (_, _) => ToggleBookmarkForCurrentPage();
         _menuEditClearAllBookmarks.Click    += (_, _) => ClearAllBookmarks();
+        _menuEditClearPageMarkers.Click     += (_, _) => ClearPageMarkers();
+        _menuEditClearStageMarkers.Click    += (_, _) => ClearStageMarkers();
+        _menuEditClearAllMarkers.Click      += (_, _) => ClearAllMarkers();
         _menuEditToggleReadOnly.CheckedChanged += (_, _) => ApplyReadOnlyState(_menuEditToggleReadOnly.Checked);
 
         // ========================
@@ -109,6 +114,14 @@ public partial class MainForm
         // ========================
         // Help
         // ========================
+        _menuHelpContents.Click += (_, _) => OpenHelpContents();
+
+        _menuHelpShortcuts.Click += (_, _) =>
+        {
+            using var dialog = new ShortcutsDialog(_menuStrip);
+            dialog.ShowDialog(this);
+        };
+
         _menuHelpAbout.Click += (_, _) =>
             MessageBox.Show(
                 "StageSmith Editor\nVersion 0.9",
@@ -133,33 +146,40 @@ public partial class MainForm
     {
         var hasProject = _context.HasProject;
         var hasStage   = _context.HasStage;
+        var isReadOnly = _commandManager.IsReadOnly;
 
-        _menuFileSaveProject.Enabled   = hasProject;
+        _menuFileSaveProject.Enabled   = hasProject && !isReadOnly;
+        _menuFileSaveProjectAs.Enabled = hasProject && !isReadOnly;
         _menuFileCloseProject.Enabled  = hasProject;
-        _menuFileNewStage.Enabled      = hasProject;
-        _menuFileImportStage.Enabled   = hasProject;
-        _menuFileSaveStage.Enabled     = hasStage;
+        _menuFileNewStage.Enabled      = hasProject && !isReadOnly;
+        _menuFileImportStage.Enabled   = hasProject && !isReadOnly;
+        _menuFileSaveStage.Enabled     = hasStage && !isReadOnly;
         _menuFileReloadStage.Enabled   = hasStage;
-        _menuFileDropStage.Enabled     = hasStage;
-        _menuFileAddPage.Enabled       = hasStage;
-        _menuFileDuplicatePage.Enabled = _context.HasPage;
-        _menuFileRemovePage.Enabled    = _context.HasPage;
-        _menuFileImportTileSet.Enabled = hasStage;
+        _menuFileDropStage.Enabled     = hasStage && !isReadOnly;
+        _menuFileAddPage.Enabled       = hasStage && !isReadOnly;
+        _menuFileDuplicatePage.Enabled = _context.HasPage && !isReadOnly;
+        _menuFileRemovePage.Enabled    = _context.HasPage && !isReadOnly;
+        _menuFileImportTileSet.Enabled = hasStage && !isReadOnly;
         _menuFileExportBin.Enabled     = hasStage;
         _menuFileExportAll.Enabled     = hasProject;
     }
 
-    private void RefreshEditMenuState()
-    {
-        _menuEditUndo.Enabled   = _commandManager.CanUndo;
-        _menuEditRedo.Enabled   = _commandManager.CanRedo;
-        _menuEditCut.Enabled    = _context.HasPage;
+     private void RefreshEditMenuState()
+     {
+        var isReadOnly = _commandManager.IsReadOnly;
+
+        _menuEditUndo.Enabled   = _commandManager.CanUndo && !isReadOnly;
+        _menuEditRedo.Enabled   = _commandManager.CanRedo && !isReadOnly;
+        _menuEditCut.Enabled    = _context.HasPage && !isReadOnly;
         _menuEditCopy.Enabled   = _context.HasPage;
-        _menuEditPaste.Enabled  = _context.HasPage;
-        _menuEditDelete.Enabled = _context.HasPage;
-        _menuEditFill.Enabled   = _context.HasPage;
-        _menuEditToggleBookmark.Enabled = _context.HasPage;
-        _menuEditClearAllBookmarks.Enabled = _context.Project?.Bookmarks.Count > 0;
+        _menuEditPaste.Enabled  = _context.HasPage && !isReadOnly;
+        _menuEditDelete.Enabled = _context.HasPage && !isReadOnly;
+        _menuEditFill.Enabled   = _context.HasPage && !isReadOnly;
+        _menuEditToggleBookmark.Enabled = _context.HasPage && !isReadOnly;
+        _menuEditClearAllBookmarks.Enabled = _context.Project?.Bookmarks.Count > 0 && !isReadOnly;
+        _menuEditClearPageMarkers.Enabled = _context.HasPage && !isReadOnly && _markerState.HasMarkers;
+        _menuEditClearStageMarkers.Enabled = _context.HasStage && !isReadOnly && _markerState.HasMarkers;
+        _menuEditClearAllMarkers.Enabled = !isReadOnly && _markerState.HasMarkers;
 
         // NOTE: ブックマークの有無に応じてメニューのテキストを切り替える
         if (_context.CurrentStage is { } stage && _context.CurrentPage is { } page && _context.Project != null)
@@ -204,4 +224,26 @@ public partial class MainForm
     private void ZoomIn() => _mapView.ZoomIn();
     private void ZoomOut() => _mapView.ZoomOut();
     private void ResetZoom() => _mapView.ResetZoom();
+
+    // ========================
+    // ヘルプメニュー
+    // ========================
+    private const string HelpContentsUrl = "https://www.loopunlimited-rootone.com/40000/sse.help/ja/index.html";
+
+    private static void OpenHelpContents()
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo(HelpContentsUrl) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"ヘルプページを開けませんでした。\n{ex.Message}",
+                "エラー",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning
+            );
+        }
+    }
 }

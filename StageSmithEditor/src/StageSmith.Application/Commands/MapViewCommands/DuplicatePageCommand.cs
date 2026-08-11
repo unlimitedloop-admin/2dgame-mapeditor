@@ -2,6 +2,9 @@ using StageSmith.Core.Models;
 
 namespace StageSmith.Application.Commands;
 
+/// <summary>
+/// 指定されたページを複製するコマンドです。
+/// </summary>
 public sealed class DuplicatePageCommand : ICommand
 {
     private readonly Stage _stage;

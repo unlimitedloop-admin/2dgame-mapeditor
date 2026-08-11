@@ -2,6 +2,9 @@ using StageSmith.Core.Models;
 
 namespace StageSmith.Application.Commands;
 
+/// <summary>
+/// 複数のタイルを一度に塗り替えるコマンドです。
+/// </summary>
 public class TilePaintCommand : ICommand
 {
     private readonly TileMap _map;

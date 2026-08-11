@@ -2,6 +2,9 @@ using System.Text.Json.Serialization;
 
 namespace StageSmith.Core.Models;
 
+/// <summary>
+/// ステージエディタのプロジェクト情報を保持するクラス。
+/// </summary>
 public sealed class EditorProject
 {
     public Guid Id { get; init; } = Guid.NewGuid();

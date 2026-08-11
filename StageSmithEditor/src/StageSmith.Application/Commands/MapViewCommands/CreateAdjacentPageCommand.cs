@@ -4,8 +4,7 @@ using StageSmith.Core.Models;
 namespace StageSmith.Application.Commands;
 
 /// <summary>
-/// 現在ページに隣接する新規ページを作成し、双方向の接続(Header)を設定するコマンド。
-/// マップビューの隣接ページ作成ボタン（＋マーク）から使用する。
+/// 現在ページに隣接する新規ページを作成し、双方向の接続(Header)を設定するコマンドです。
 /// </summary>
 public sealed class CreateAdjacentPageCommand : ICommand
 {
@@ -44,7 +43,7 @@ public sealed class CreateAdjacentPageCommand : ICommand
             EnsureRoomIds(_stage);
             var newRoomId = _stage.GetNextAvailableRoomId();
 
-            _newPage = BuildAdjacentPage(_stage, _currentPage, _direction, newRoomId);
+            _newPage = BuildAdjacentPage(_currentPage, _direction, newRoomId);
 
             _stage.Pages.Add(_newPage);
             _insertIndex = _stage.Pages.IndexOf(_newPage);
@@ -72,11 +71,7 @@ public sealed class CreateAdjacentPageCommand : ICommand
         _context.SetPage(restoreIndex);
     }
 
-    private static Page BuildAdjacentPage(
-        Stage stage,
-        Page currentPage,
-        PageDirection direction,
-        byte newRoomId)
+    private static Page BuildAdjacentPage(Page currentPage, PageDirection direction, byte newRoomId)
     {
         var newPage = new Page
         {

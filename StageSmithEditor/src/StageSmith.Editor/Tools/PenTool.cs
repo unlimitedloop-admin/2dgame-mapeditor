@@ -3,6 +3,10 @@ using StageSmith.Core.Models;
 
 namespace StageSmith.Editor.Tools;
 
+/// <summary>
+/// ペンツール。
+/// 選択されたタイルをマップ上に描画する。
+/// </summary>
 public class PenTool : ITool
 {
     private readonly Func<TileMap?> _getTileMap;

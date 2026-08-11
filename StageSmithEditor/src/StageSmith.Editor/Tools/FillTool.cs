@@ -3,6 +3,9 @@ using StageSmith.Editor.Utilities;
 
 namespace StageSmith.Editor.Tools;
 
+/// <summary>
+/// 塗りつぶしツール。
+/// </summary>
 public class FillTool : ITool
 {
     private readonly Func<TileMap?> _getTileMap;

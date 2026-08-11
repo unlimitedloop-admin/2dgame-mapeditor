@@ -2,12 +2,15 @@ using StageSmith.Core.Models;
 
 namespace StageSmith.Application.Commands;
 
+/// <summary>
+/// 単一のタイルを塗り替えるコマンドです。
+/// </summary>
 public class SetTileCommand : ICommand
 {
-    private TileMap _map;
-    private int _x, _y;
-    private byte _oldValue;
-    private byte _newValue;
+    private readonly TileMap _map;
+    private readonly int _x, _y;
+    private readonly byte _oldValue;
+    private readonly byte _newValue;
 
     public SetTileCommand(TileMap map, int x, int y, byte newValue)
     {

@@ -1,5 +1,8 @@
 namespace StageSmith.Core.Models;
 
+/// <summary>
+/// 将来のエディタで使うブックマーク情報（1件）を表すクラス。
+/// </summary>
 public sealed class Bookmark
 {
     public Guid Id { get; init; } = Guid.NewGuid();

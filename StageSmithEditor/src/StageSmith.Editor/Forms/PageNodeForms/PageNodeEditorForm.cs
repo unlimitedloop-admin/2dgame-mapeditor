@@ -1,6 +1,7 @@
 using StageSmith.Application.Commands;
 using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
+using StageSmith.Editor.Controls;
 
 namespace StageSmith.Editor;
 
@@ -348,17 +349,16 @@ public partial class PageNodeEditorForm : Form
         if (roomId == 0xFF)
             return $"{direction,-6} ----";
 
-        var scrollType = ScrollEncoding.GetType(scrollByte);
+        var scrollType = (ScrollType)scrollByte;
         var scrollName = scrollType switch
         {
-            ScrollType.Free    => "free",
-            ScrollType.Page    => "page",
-            ScrollType.Locked  => "locked",
-            ScrollType.Axis    => "axis",
-            ScrollType.Auto    => "auto",
-            ScrollType.Object  => "object",
-            ScrollType.Dynamic => "dynamic",
-            _                  => "none",
+            ScrollType.Free         => "free",
+            ScrollType.Page         => "page",
+            ScrollType.Auto         => "auto",
+            ScrollType.ObjectFollow => "objectfollow",
+            ScrollType.EventDriven  => "eventdriven",
+            ScrollType.Loop         => "loop",
+            _                       => "none",
         };
 
         return $"{direction,-6} #{roomId} / {scrollName}";

@@ -2,6 +2,10 @@ using StageSmith.Core.Models;
 
 namespace StageSmith.Editor.Forms;
 
+/// <summary>
+/// プロジェクトのタグを一覧表示し、追加・編集・削除するためのフォーム。
+/// タグの追加・編集は、作業コピーを使って行い、Saveボタンで確定する。
+/// </summary>
 public sealed class TagManagerForm : Form
 {
     private readonly EditorProject _project;
@@ -22,6 +26,9 @@ public sealed class TagManagerForm : Form
     private readonly NumericUpDown _priorityNumeric = new();
     private readonly Label _statusLabel = new();
 
+    /// <summary>
+    /// タグが変更されたときに発生するイベント。
+    /// </summary>
     public event Action? TagsChanged;
 
     public TagManagerForm(EditorProject project)
@@ -171,6 +178,9 @@ public sealed class TagManagerForm : Form
         Controls.Add(root);
     }
 
+    /// <summary>
+    /// タグリストの項目を描画する際に発生するイベント。
+    /// </summary>
     private void OnDrawTagListItem(object? sender, DrawItemEventArgs e)
     {
         e.DrawBackground();
@@ -191,6 +201,9 @@ public sealed class TagManagerForm : Form
         e.DrawFocusRectangle();
     }
 
+    /// <summary>
+    /// カラー変更ボタンがクリックされたときに発生するイベント。
+    /// </summary>
     private void OnChangeColorClick(object? sender, EventArgs e)
     {
         using var dialog = new ColorDialog { Color = ColorTranslator.FromHtml(_currentTag.Color) };
@@ -200,6 +213,9 @@ public sealed class TagManagerForm : Form
         _colorSwatch.BackColor = dialog.Color;
     }
 
+    /// <summary>
+    /// アイコン選択ボタンがクリックされたときに発生するイベント。
+    /// </summary>
     private void OnSelectIconClick(object? sender, EventArgs e)
     {
         using var dialog = new TagIconPickerDialog();
@@ -216,6 +232,11 @@ public sealed class TagManagerForm : Form
         }
     }
 
+    /// <summary>
+    /// 作業中のタグを設定する。
+    /// </summary>
+    /// <param name="source">設定するタグのソース。</param>
+    /// <param name="editingTagId">編集中のタグのID。</param>
     private void SetWorkingTag(Tag source, Guid? editingTagId)
     {
         _currentTag = new Tag
@@ -367,6 +388,10 @@ public sealed class TagManagerForm : Form
         }
     }
 
+    /// <summary>
+    /// ステータスラベルを更新する。
+    /// </summary>
+    /// <param name="message">表示するメッセージ。</param>
     private void UpdateStatus(string? message = null)
     {
         var mode = _editingTagId.HasValue ? "Editing" : "New / Unsaved";
@@ -403,6 +428,9 @@ public sealed class TagManagerForm : Form
         return Path.GetRelativePath(_project.BaseDirectory, candidate);
     }
 
+    /// <summary>
+    /// タグリストの項目を表す内部クラス。
+    /// </summary>
     private sealed class TagListItem
     {
         public Guid Id { get; }
@@ -423,6 +451,7 @@ public sealed class TagManagerForm : Form
     /// 読み取り専用状態を反映する。Save/DeleteをガードするだけでOK
     /// （New/アイコン選択/色変更は作業コピー内の変更に過ぎず、Save時点で初めて確定するため）。
     /// </summary>
+    /// <param name="isReadOnly">読み取り専用状態かどうか。</param>
     public void SetReadOnly(bool isReadOnly)
     {
         _isReadOnly = isReadOnly;

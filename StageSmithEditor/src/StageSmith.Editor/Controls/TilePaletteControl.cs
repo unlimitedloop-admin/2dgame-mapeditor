@@ -3,14 +3,24 @@ using StageSmith.Editor.Utilities;
 
 namespace StageSmith.Editor.Controls;
 
+/// <summary>
+/// タイルパレットを表示するコントロール。
+/// </summary>
 public class TilePaletteControl : DoubleBufferedPanel
 {
     private readonly SafeTilesetHolder _tilesetHolder = new();
 
     public int SelectedTileIndex { get; private set; } = -1;
     private NumberDisplayFormat _numberDisplayFormat = NumberDisplayFormat.Hex;
-
+    
+    /// <summary>
+    /// タイルが選択されたときに発生するイベント。
+    /// </summary>
     public event Action<int>? TileSelected;
+    
+    /// <summary>
+    /// タイルセット画像の選択が要求されたときに発生するイベント。
+    /// </summary>
     public event EventHandler? TilesetImageSelectionRequested;
 
     private const int TileSpacing = 2;
@@ -42,6 +52,8 @@ public class TilePaletteControl : DoubleBufferedPanel
     /// <summary>
     /// 指定座標に対応するタイルインデックスを返す。範囲外・タイルセット未設定の場合は -1。
     /// </summary>
+    /// <param name="location">タイルパレット内の座標。</param>
+    /// <returns>タイルインデックス。範囲外・タイルセット未設定の場合は -1。</returns>
     private int HitTestTileIndex(Point location)
     {
         var tileset = GetUsableTileset();
@@ -229,7 +241,11 @@ public class TilePaletteControl : DoubleBufferedPanel
             }
         }
     }
-
+    
+    /// <summary>
+    /// 水平スクロールを行う。
+    /// </summary>
+    /// <param name="wheelDelta">マウスホイールのデルタ値。</param>
     private void ScrollHorizontal(int wheelDelta)
     {
         if (!HorizontalScroll.Visible)
@@ -258,6 +274,9 @@ public class TilePaletteControl : DoubleBufferedPanel
         Invalidate();
     }
 
+    /// <summary>
+    /// スクロール領域のサイズを更新する。
+    /// </summary>
     private void UpdateScrollSize()
     {
         var tileset = GetUsableTileset();
