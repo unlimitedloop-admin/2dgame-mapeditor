@@ -414,8 +414,8 @@ public sealed class PropertyWindowControl : UserControl
 
         return new PageHeader
         {
-            MagicStart = 0xA5,
-            MagicEnd = 0x5A,
+            MagicStart = PageHeaderMagic.Start,
+            MagicEnd = PageHeaderMagic.End,
             RoomId = (byte)_roomIdNumeric.Value,
             Flags = flags,
             LeftPage = (byte)_leftPageNumeric.Value,

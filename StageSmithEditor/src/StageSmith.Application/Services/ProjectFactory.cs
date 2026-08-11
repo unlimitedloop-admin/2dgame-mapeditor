@@ -20,13 +20,7 @@ public static class ProjectFactory
         stage.Key = "stage_001";
 
         var page = stage.AddPage("Page 000");
-
-        var header = PageHeader.CreateDefault();
-        header.MagicStart = 0xA5;
-        header.MagicEnd = 0x5A;
-        header.Z = 0;
-
-        page.Header = header;
+        page.Header = PageHeader.CreateDefault();
 
         return project;
     }

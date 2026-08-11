@@ -28,19 +28,19 @@ public enum PageFlags : byte
     None = 0,
 
     // --- ゲームロジック系 ---
-    ContinuePoint = 1 << 0,    // bit0: この部屋を通過したらミス後再開する分岐点になる
-    NoScrollBack = 1 << 1,    // bit1: 一方通行（後戻り不可）
+    ContinuePoint = 1 << 0,     // bit0: この部屋を通過したらミス後再開する分岐点になる
+    NoScrollBack = 1 << 1,      // bit1: 一方通行（後戻り不可）
 
     // --- 装飾演出系 ---
-    PostEffects = 1 << 2,    // bit2: 画面全体に視覚エフェクトを掛ける（雨など。操作性には影響しない）
+    PostEffects = 1 << 2,       // bit2: 画面全体に視覚エフェクトを掛ける（雨など。操作性には影響しない）
 
     // --- 知覚メカニクス系 ---
-    Darkness = 1 << 3,    // bit3: 暗闇演出（視認性そのものに影響する立ち回りメカニクス）
+    Darkness = 1 << 3,          // bit3: 暗闇演出（視認性そのものに影響する立ち回りメカニクス）
 
     // --- 物理干渉系 ---
-    Wind = 1 << 4,    // bit4: 風。オブジェクトの挙動に直接影響する
-    GravityModifier = 1 << 5,    // bit5: 重力(等)の変化エリア。名称・詳細仕様は今後変更前提
-                                        //       （水中の低速移動演出もこの系統に統合される可能性あり）
+    Wind = 1 << 4,              // bit4: 風。オブジェクトの挙動に直接影響する
+    GravityModifier = 1 << 5,   // bit5: 重力(等)の変化エリア。名称・詳細仕様は今後変更前提
+                                //       （水中の低速移動演出もこの系統に統合される可能性あり）
 
     // bit6〜7: 将来拡張用（未使用）
 }
@@ -70,11 +70,27 @@ public enum ScrollType : byte
 }
 
 /// <summary>
+/// ページヘッダーのマジック値（$00 / $0F）。
+/// binファイル読み込み時の整合性チェック、および各所でのヘッダー生成に使用する。
+///
+/// NOTE: PageHeader構造体には既に MagicStart/MagicEnd という同名プロパティが
+/// あるため（プロパティと定数は名前空間を共有し同名にできない）、
+/// あえて構造体の外に定数クラスとして分離している。
+/// C++側 mm2hack::apps::resources::bg::kPageHeaderMagicStart /
+/// kPageHeaderMagicEnd と値を完全一致させること。
+/// </summary>
+public static class PageHeaderMagic
+{
+    public const byte Start = 0xA5; // $00
+    public const byte End = 0x5A;   // $0F
+}
+
+/// <summary>
 /// ページヘッダー構造体。
 /// binファイルの $00-$0F（16byte）に対応する。
 ///
 /// アドレスマップ:
-///   $00: MagicStart (0xA5)
+///   $00: MagicStart (<see cref="PageHeaderMagic.Start"/>)
 ///   $01: RoomId
 ///   $02: LeftPage
 ///   $03: RightPage
@@ -89,13 +105,13 @@ public enum ScrollType : byte
 ///   $0C: Z
 ///   $0D: Flags
 ///   $0E: Reserved
-///   $0F: MagicEnd (0x5A)
+///   $0F: MagicEnd (<see cref="PageHeaderMagic.End"/>)
 /// </summary>
 public struct PageHeader
 {
     public const int Size = 0x10; // 16byte
 
-    public byte MagicStart { get; set; }  // $00 固定値 0xA5
+    public byte MagicStart { get; set; }  // $00 固定値。PageHeaderMagic.Start を使うこと
 
     public byte RoomId { get; set; }      // $01 自分自身の部屋番号
 
@@ -117,14 +133,14 @@ public struct PageHeader
 
     public byte Reserved { get; set; }    // $0E 予約領域
 
-    public byte MagicEnd { get; set; }    // $0F 固定値 0x5A
+    public byte MagicEnd { get; set; }    // $0F 固定値。PageHeaderMagic.End を使うこと
 
     public static PageHeader CreateDefault()
     {
         return new PageHeader
         {
-            MagicStart = 0xA5,
-            MagicEnd   = 0x5A,
+            MagicStart = PageHeaderMagic.Start,
+            MagicEnd   = PageHeaderMagic.End,
 
             RoomId    = 0xFF,
             LeftPage  = 0xFF,
