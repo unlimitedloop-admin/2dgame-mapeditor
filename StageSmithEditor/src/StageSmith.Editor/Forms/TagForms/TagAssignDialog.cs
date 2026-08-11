@@ -78,6 +78,9 @@ public sealed class TagAssignDialog : Form
         CancelButton = cancelButton;
     }
 
+    /// <summary>
+    /// タグのチェックボックス用のラッパークラス。
+    /// </summary>
     private sealed class TagCheckItem
     {
         public Guid Id { get; }
