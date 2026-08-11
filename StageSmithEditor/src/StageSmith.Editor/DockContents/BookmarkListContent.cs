@@ -3,6 +3,9 @@ using StageSmith.Editor.Controls;
 
 namespace StageSmith.Editor.DockContents;
 
+/// <summary>
+/// ブックマークリストを格納する DockContent。
+/// </summary>
 public class BookmarkListContent : DockContent
 {
     public BookmarkListControl BookmarkList { get; }
