@@ -123,12 +123,10 @@ public partial class MainForm
         };
 
         _menuHelpAbout.Click += (_, _) =>
-            MessageBox.Show(
-                "StageSmith Editor\nVersion 0.9",
-                "About",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information
-            );
+        {
+            using var dialog = new AboutBox();
+            dialog.ShowDialog(this);
+        };
 
         // ========================
         // Edit / View / Navigation メニューの有効状態管理

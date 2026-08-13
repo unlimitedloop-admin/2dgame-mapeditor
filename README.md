@@ -1,11 +1,86 @@
-# Stage Smith Map Editor (SSE)
-It is a production tool for a project to port a remake of a Famicom game to Windows.
+# StageSmith Editor (SSE)
 
-The source code used in this can be used freely by anyone.
+**StageSmith Editor**（ステージ職人）は、Windows環境に移植されたファミコン風2Dアクションゲームのステージマップを、視覚的に構築するためのマップエディタです。
 
-However, it is dangerous to claim the creator of this entire project under a name other than mine. It is because of the fatal fear of portrait rights.
+タイル単位でのマップ編集、ページ間の接続・スクロール設定、ブックマークやタグによる作業補助機能などを備え、ゲーム実行用のバイナリ（`.bin`）およびステージ定義データ（`.def`）を出力します。
 
-Also, this source code may be incomplete because it may have a configuration uniquely devised by u7.
-For example, if you misappropriate this and damage occurs, it will be transferred only to your responsibility.
+出力データは、コンパニオンアプリケーション **mm2hack**（C++製ゲームアプリ）で読み込まれます。
 
-Many thanks
+---
+
+## 動作環境
+
+| 項目 | 内容 |
+|---|---|
+| OS | **Windows 11 x64 専用** |
+| 追加インストール | 不要（自己完結型ビルドのため .NET ランタイムの別途インストール不要） |
+
+> **Windows 10 環境での動作は保証していません。** Windows 10 のサポート終了に伴い、本ツールは Windows 11 のみを対象としています。
+
+---
+
+## インストール方法
+
+1. [Releases](../../releases) ページから最新の `StageSmithEditor_vX.X.X_win-x64.zip` をダウンロード
+2. 任意のフォルダに解凍
+3. `StageSmithEditor.exe` を実行
+
+インストーラーは不要です。フォルダごと配置すればそのまま動作します。
+
+### 初回起動時の警告について
+
+配布ファイルは未署名のため、初回起動時に Windows SmartScreen の警告が表示される場合があります。
+その場合は「詳細情報」→「実行」を選択してください。
+
+---
+
+## 使い方
+
+1. `File > New Project` で新規プロジェクトを作成
+2. `File > New Stage` でステージを追加
+3. タイルパレットからタイルを選択し、マップビュー上に配置
+4. `File > Export BIN` でゲーム実行用データを出力
+
+詳しい操作方法は、エディタ内で **F1キー** を押すか、以下のヘルプサイトを参照してください。
+
+📖 [StageSmith Editor ヘルプドキュメント](https://www.loopunlimited-rootone.com/40000/sse.help/ja/index.html)
+
+---
+
+## ファイル構成
+
+| ファイル | 用途 |
+|---|---|
+| `.sseproj` | エディタ専用プロジェクトファイル（正規データ） |
+| `.ssestage` | ステージ単位のエディタデータ |
+| `.bin` | ゲーム実行用マップバイナリ（`.def`から生成） |
+| `.def` | ステージ構造・ロジック定義（JSON形式） |
+
+---
+
+## ライセンス
+
+本ソフトウェアは [MITライセンス](LICENSE) の下で公開されています。
+
+---
+
+## サードパーティライセンス・クレジット
+
+本ソフトウェアは以下のライブラリ・素材を利用しています。
+
+### DockPanel Suite
+
+- 作者: WeifenLuo
+- ライセンス: MIT License
+- ドッキングウィンドウUIフレームワークとして使用
+
+### アイコン素材
+
+- 提供: [Icons8](https://icons8.jp/)
+- エディタ内のステータスバーにクレジット表記を掲載しています
+
+---
+
+## 関連プロジェクト
+
+- **mm2hack** — 本エディタが出力する `.bin` / `.def` データを読み込むC++製ゲームアプリケーション
