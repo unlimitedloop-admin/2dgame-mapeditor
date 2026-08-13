@@ -361,3 +361,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# StageSmith Editor - ポータブル設定ファイル（exeと同フォルダに生成される）
+SSE_Config.ini
+SSE_Layout.xml
