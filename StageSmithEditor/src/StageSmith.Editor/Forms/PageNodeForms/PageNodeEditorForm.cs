@@ -933,6 +933,7 @@ public partial class PageNodeEditorForm : Form
 
         // ページを複製（接続情報は引き継がない）
         var newPage   = sourcePage.Clone();
+        stage.EnsureUniqueEntityIds(newPage);
         newPage.NodeX = newX;
         newPage.NodeY = newY;
 

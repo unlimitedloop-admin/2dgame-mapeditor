@@ -16,6 +16,7 @@ public partial class MainForm
         _mapView.SetCurrentPageIndex(_context.CurrentPageIndex);
         _mapView.SetCurrentStageId(stage?.Id ?? Guid.Empty);
         _metaTilePalette.SetStage(stage);
+        SyncObjectPaletteProject();
 
         var stageChanged = stage != null && stage.Id != _loadedTilesetStageId;
         var pageChanged = page?.Id != _lastAppliedPageId;

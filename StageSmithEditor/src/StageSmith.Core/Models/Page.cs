@@ -35,8 +35,39 @@ public sealed class Page
     public PageHeader Header { get; set; } = PageHeader.CreateDefault();
 
     /// <summary>
+    /// この部屋の敵リスポーン既定値（.def の nodes[].enemyRespawn）。
+    /// EntityConstants.RespawnValues のいずれか。null なら出力しない（ゲーム側既定）。
+    /// </summary>
+    public string? EnemyRespawn { get; set; }
+
+    /// <summary>
+    /// この部屋に配置されたエンティティ（.def の entities[] のうち、この部屋に属するもの）。
+    /// </summary>
+    public List<EntityPlacement> Entities { get; set; } = [];
+
+    public EntityPlacement? FindEntity(Guid entityId)
+    {
+        return Entities.FirstOrDefault(x => x.Id == entityId);
+    }
+
+    public void Normalize()
+    {
+        TagIds ??= [];
+        Entities ??= [];
+
+        if (string.IsNullOrWhiteSpace(EnemyRespawn)) EnemyRespawn = null;
+
+        foreach (var entity in Entities)
+        {
+            entity.Normalize();
+        }
+    }
+
+    /// <summary>
     /// このページの複製を生成する。
-    /// Id は新規発行、TileMap はディープコピーされる。
+    /// Id は新規発行、TileMap・配置エンティティはディープコピーされる。
+    /// NOTE: エンティティの EntityId はそのまま複製されるため、同一ステージ内へ追加する場合は
+    /// 呼び出し側で Stage.EnsureUniqueEntityIds() を呼んで採番し直すこと。
     /// </summary>
     public Page Clone()
     {
@@ -49,7 +80,9 @@ public sealed class Page
             NodeX = NodeX,
             NodeY = NodeY,
             Header = Header.Clone(),
-            TileMap = TileMap.Clone()
+            TileMap = TileMap.Clone(),
+            EnemyRespawn = EnemyRespawn,
+            Entities = [.. Entities.Select(e => e.Clone())]
         };
 
         return clone;

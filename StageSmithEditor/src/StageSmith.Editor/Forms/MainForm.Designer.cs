@@ -239,6 +239,7 @@ namespace StageSmith.Editor
             _menuWindowStageExplorer    = new ToolStripMenuItem("Stage Explorer")       { ShortcutKeys = Keys.F7 };
             _menuWindowProperties       = new ToolStripMenuItem("Properties Window")    { ShortcutKeys = Keys.F8 };
             _menuWindowBookmarkList     = new ToolStripMenuItem("Bookmark List")        { ShortcutKeys = Keys.F9 };
+            _menuWindowObjectPalette    = new ToolStripMenuItem("Object Palette")       { ShortcutKeys = Keys.Control | Keys.F9 };
             _menuWindowTagManager       = new ToolStripMenuItem("Tag Manager")          { ShortcutKeys = Keys.Control | Keys.F7 };
             _menuWindowMarkerManager    = new ToolStripMenuItem("Marker Manager")       { ShortcutKeys = Keys.Control | Keys.F8 };
             _menuWindowStageMapViewer   = new ToolStripMenuItem("Stage Map Viewer")     { ShortcutKeys = Keys.F10 };
@@ -251,6 +252,7 @@ namespace StageSmith.Editor
                 _menuWindowStageExplorer,
                 _menuWindowProperties,
                 _menuWindowBookmarkList,
+                _menuWindowObjectPalette,
                 new ToolStripSeparator(),
                 _menuWindowTagManager,
                 _menuWindowMarkerManager,
@@ -403,6 +405,7 @@ namespace StageSmith.Editor
         private ToolStripMenuItem _menuWindowStageExplorer  = null!;
         private ToolStripMenuItem _menuWindowProperties     = null!;
         private ToolStripMenuItem _menuWindowBookmarkList   = null!;
+        private ToolStripMenuItem _menuWindowObjectPalette  = null!;
         private ToolStripMenuItem _menuWindowTagManager     = null!;
         private ToolStripMenuItem _menuWindowMarkerManager  = null!;
         private ToolStripMenuItem _menuWindowStageMapViewer = null!;

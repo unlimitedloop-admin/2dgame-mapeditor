@@ -43,6 +43,7 @@ public partial class MainForm : Form
     private readonly MetaTilePaletteContent _metaTilePaletteContent;
     private readonly BookmarkListContent _bookmarkListContent;
     private readonly MarkerColorPanelContent _markerColorPanelContent;
+    private readonly ObjectPaletteContent _objectPaletteContent;
 
     //========================
     // EditorForms
@@ -63,6 +64,7 @@ public partial class MainForm : Form
     private PageNavBarControl _pageNavBar => _mapViewContent.PageNavBar;
     private BookmarkListControl _bookmarkList => _bookmarkListContent.BookmarkList;
     private MarkerColorPanelControl _markerColorPanel => _markerColorPanelContent.MarkerColorPanel;
+    private ObjectPaletteControl _objectPalette => _objectPaletteContent.ObjectPalette;
 
     //========================
     // Tools
@@ -113,6 +115,7 @@ public partial class MainForm : Form
         _metaTilePaletteContent = new MetaTilePaletteContent();
         _bookmarkListContent = new BookmarkListContent();
         _markerColorPanelContent = new MarkerColorPanelContent();
+        _objectPaletteContent = new ObjectPaletteContent();
 
         _mapView.ZoomChanged += (_, _) =>
         {
@@ -137,6 +140,7 @@ public partial class MainForm : Form
 
         BindTilePalette();
         BindMetaTilePalette();
+        BindObjectPalette();
         BindMarkerColorPanel();
         BindPageNavigationController();
         
