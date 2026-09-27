@@ -15,6 +15,9 @@ public class EditorConfig
     public int LastSelectedStageIndex { get; set; } = -1;
     public int LastSelectedPageIndex { get; set; } = -1;
     public int LastZ { get; set; } = 0;
+
+    /// <summary>オブジェクト配置のスナップ間隔（px）。1 ならスナップなし。</summary>
+    public int EntitySnapSize { get; set; } = 1;
     public EditorToolMode LastToolMode { get; set; } = EditorToolMode.Pen;
 
     // MainWindow の位置・サイズ（-1 は未保存を示すセンチネル値）
@@ -32,6 +35,7 @@ public class EditorConfig
     public bool ShowColumnNumbers { get; set; } = false;
     public bool ShowTileInfo { get; set; } = false;
     public bool ShowMarkerOverlay { get; set; } = false;
+    public bool ShowEntities { get; set; } = true;
     public bool ShowToolBar { get; set; } = true;
     public bool ShowStatusBar { get; set; } = true;
 

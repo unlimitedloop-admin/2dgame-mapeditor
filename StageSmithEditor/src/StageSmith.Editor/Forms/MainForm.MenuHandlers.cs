@@ -66,6 +66,7 @@ public partial class MainForm
         _menuViewRowNumbers.CheckedChanged      += (_, _) => ApplyRowNumberState(_menuViewRowNumbers.Checked);
         _menuViewColumnNumbers.CheckedChanged   += (_, _) => ApplyColumnNumberState(_menuViewColumnNumbers.Checked);
         _menuViewMarkerOverlay.CheckedChanged   += (_, _) => ToggleMarkerOverlay(_menuViewMarkerOverlay.Checked);
+        _menuViewShowEntities.CheckedChanged    += (_, _) => _mapView.SetShowEntities(_menuViewShowEntities.Checked);
         _menuViewTileInfo.CheckedChanged        += (_, _) => _mapView.SetShowTileInfo(_menuViewTileInfo.Checked);
         _menuViewZoomIn.Click                   += (_, _) => ZoomIn();
         _menuViewZoomOut.Click                  += (_, _) => ZoomOut();
@@ -95,6 +96,7 @@ public partial class MainForm
         _menuToolsSelection.Click += (_, _) => SetToolMode(EditorToolMode.Selection);
         _menuToolsBucket.Click    += (_, _) => SetToolMode(EditorToolMode.Bucket);
         _menuToolsMarker.Click    += (_, _) => SetToolMode(EditorToolMode.Marker);
+        _menuToolsObject.Click    += (_, _) => SetToolMode(EditorToolMode.Object);
         _menuToolsOptions.Click   += (_, _) => OpenEditorPropertiesDialog();
 
         // ========================

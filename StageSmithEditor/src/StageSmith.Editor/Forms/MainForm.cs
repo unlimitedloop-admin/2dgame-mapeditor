@@ -74,6 +74,7 @@ public partial class MainForm : Form
     private SelectionTool? _selectionTool;
     private FillTool? _fillTool;
     private MarkerTool? _markerTool;
+    private ObjectTool? _objectTool;
 
     private DragPaintCommand? _currentDragCommand;
     private EditorToolMode _currentMode = EditorToolMode.Pen;

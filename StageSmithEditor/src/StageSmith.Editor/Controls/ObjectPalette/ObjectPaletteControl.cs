@@ -18,6 +18,7 @@ public sealed class ObjectPaletteControl : UserControl
     private readonly SpriteSheetGridControl _sheetGrid;
     private readonly Button _registerTemplateButton;
     private readonly EntityTemplateListControl _templateList;
+    private readonly ComboBox _snapCombo;
 
     private EditorProject? _project;
     private SpriteSheetImageCache? _imageCache;
@@ -30,6 +31,9 @@ public sealed class ObjectPaletteControl : UserControl
     public event Action<EntityTemplate>? TemplateEditRequested;
     public event Action<EntityTemplate>? TemplateRemoveRequested;
     public event Action<EntityTemplate>? TemplateSelected;
+    public event Action<int>? SnapSizeChanged;
+
+    public int SnapSize => (_snapCombo.SelectedItem as SnapItem)?.Size ?? 1;
 
     public SpriteSheet? SelectedSheet => _sheetCombo.SelectedItem as SpriteSheet;
 
@@ -77,14 +81,37 @@ public sealed class ObjectPaletteControl : UserControl
         //========================
         _templateList = new EntityTemplateListControl { Dock = DockStyle.Fill };
 
-        var templateHeader = new Label
+        _snapCombo = new ComboBox
+        {
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Dock = DockStyle.Right,
+            Width = 64,
+        };
+        foreach (var size in EntityGeometry.SnapSizes)
+            _snapCombo.Items.Add(new SnapItem(size));
+        _snapCombo.SelectedIndex = 0;
+        _toolTip.SetToolTip(_snapCombo, "配置・移動のスナップ間隔（足元位置）");
+
+        var templateHeader = new Panel
+        {
+            Dock = DockStyle.Top,
+            Height = 27,
+            Padding = new Padding(4, 2, 3, 2),
+        };
+        templateHeader.Controls.Add(new Label
         {
             Text = "テンプレート",
-            Dock = DockStyle.Top,
-            Height = 20,
+            Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleLeft,
-            Padding = new Padding(4, 0, 0, 0),
-        };
+        });
+        templateHeader.Controls.Add(new Label
+        {
+            Text = "スナップ:",
+            Dock = DockStyle.Right,
+            AutoSize = true,
+            Padding = new Padding(0, 4, 2, 0),
+        });
+        templateHeader.Controls.Add(_snapCombo);
 
         var split = new SplitContainer
         {
@@ -146,6 +173,8 @@ public sealed class ObjectPaletteControl : UserControl
             UpdateButtons();
             TemplateSelected?.Invoke(template);
         };
+        _snapCombo.SelectedIndexChanged += (_, _) => SnapSizeChanged?.Invoke(SnapSize);
+
         _templateList.EditRequested += t => TemplateEditRequested?.Invoke(t);
         _templateList.RemoveRequested += t => TemplateRemoveRequested?.Invoke(t);
 
@@ -225,6 +254,15 @@ public sealed class ObjectPaletteControl : UserControl
         _templateList.SetSelected(template);
     }
 
+    /// <summary>
+    /// スナップ間隔を設定する（候補に無い値なら 1px）。SnapSizeChanged も発火する。
+    /// </summary>
+    public void SetSnapSize(int size)
+    {
+        var index = EntityGeometry.SnapSizes.ToList().IndexOf(size);
+        _snapCombo.SelectedIndex = Math.Max(0, index);
+    }
+
     public void SetReadOnly(bool isReadOnly)
     {
         _isReadOnly = isReadOnly;
@@ -239,6 +277,11 @@ public sealed class ObjectPaletteControl : UserControl
     {
         _sheetGrid.SetSheet(SelectedSheet, _imageCache);
         UpdateButtons();
+    }
+
+    private sealed record SnapItem(int Size)
+    {
+        public override string ToString() => $"{Size}px";
     }
 
     protected override void Dispose(bool disposing)

@@ -22,6 +22,9 @@ public partial class MainForm
         var pageChanged = page?.Id != _lastAppliedPageId;
         _lastAppliedPageId = page?.Id;
 
+        if (pageChanged)
+            ResetObjectToolForPageChange();
+
         // ステージが実際に切り替わった時は、設定に関わらず必ずタイルセットを読み直す
         // （LoadTilesetImage / ClearTileset 内部で選択タイルのリセットも行われる）。
         if (stageChanged)
