@@ -125,6 +125,7 @@ public partial class MainForm
                 CancelDrag();
                 _selectionTool?.ClearSelection();
                 _objectTool?.ClearSelection();
+                _objectPalette.SetPlayerStartMode(false);
                 _mapView.Invalidate();
                 return true;
 

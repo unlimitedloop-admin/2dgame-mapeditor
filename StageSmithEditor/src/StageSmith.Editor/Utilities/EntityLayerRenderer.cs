@@ -19,9 +19,11 @@ public sealed class EntityLayerRenderer
     private static readonly Color SelectedColor = Color.Red;
     private static readonly Color FootMarkerColor = Color.Yellow;
     private static readonly Color MissingColor = Color.OrangeRed;
+    private static readonly Color PlayerStartColor = Color.LimeGreen;
 
     private readonly SpriteSheetImageCache _imageCache;
     private readonly Func<EditorProject?> _getProject;
+    private readonly Func<Stage?> _getStage;
     private readonly Func<Page?> _getPage;
     private readonly Func<EntityTemplate?> _getTemplate;
     private readonly ObjectTool _tool;
@@ -30,6 +32,7 @@ public sealed class EntityLayerRenderer
     public EntityLayerRenderer(
         SpriteSheetImageCache imageCache,
         Func<EditorProject?> getProject,
+        Func<Stage?> getStage,
         Func<Page?> getPage,
         Func<EntityTemplate?> getTemplate,
         ObjectTool tool,
@@ -37,6 +40,7 @@ public sealed class EntityLayerRenderer
     {
         _imageCache = imageCache;
         _getProject = getProject;
+        _getStage = getStage;
         _getPage = getPage;
         _getTemplate = getTemplate;
         _tool = tool;
@@ -63,6 +67,9 @@ public sealed class EntityLayerRenderer
             if (toolActive)
                 DrawFootMarker(g, entity.X, entity.Y, offsetX, offsetY, scale);
         }
+
+        if (_getStage()?.PlayerStart is { } start && start.PageId == page.Id)
+            DrawPlayerStart(g, start.X, start.Y, offsetX, offsetY, scale, preview: false, showFoot: toolActive);
 
         if (!toolActive) return;
 
@@ -99,6 +106,12 @@ public sealed class EntityLayerRenderer
     {
         if (_tool.PreviewFoot is not { } foot) return;
 
+        if (_tool.IsPlacingPlayerStart)
+        {
+            DrawPlayerStart(g, foot.X, foot.Y, offsetX, offsetY, scale, preview: true, showFoot: true);
+            return;
+        }
+
         var template = _getTemplate();
         if (template == null) return;
 
@@ -117,11 +130,40 @@ public sealed class EntityLayerRenderer
         DrawFootMarker(g, foot.X, foot.Y, offsetX, offsetY, scale);
     }
 
+    /// <summary>
+    /// プレイヤー開始位置のマーカー（緑の枠＋"START"）。スプライトではなく目安の枠で表す。
+    /// </summary>
+    private static void DrawPlayerStart(Graphics g, int footX, int footY, int offsetX, int offsetY, float scale,
+        bool preview, bool showFoot)
+    {
+        var rect = ToScreen(EntityGeometry.GetPlayerStartBounds(footX, footY), offsetX, offsetY, scale);
+        var alpha = preview ? 70 : 140;
+
+        using (var fill = new SolidBrush(Color.FromArgb(alpha, PlayerStartColor)))
+            g.FillRectangle(fill, rect);
+
+        using (var pen = new Pen(Color.FromArgb(preview ? 160 : 255, PlayerStartColor), 2))
+            g.DrawRectangle(pen, rect.X, rect.Y, rect.Width - 1, rect.Height - 1);
+
+        using var font = new Font("Yu Gothic UI", 7f, FontStyle.Bold);
+        using var back = new SolidBrush(Color.FromArgb(preview ? 100 : 180, Color.DarkGreen));
+        using var brush = new SolidBrush(Color.White);
+        var text = "START";
+        var size = g.MeasureString(text, font);
+        var labelX = rect.X + (rect.Width - size.Width) / 2;
+        var labelY = rect.Y - size.Height;
+        g.FillRectangle(back, labelX, labelY, size.Width, size.Height);
+        g.DrawString(text, font, brush, labelX, labelY);
+
+        if (showFoot)
+            DrawFootMarker(g, footX, footY, offsetX, offsetY, scale);
+    }
+
     private static void DrawFootMarker(Graphics g, int footX, int footY, int offsetX, int offsetY, float scale)
     {
-        // 足元の1px（部屋座標）の中心に十字を描く
-        var cx = offsetX + (footX + 0.5f) * scale;
-        var cy = offsetY + (footY + 0.5f) * scale;
+        // .def の座標はピクセル境界（x=左右の境目、y=スプライト下端）なので、境界線上に十字を描く
+        var cx = offsetX + footX * scale;
+        var cy = offsetY + footY * scale;
         const float arm = 4f;
 
         using var shadow = new Pen(Color.FromArgb(160, Color.Black), 3);

@@ -19,6 +19,7 @@ public sealed class ObjectPaletteControl : UserControl
     private readonly Button _registerTemplateButton;
     private readonly EntityTemplateListControl _templateList;
     private readonly ComboBox _snapCombo;
+    private readonly CheckBox _playerStartToggle;
 
     private EditorProject? _project;
     private SpriteSheetImageCache? _imageCache;
@@ -32,6 +33,7 @@ public sealed class ObjectPaletteControl : UserControl
     public event Action<EntityTemplate>? TemplateRemoveRequested;
     public event Action<EntityTemplate>? TemplateSelected;
     public event Action<int>? SnapSizeChanged;
+    public event Action<bool>? PlayerStartModeChanged;
 
     public int SnapSize => (_snapCombo.SelectedItem as SnapItem)?.Size ?? 1;
 
@@ -125,8 +127,23 @@ public sealed class ObjectPaletteControl : UserControl
         split.Panel2.Controls.Add(_templateList);
         split.Panel2.Controls.Add(templateHeader);
 
+        //========================
+        // プレイヤー開始位置モード（トグル）
+        //========================
+        _playerStartToggle = new CheckBox
+        {
+            Text = "プレイヤー開始位置を置く",
+            Appearance = Appearance.Button,
+            TextAlign = ContentAlignment.MiddleCenter,
+            Dock = DockStyle.Bottom,
+            Height = 28,
+        };
+        _toolTip.SetToolTip(_playerStartToggle,
+            "ON の間、マップ上の左クリックでプレイヤー開始位置（stage.start）を設定します。\n開始位置マーカーの右クリックで解除します。");
+
         Controls.Add(split);
         Controls.Add(sheetRow);
+        Controls.Add(_playerStartToggle);
 
         // SplitterDistance はハンドル生成後（サイズ確定後）でないと設定できない
         HandleCreated += (_, _) =>
@@ -145,6 +162,8 @@ public sealed class ObjectPaletteControl : UserControl
         };
 
         _addSheetButton.Click += (_, _) => SheetAddRequested?.Invoke();
+
+        _playerStartToggle.CheckedChanged += (_, _) => PlayerStartModeChanged?.Invoke(_playerStartToggle.Checked);
 
         _removeSheetButton.Click += (_, _) =>
         {
@@ -261,6 +280,12 @@ public sealed class ObjectPaletteControl : UserControl
     {
         var index = EntityGeometry.SnapSizes.ToList().IndexOf(size);
         _snapCombo.SelectedIndex = Math.Max(0, index);
+    }
+
+    /// <summary>プレイヤー開始位置モードの ON/OFF を切り替える（変化した場合は PlayerStartModeChanged を発火）。</summary>
+    public void SetPlayerStartMode(bool enabled)
+    {
+        _playerStartToggle.Checked = enabled;
     }
 
     public void SetReadOnly(bool isReadOnly)

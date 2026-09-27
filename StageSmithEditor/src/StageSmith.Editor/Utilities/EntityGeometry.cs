@@ -15,6 +15,13 @@ public static class EntityGeometry
 
     public static readonly IReadOnlyList<int> SnapSizes = [1, 8, 16];
 
+    /// <summary>プレイヤー開始位置マーカーの大きさ（部屋内px）。見た目の目安で、ゲーム側の判定とは無関係。</summary>
+    public const int PlayerStartMarkerWidth = 16;
+    public const int PlayerStartMarkerHeight = 24;
+
+    public static Rectangle GetPlayerStartBounds(int footX, int footY)
+        => GetRoomBounds(footX, footY, PlayerStartMarkerWidth, PlayerStartMarkerHeight);
+
     public static SpriteSheet? ResolveSheet(EditorProject? project, EntityPlacement entity)
     {
         if (project == null || entity.TemplateId is not { } templateId) return null;
@@ -35,16 +42,24 @@ public static class EntityGeometry
     }
 
     /// <summary>
+    /// 着地時にスプライト下端が床タイル上端より沈む量（px）。
+    /// ゲーム側 EnemyEntity の kVisualFloorSinkPx と一致させること。
+    /// キャラクターの最下行が床の最上行に1px重なる接触判定仕様による。
+    /// </summary>
+    public const int FloorSinkPx = 1;
+
+    /// <summary>
     /// 足元位置をグリッドにスナップし、部屋の範囲内に収める。
-    /// X はグリッド線上、Y は「グリッド線（＝タイル上端）の1px上」に合わせる。
-    /// 16px スナップでタイルの上に立たせると Y = 16n - 1 になる。
+    /// .def の (x, y) はピクセルの境界座標（x=スプライト左右の境目、y=スプライト下端）。
+    /// X はグリッド線上、Y は「グリッド線（＝床タイル上端）＋FloorSinkPx」に合わせる。
+    /// 16px スナップで床に立たせると Y = 16n + 1 となり、ゲーム内で着地した状態と一致する。
     /// </summary>
     public static (int X, int Y) SnapFoot(int x, int y, int snapSize)
     {
         if (snapSize > 1)
         {
             x = (int)Math.Round(x / (double)snapSize, MidpointRounding.AwayFromZero) * snapSize;
-            y = (int)Math.Round((y + 1) / (double)snapSize, MidpointRounding.AwayFromZero) * snapSize - 1;
+            y = (int)Math.Round((y - FloorSinkPx) / (double)snapSize, MidpointRounding.AwayFromZero) * snapSize + FloorSinkPx;
         }
 
         return ClampToRoom(x, y);

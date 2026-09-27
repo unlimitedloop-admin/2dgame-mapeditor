@@ -58,12 +58,34 @@ public sealed class ObjectTool : IPixelTool
     public EntityPlacement? SelectedEntity
         => SelectedEntityId is { } id ? _getPage()?.FindEntity(id) : null;
 
+    /// <summary>
+    /// true の間は、左クリックでエンティティではなくプレイヤー開始位置を設定する（右クリックで解除）。
+    /// </summary>
+    public bool IsPlacingPlayerStart
+    {
+        get => _isPlacingPlayerStart;
+        set
+        {
+            if (_isPlacingPlayerStart == value) return;
+
+            _isPlacingPlayerStart = value;
+            _drag = null;
+            if (value) Select(null);
+            _invalidate();
+        }
+    }
+
+    private bool _isPlacingPlayerStart;
+
     /// <summary>配置プレビューを出す位置（スナップ済みの足元）。出さない場合は null。</summary>
     public (int X, int Y)? PreviewFoot
     {
         get
         {
-            if (HoverPoint is not { } p || IsHoveringEntity || _drag != null || _getTemplate() == null)
+            if (HoverPoint is not { } p || !EntityConstants.IsInsideRoom(p.X, p.Y) || _drag != null)
+                return null;
+
+            if (!IsPlacingPlayerStart && (IsHoveringEntity || _getTemplate() == null))
                 return null;
 
             return EntityGeometry.SnapFoot(p.X, p.Y, SnapSize);
@@ -124,6 +146,12 @@ public sealed class ObjectTool : IPixelTool
         var page = _getPage();
         if (page == null) return;
 
+        if (IsPlacingPlayerStart)
+        {
+            SetPlayerStartAt(page, px, py);
+            return;
+        }
+
         var hit = HitTest(page, px, py);
         if (hit != null)
         {
@@ -180,7 +208,7 @@ public sealed class ObjectTool : IPixelTool
         }
 
         var page = _getPage();
-        IsHoveringEntity = page != null && HitTest(page, px, py) != null;
+        IsHoveringEntity = !IsPlacingPlayerStart && page != null && HitTest(page, px, py) != null;
         _invalidate();
     }
 
@@ -204,6 +232,14 @@ public sealed class ObjectTool : IPixelTool
     {
         var page = _getPage();
         if (page == null || _commandManager.IsReadOnly) return;
+
+        if (IsPlacingPlayerStart)
+        {
+            // 開始位置マーカー上の右クリックで解除
+            if (_getStage() is { } stage && HitTestPlayerStart(stage, page, px, py))
+                ExecutePlayerStart(stage, null);
+            return;
+        }
 
         var hit = HitTest(page, px, py);
         if (hit == null) return;
@@ -251,6 +287,31 @@ public sealed class ObjectTool : IPixelTool
         }
 
         return null;
+    }
+
+    private static bool HitTestPlayerStart(Stage stage, Page page, int px, int py)
+    {
+        return stage.PlayerStart is { } start
+            && start.PageId == page.Id
+            && EntityGeometry.GetPlayerStartBounds(start.X, start.Y).Contains(px, py);
+    }
+
+    private void SetPlayerStartAt(Page page, int px, int py)
+    {
+        if (_getStage() is not { } stage || _commandManager.IsReadOnly) return;
+        if (!EntityConstants.IsInsideRoom(px, py)) return;
+
+        var (x, y) = EntityGeometry.SnapFoot(px, py, SnapSize);
+        ExecutePlayerStart(stage, new PlayerStart { PageId = page.Id, X = x, Y = y });
+    }
+
+    private void ExecutePlayerStart(Stage stage, PlayerStart? value)
+    {
+        var command = new PlayerStartSetCommand(stage, value);
+        if (!command.HasChanges) return;
+
+        _commandManager.Execute(command);
+        _invalidate();
     }
 
     private sealed class DragState(EntityPlacement entity, (int X, int Y) origin, int grabOffsetX, int grabOffsetY, int startX, int startY)

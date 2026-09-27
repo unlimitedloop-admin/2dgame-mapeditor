@@ -37,14 +37,9 @@ public sealed class EntityTemplateDialog : Form
     {
         Kind             = _kindCombo.Text.Trim(),
         Palette          = string.IsNullOrWhiteSpace(_paletteTextBox.Text) ? null : _paletteTextBox.Text.Trim(),
-        Facing           = ((ChoiceItem)_facingCombo.SelectedItem!).Value,
-        Respawn          = ((ChoiceItem)_respawnCombo.SelectedItem!).Value,
-        DespawnOffscreen = ((ChoiceItem)_despawnCombo.SelectedItem!).Value switch
-        {
-            "true"  => true,
-            "false" => false,
-            _       => null,
-        },
+        Facing           = ChoiceItem.GetValue(_facingCombo),
+        Respawn          = ChoiceItem.GetValue(_respawnCombo),
+        DespawnOffscreen = ChoiceItem.ToBool(ChoiceItem.GetValue(_despawnCombo)),
     };
 
     /// <param name="existing">編集時は対象テンプレート。新規登録時は null。</param>
@@ -84,17 +79,13 @@ public sealed class EntityTemplateDialog : Form
         _paletteTextBox = new TextBox { Width = 220, PlaceholderText = $"(既定: {EntityConstants.DefaultPalette})" };
 
         _facingCombo = CreateDropDownList();
-        _facingCombo.Items.Add(new ChoiceItem($"(既定: {EntityConstants.FacingPlayer})", null));
-        foreach (var v in EntityConstants.FacingValues) _facingCombo.Items.Add(new ChoiceItem(v, v));
+        ChoiceItem.FillFacing(_facingCombo);
 
         _respawnCombo = CreateDropDownList();
-        _respawnCombo.Items.Add(new ChoiceItem("(部屋の既定に従う)", null));
-        foreach (var v in EntityConstants.RespawnValues) _respawnCombo.Items.Add(new ChoiceItem(v, v));
+        ChoiceItem.FillRespawn(_respawnCombo);
 
         _despawnCombo = CreateDropDownList();
-        _despawnCombo.Items.Add(new ChoiceItem("(既定: true)", null));
-        _despawnCombo.Items.Add(new ChoiceItem("true", "true"));
-        _despawnCombo.Items.Add(new ChoiceItem("false", "false"));
+        ChoiceItem.FillDespawn(_despawnCombo);
 
         var fields = new TableLayoutPanel
         {
@@ -192,9 +183,9 @@ public sealed class EntityTemplateDialog : Form
         if (_typeCombo.SelectedIndex < 0) _typeCombo.SelectedIndex = 0;
         _kindCombo.Text = initial.Kind;
         _paletteTextBox.Text = initial.Palette ?? string.Empty;
-        SelectChoice(_facingCombo, initial.Facing);
-        SelectChoice(_respawnCombo, initial.Respawn);
-        SelectChoice(_despawnCombo, initial.DespawnOffscreen switch { true => "true", false => "false", null => null });
+        ChoiceItem.Select(_facingCombo, initial.Facing);
+        ChoiceItem.Select(_respawnCombo, initial.Respawn);
+        ChoiceItem.Select(_despawnCombo, ChoiceItem.FromBool(initial.DespawnOffscreen));
 
         FormClosing += (_, e) =>
         {
@@ -232,20 +223,6 @@ public sealed class EntityTemplateDialog : Form
         table.Controls.Add(control, 1, row);
     }
 
-    private static void SelectChoice(ComboBox combo, string? value)
-    {
-        for (var i = 0; i < combo.Items.Count; i++)
-        {
-            if (combo.Items[i] is ChoiceItem item && item.Value == value)
-            {
-                combo.SelectedIndex = i;
-                return;
-            }
-        }
-
-        combo.SelectedIndex = 0;
-    }
-
     private void DrawPreview(Graphics g, Rectangle bounds)
     {
         g.Clear(Color.FromArgb(235, 235, 235));
@@ -268,11 +245,6 @@ public sealed class EntityTemplateDialog : Form
         using var footPen = new Pen(Color.FromArgb(200, Color.Red));
         g.DrawLine(footPen, footX - 4, footY, footX + 4, footY);
         g.DrawLine(footPen, footX, footY - 4, footX, footY);
-    }
-
-    private sealed record ChoiceItem(string Label, string? Value)
-    {
-        public override string ToString() => Label;
     }
 
     private sealed class DoubleBufferedPreview : Panel

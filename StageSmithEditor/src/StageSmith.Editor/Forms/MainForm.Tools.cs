@@ -62,7 +62,7 @@ public partial class MainForm
         _selectionButton = CreateButton("Selection", "選択 (S)", StageSmithEditor.Properties.Resources.icons8_選択_24, true);
         _bucketButton = CreateButton("Bucket", "バケツ (B)", StageSmithEditor.Properties.Resources.icons8_バケツ_24, true);
         _markerButton = CreateButton("Marker", "マーカー (K)", StageSmithEditor.Properties.Resources.icons8_マーカー_24, true);
-        _objectButton = CreateButton("Object", "オブジェクト配置 (O)", "敵", true);
+        _objectButton = CreateButton("Object", "オブジェクト配置 (O)", StageSmithEditor.Properties.Resources.icons8_材料_30, true);
 
         _showGridButton = CreateButton("ShowGrid", "グリッド表示切替 (G)", StageSmithEditor.Properties.Resources.icons8_グリッド_24, true);
         _tilePreviewButton = CreateButton("TilePreview", "タイルプレビュー切替 (T)", StageSmithEditor.Properties.Resources.icons8_目に見える_24, true);
@@ -379,7 +379,10 @@ public partial class MainForm
                 _selectionTool?.ClearSelection();
 
             if (_currentMode != EditorToolMode.Object)
+            {
                 _objectTool?.ClearSelection();
+                _objectPalette.SetPlayerStartMode(false);
+            }
 
             // Objectツールに切り替えたら、オブジェクト表示を自動的にONにする（Markerと同じ流儀）
             if (_currentMode == EditorToolMode.Object && !_menuViewShowEntities.Checked)

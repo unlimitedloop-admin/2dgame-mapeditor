@@ -27,6 +27,7 @@ public partial class MainForm
         _mapView.EntityLayer = new EntityLayerRenderer(
             _spriteSheetImages,
             () => _context.Project,
+            () => _context.CurrentStage,
             () => _page,
             () => _context.SelectedEntityTemplate,
             _objectTool,
@@ -40,7 +41,19 @@ public partial class MainForm
         };
 
         // テンプレートを選んだら、そのまま配置できるようにオブジェクトツールへ切り替える
-        _objectPalette.TemplateSelected += _ => SetToolMode(EditorToolMode.Object);
+        // （開始位置モード中なら解除してエンティティ配置に戻す）
+        _objectPalette.TemplateSelected += _ =>
+        {
+            _objectPalette.SetPlayerStartMode(false);
+            SetToolMode(EditorToolMode.Object);
+        };
+
+        _objectPalette.PlayerStartModeChanged += enabled =>
+        {
+            _objectTool.IsPlacingPlayerStart = enabled;
+            if (enabled)
+                SetToolMode(EditorToolMode.Object);
+        };
 
         _context.EntityTemplateChanged += () => _mapView.Invalidate();
     }
@@ -71,6 +84,8 @@ public partial class MainForm
 
     private void OnObjectSelectionChanged()
     {
+        _propertyWindow.SetSelectedEntity(_objectTool?.SelectedEntity);
+
         if (_objectTool?.SelectedEntity is not { } entity) return;
 
         ShowStatusMessage(
