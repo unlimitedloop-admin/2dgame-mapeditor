@@ -114,12 +114,18 @@ public partial class MainForm
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
+        // ── Objectツールで選択中のエンティティを矢印キーで微調整（Shift で 8px） ──
+        if (_currentMode == EditorToolMode.Object && TryNudgeSelectedEntity(keyData))
+            return true;
+
         // ── 単体キー（TextBox 以外のとき有効） ───────────────────────
         switch (keyData)
         {
             case Keys.Escape:
                 CancelDrag();
                 _selectionTool?.ClearSelection();
+                _objectTool?.ClearSelection();
+                _objectPalette.SetPlayerStartMode(false);
                 _mapView.Invalidate();
                 return true;
 
@@ -153,6 +159,14 @@ public partial class MainForm
 
             case Keys.K:
                 SetToolMode(EditorToolMode.Marker);
+                return true;
+
+            case Keys.O:
+                SetToolMode(EditorToolMode.Object);
+                return true;
+
+            case Keys.E:
+                _menuViewShowEntities.Checked = !_menuViewShowEntities.Checked;
                 return true;
 
             case Keys.B:
@@ -202,7 +216,10 @@ public partial class MainForm
                 return true;
 
             case Keys.Delete:
-                DeleteSelection();
+                if (_currentMode == EditorToolMode.Object)
+                    _objectTool?.DeleteSelected();
+                else
+                    DeleteSelection();
                 return true;
 
             case Keys.Control | Keys.D1:
@@ -223,6 +240,11 @@ public partial class MainForm
             case Keys.Control | Keys.D4:
             case Keys.Control | Keys.NumPad4:
                 SetToolMode(EditorToolMode.Marker);
+                return true;
+
+            case Keys.Control | Keys.D5:
+            case Keys.Control | Keys.NumPad5:
+                SetToolMode(EditorToolMode.Object);
                 return true;
         }
 

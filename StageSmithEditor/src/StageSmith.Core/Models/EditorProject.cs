@@ -56,6 +56,17 @@ public sealed class EditorProject
     public List<Tag> Tags { get; set; } = [];
 
     /// <summary>
+    /// 敵・アイテムなどの画像シート（プロジェクト全体で共有）。
+    /// </summary>
+    public List<SpriteSheet> SpriteSheets { get; set; } = [];
+
+    /// <summary>
+    /// 配置用の画像（シートの1コマ＋エンティティ既定値）。プロジェクト全体で共有する。
+    /// 各ステージの EntityPlacement.TemplateId から参照される。
+    /// </summary>
+    public List<EntityTemplate> EntityTemplates { get; set; } = [];
+
+    /// <summary>
     /// このプロジェクトがステージファイルをサブフォルダ分けして保存するかどうか。
     /// プロジェクト新規作成時（NewProject）に、その時点の EditorConfig.UseStageSubFolder を
     /// 一度だけ焼き込む。以降はプロジェクトが存在する限り固定値とし、
@@ -89,11 +100,23 @@ public sealed class EditorProject
         StageFilePaths ??= [];
         Bookmarks ??= [];
         Tags ??= [];
+        SpriteSheets ??= [];
+        EntityTemplates ??= [];
         if (LastEditedPageIndex < 0) LastEditedPageIndex = 0;
 
         foreach (var stage in Stages)
         {
             stage.Normalize();
+        }
+
+        foreach (var sheet in SpriteSheets)
+        {
+            sheet.Normalize();
+        }
+
+        foreach (var template in EntityTemplates)
+        {
+            template.Normalize();
         }
 
         foreach (var bookmark in Bookmarks)
@@ -180,6 +203,10 @@ public sealed class EditorProject
     }
 
     public Tag? FindTag(Guid tagId) => Tags.FirstOrDefault(t => t.Id == tagId);
+
+    public SpriteSheet? FindSpriteSheet(Guid sheetId) => SpriteSheets.FirstOrDefault(s => s.Id == sheetId);
+
+    public EntityTemplate? FindEntityTemplate(Guid templateId) => EntityTemplates.FirstOrDefault(t => t.Id == templateId);
 
     /// <summary>
     /// LastEditedStageId に対応する Stages 上のインデックスを解決する。

@@ -156,6 +156,7 @@ namespace StageSmith.Editor
             _menuViewColumnNumbers      = new ToolStripMenuItem("Column Numbers")       { ShortcutKeyDisplayString = "C", CheckOnClick = true };
             _menuViewTileInfo           = new ToolStripMenuItem("Tile Info")            { ShortcutKeyDisplayString = "I", CheckOnClick = true };
             _menuViewMarkerOverlay      = new ToolStripMenuItem("Marker Overlay")       { ShortcutKeyDisplayString = "M", CheckOnClick = true };
+            _menuViewShowEntities       = new ToolStripMenuItem("Show Objects")         { ShortcutKeyDisplayString = "E", CheckOnClick = true, Checked = true };
             _menuViewZoomIn             = new ToolStripMenuItem("Zoom In")              { ShortcutKeys = Keys.Control | Keys.Oemplus };
             _menuViewZoomOut            = new ToolStripMenuItem("Zoom Out")             { ShortcutKeys = Keys.Control | Keys.OemMinus };
             _menuViewResetZoom          = new ToolStripMenuItem("Reset Zoom")           { ShortcutKeys = Keys.Control | Keys.D0 };
@@ -170,6 +171,7 @@ namespace StageSmith.Editor
                 _menuViewColumnNumbers,
                 _menuViewTileInfo,
                 _menuViewMarkerOverlay,
+                _menuViewShowEntities,
                 new ToolStripSeparator(),
                 _menuViewZoomIn,
                 _menuViewZoomOut,
@@ -220,6 +222,7 @@ namespace StageSmith.Editor
             _menuToolsSelection  = new ToolStripMenuItem("Selection") { ShortcutKeyDisplayString = "S" };
             _menuToolsBucket     = new ToolStripMenuItem("Bucket")    { ShortcutKeyDisplayString = "B" };
             _menuToolsMarker     = new ToolStripMenuItem("Marker")    { ShortcutKeyDisplayString = "K" };
+            _menuToolsObject     = new ToolStripMenuItem("Object")    { ShortcutKeyDisplayString = "O" };
             _menuToolsOptions    = new ToolStripMenuItem("Options...");
 
             _menuTools.DropDownItems.AddRange([
@@ -227,6 +230,7 @@ namespace StageSmith.Editor
                 _menuToolsSelection,
                 _menuToolsBucket,
                 _menuToolsMarker,
+                _menuToolsObject,
                 new ToolStripSeparator(),
                 _menuToolsOptions,
             ]);
@@ -239,6 +243,7 @@ namespace StageSmith.Editor
             _menuWindowStageExplorer    = new ToolStripMenuItem("Stage Explorer")       { ShortcutKeys = Keys.F7 };
             _menuWindowProperties       = new ToolStripMenuItem("Properties Window")    { ShortcutKeys = Keys.F8 };
             _menuWindowBookmarkList     = new ToolStripMenuItem("Bookmark List")        { ShortcutKeys = Keys.F9 };
+            _menuWindowObjectPalette    = new ToolStripMenuItem("Object Palette")       { ShortcutKeys = Keys.Control | Keys.F9 };
             _menuWindowTagManager       = new ToolStripMenuItem("Tag Manager")          { ShortcutKeys = Keys.Control | Keys.F7 };
             _menuWindowMarkerManager    = new ToolStripMenuItem("Marker Manager")       { ShortcutKeys = Keys.Control | Keys.F8 };
             _menuWindowStageMapViewer   = new ToolStripMenuItem("Stage Map Viewer")     { ShortcutKeys = Keys.F10 };
@@ -251,6 +256,7 @@ namespace StageSmith.Editor
                 _menuWindowStageExplorer,
                 _menuWindowProperties,
                 _menuWindowBookmarkList,
+                _menuWindowObjectPalette,
                 new ToolStripSeparator(),
                 _menuWindowTagManager,
                 _menuWindowMarkerManager,
@@ -369,6 +375,7 @@ namespace StageSmith.Editor
         private ToolStripMenuItem _menuViewColumnNumbers   = null!;
         private ToolStripMenuItem _menuViewTileInfo        = null!;
         private ToolStripMenuItem _menuViewMarkerOverlay   = null!;
+        private ToolStripMenuItem _menuViewShowEntities    = null!;
         private ToolStripMenuItem _menuViewZoomIn          = null!;
         private ToolStripMenuItem _menuViewZoomOut         = null!;
         private ToolStripMenuItem _menuViewResetZoom       = null!;
@@ -395,6 +402,7 @@ namespace StageSmith.Editor
         private ToolStripMenuItem _menuToolsSelection   = null!;
         private ToolStripMenuItem _menuToolsBucket      = null!;
         private ToolStripMenuItem _menuToolsMarker      = null!;
+        private ToolStripMenuItem _menuToolsObject      = null!;
         private ToolStripMenuItem _menuToolsOptions     = null!;
 
         // Window
@@ -403,6 +411,7 @@ namespace StageSmith.Editor
         private ToolStripMenuItem _menuWindowStageExplorer  = null!;
         private ToolStripMenuItem _menuWindowProperties     = null!;
         private ToolStripMenuItem _menuWindowBookmarkList   = null!;
+        private ToolStripMenuItem _menuWindowObjectPalette  = null!;
         private ToolStripMenuItem _menuWindowTagManager     = null!;
         private ToolStripMenuItem _menuWindowMarkerManager  = null!;
         private ToolStripMenuItem _menuWindowStageMapViewer = null!;

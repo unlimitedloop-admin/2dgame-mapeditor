@@ -553,6 +553,7 @@ public class StageExplorerControl : UserControl
         if (_pageMenu.Tag is not NodeTag tag || tag.Page == null) return;
 
         var clone = tag.Page.Clone();
+        tag.Stage.EnsureUniqueEntityIds(clone);
 
         var insertIndex = tag.Stage.Pages.IndexOf(tag.Page) + 1;
         tag.Stage.Pages.Insert(insertIndex, clone);

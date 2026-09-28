@@ -511,6 +511,42 @@ public partial class MainForm
         DefExporter.Export(stage, path);
     }
 
+    /// <summary>
+    /// def 出力前の検証。ゲーム側が読み込みエラーにする内容があれば一覧を表示して false を返す。
+    /// bin だけ出力されて def が出ない、という中途半端な状態を避けるため、ファイル書き込み前に呼ぶ。
+    /// </summary>
+    private bool ValidateDefExport(IEnumerable<Stage> stages, string caption)
+    {
+        const int MaxLines = 20;
+
+        var lines = new List<string>();
+
+        foreach (var stage in stages)
+        {
+            var errors = DefExporter.Validate(stage);
+            if (errors.Count == 0) continue;
+
+            lines.Add($"■ {stage.Name}");
+            lines.AddRange(errors.Select(e => "  " + e));
+        }
+
+        if (lines.Count == 0)
+            return true;
+
+        var shown = lines.Take(MaxLines).ToList();
+        if (lines.Count > MaxLines)
+            shown.Add($"…ほか {lines.Count - MaxLines} 件");
+
+        MessageBox.Show(
+            this,
+            "配置データに問題があるため出力を中止しました。\n\n" + string.Join("\n", shown),
+            caption,
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Warning);
+
+        return false;
+    }
+
     private void ExportCurrentStageBin()
     {
         var stage = _context.CurrentStage;
@@ -524,6 +560,9 @@ public partial class MainForm
                 MessageBoxIcon.Warning);
             return;
         }
+
+        if (!ValidateDefExport([stage], "Export BIN"))
+            return;
 
         // 1. 確認ダイアログ
         var confirm = MessageBox.Show(
@@ -585,6 +624,9 @@ public partial class MainForm
                 MessageBoxIcon.Warning);
             return;
         }
+
+        if (!ValidateDefExport(project.Stages, "Export All Stages"))
+            return;
 
         string? sharedOutputDir = null;
         var perStageFolder = false;
@@ -884,6 +926,7 @@ public partial class MainForm
         _findTileDialog?.SetTileset(null);
         _replaceTileDialog?.SetTileset(null);
         _context.SetSelectedMetaTile(null);
+        SyncObjectPaletteProject();
 
         _propertyWindow.RefreshProperties();
         _pageNavBar.UpdateDisplay(_context);

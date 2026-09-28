@@ -11,7 +11,7 @@ namespace StageSmith.Editor.Controls;
 /// <summary>
 /// ステージエディタの右側に表示するプロパティウィンドウ。
 /// </summary>
-public sealed class PropertyWindowControl : UserControl
+public sealed partial class PropertyWindowControl : UserControl
 {
     private EditorContext? _context;
 
@@ -130,12 +130,17 @@ public sealed class PropertyWindowControl : UserControl
         AddHeader("Stage", Color.FromArgb(200, 255, 200));
         _stageNameTextBox = AddTextRow("Name");
         _stageTagsBadgesPanel = AddTagsRow("Tags", OnEditStageTagsClick);
+        _playerStartLabel = AddPlayerStartRow("Player Start");
 
         AddHeader("Page", Color.FromArgb(255, 200, 0));
         _pageNameTextBox = AddTextRow("Name");
         _pageEnableCheckBox = AddCheckRow("Enable");
         _pageRemarksTextBox = AddTextRow("Remarks");
         _pageTagsBadgesPanel = AddTagsRow("Tags", OnEditPageTagsClick);
+        _pageEnemyRespawnCombo = AddChoiceRow("Enemy Respawn", combo => ChoiceItem.FillRespawn(combo, "(既定)"));
+
+        // 選択中エンティティの編集は頻繁に使うため、長い Page Header より上に置く
+        InitializeEntitySection();
 
         AddHeader("Page Header", Color.FromArgb(255, 220, 120));
 
@@ -220,6 +225,7 @@ public sealed class PropertyWindowControl : UserControl
         _projectNameTextBox.Text = _context.Project?.Name ?? "";
         _stageNameTextBox.Text = _context.CurrentStage?.Name ?? "";
         RebuildTagBadges(_stageTagsBadgesPanel, _context.Project, _context.CurrentStage?.TagIds);
+        RefreshPlayerStart();
 
         var page = _context.CurrentPage;
 
@@ -227,6 +233,8 @@ public sealed class PropertyWindowControl : UserControl
         _pageEnableCheckBox.Checked = page?.Enable ?? false;
         _pageRemarksTextBox.Text = page?.Remarks ?? "";
         RebuildTagBadges(_pageTagsBadgesPanel, _context.Project, page?.TagIds);
+        ChoiceItem.Select(_pageEnemyRespawnCombo, page?.EnemyRespawn);
+        _pageEnemyRespawnCombo.Enabled = page != null;
 
         if (page != null)
         {
@@ -256,6 +264,8 @@ public sealed class PropertyWindowControl : UserControl
         }
 
         _isRefreshing = false;
+
+        RefreshEntitySection();
     }
 
     private void UpdatePageHeader()

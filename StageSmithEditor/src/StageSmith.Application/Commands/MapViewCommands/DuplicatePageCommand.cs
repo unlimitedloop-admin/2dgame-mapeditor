@@ -31,6 +31,7 @@ public sealed class DuplicatePageCommand : ICommand
         if (_clone == null)
         {
             _clone = _sourcePage.Clone();
+            _stage.EnsureUniqueEntityIds(_clone);
             _insertIndex = _stage.Pages.IndexOf(_sourcePage) + 1;
         }
 

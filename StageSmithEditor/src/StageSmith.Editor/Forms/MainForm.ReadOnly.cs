@@ -13,6 +13,7 @@ public partial class MainForm
         _metaTileEditorForm?.SetReadOnly(isReadOnly);
         _tagManagerForm?.SetReadOnly(isReadOnly);
         _stageExplorer.IsReadOnly = isReadOnly;
+        _objectPalette.SetReadOnly(isReadOnly);
 
         UpdateEditorAvailability(); // ツールバーのボタンの有効/無効を更新
     }

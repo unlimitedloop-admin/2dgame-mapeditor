@@ -16,10 +16,14 @@ public partial class MainForm
         _mapView.SetCurrentPageIndex(_context.CurrentPageIndex);
         _mapView.SetCurrentStageId(stage?.Id ?? Guid.Empty);
         _metaTilePalette.SetStage(stage);
+        SyncObjectPaletteProject();
 
         var stageChanged = stage != null && stage.Id != _loadedTilesetStageId;
         var pageChanged = page?.Id != _lastAppliedPageId;
         _lastAppliedPageId = page?.Id;
+
+        if (pageChanged)
+            ResetObjectToolForPageChange();
 
         // ステージが実際に切り替わった時は、設定に関わらず必ずタイルセットを読み直す
         // （LoadTilesetImage / ClearTileset 内部で選択タイルのリセットも行われる）。

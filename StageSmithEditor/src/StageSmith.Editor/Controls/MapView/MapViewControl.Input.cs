@@ -1,3 +1,4 @@
+using StageSmith.Core.Constants;
 using StageSmith.Editor.Tools;
 using StageSmith.Editor.Utilities;
 
@@ -34,6 +35,21 @@ public partial class MapViewControl
                 this,
                 new AdjacentNavigationRequestedEventArgs(direction, hasAdjacent)
             );
+            return;
+        }
+
+        // ピクセル座標ツール（オブジェクト配置）は、タイル用の Alt/Shift 操作や MetaTile 抑止を通さず直接渡す
+        if (_toolManager?.CurrentTool is IPixelTool pixelTool)
+        {
+            var (px, py) = ScreenToRoomPixel(e.X, e.Y);
+
+            if (e.Button == MouseButtons.Left)
+                pixelTool.OnPixelMouseDown(px, py);
+            else if (e.Button == MouseButtons.Right)
+                pixelTool.OnPixelRightMouseDown(px, py);
+
+            Cursor = pixelTool.GetCursor(px, py);
+            Invalidate();
             return;
         }
 
@@ -94,6 +110,18 @@ public partial class MapViewControl
 
         if (_tileMap == null) return;
 
+        // ピクセル座標ツール使用中は右クリック＝削除のため、コンテキストメニューも出さない
+        if (_toolManager?.CurrentTool is IPixelTool pixelTool)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                var (px, py) = ScreenToRoomPixel(e.X, e.Y);
+                pixelTool.OnPixelMouseUp(px, py);
+                Invalidate();
+            }
+            return;
+        }
+
         var (x, y) = ScreenToTile(e.X, e.Y);
 
         // ========================
@@ -141,6 +169,18 @@ public partial class MapViewControl
         base.OnMouseMove(e);
 
         if (_tileMap == null) return;
+
+        if (_toolManager?.CurrentTool is IPixelTool pixelTool)
+        {
+            var (px, py) = ScreenToRoomPixel(e.X, e.Y);
+            pixelTool.OnPixelMouseMove(px, py, e.Button);
+
+            var (tx, ty) = ScreenToTile(e.X, e.Y);
+            _hoverTile = IsInside(tx, ty) ? new Point(tx, ty) : new Point(-1, -1);
+            Cursor = IsInside(tx, ty) ? pixelTool.GetCursor(px, py) : Cursors.Default;
+            Invalidate();
+            return;
+        }
 
         var (x, y) = ScreenToTile(e.X, e.Y);
 
@@ -198,6 +238,20 @@ public partial class MapViewControl
         return q;
     }
 
+    /// <summary>
+    /// 画面座標を部屋内ピクセル座標（0〜255, 0〜239 が部屋の範囲）へ変換する。範囲外もそのまま返す。
+    /// </summary>
+    private (int x, int y) ScreenToRoomPixel(int px, int py)
+    {
+        var dstSize = CurrentTileRenderSize;
+        var srcSize = MapConstants.DefaultTileSize;
+
+        return (
+            FloorDiv((px - OffsetX) * srcSize, dstSize),
+            FloorDiv((py - OffsetY) * srcSize, dstSize)
+        );
+    }
+
     public bool TryScreenToTile(int px, int py, out int x, out int y)
     {
         (x, y) = ScreenToTile(px, py);
@@ -242,6 +296,13 @@ public partial class MapViewControl
         }
 
         var currentTool = _toolManager?.CurrentTool;
+
+        // ピクセル座標ツールは Alt/Shift のタイル用操作を持たないので、ツール自身のカーソルのみ
+        if (currentTool is IPixelTool)
+        {
+            Cursor = currentTool.GetCursor(x, y);
+            return;
+        }
 
         // スポイト（Alt併用、右クリックの有無に関わらずカーソルで予告）
         if (isAlt)

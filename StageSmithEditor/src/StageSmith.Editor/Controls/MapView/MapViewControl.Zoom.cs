@@ -24,6 +24,13 @@ public partial class MapViewControl
     public int CurrentTileRenderSize
         => Math.Max(1, (int)MathF.Round(ViewerConstants.TileRenderSize * _zoomScale));
 
+    /// <summary>
+    /// 部屋内ピクセル1pxあたりの画面ピクセル数（エンティティ配置の座標変換用）。
+    /// </summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public float RoomPixelScale => CurrentTileRenderSize / (float)MapConstants.DefaultTileSize;
+
     public bool CanZoomIn => _zoomScale < MaxZoomScale;
     public bool CanZoomOut => _zoomScale > MinZoomScale;
     public bool IsDefaultZoom => Math.Abs(_zoomScale - DefaultZoomScale) < 0.001f;

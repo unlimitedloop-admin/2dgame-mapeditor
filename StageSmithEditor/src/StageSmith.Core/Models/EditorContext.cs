@@ -79,6 +79,23 @@ public class EditorContext
     }
 
     //========================
+    // 現在の配置用エンティティテンプレート
+    //========================
+    // NOTE: タイル/メタタイルのブラシ（CurrentBrushKind）とは独立して保持する。
+    // オブジェクトツール使用中のみ参照されるため、タイル側の選択を変えても解除しない。
+    public EntityTemplate? SelectedEntityTemplate { get; private set; }
+
+    public event Action? EntityTemplateChanged;
+
+    public void SetSelectedEntityTemplate(EntityTemplate? template)
+    {
+        if (ReferenceEquals(SelectedEntityTemplate, template)) return;
+
+        SelectedEntityTemplate = template;
+        EntityTemplateChanged?.Invoke();
+    }
+
+    //========================
     // 操作
     //========================
     public event Action? ContextChanged;
