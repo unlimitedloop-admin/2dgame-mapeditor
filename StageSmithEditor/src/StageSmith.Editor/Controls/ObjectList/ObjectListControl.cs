@@ -41,6 +41,12 @@ public sealed class ObjectListControl : UserControl
     /// <summary>検索結果、またはハイライトの ON/OFF が変わったとき。</summary>
     public event Action? HitsChanged;
 
+    /// <summary>
+    /// 削除が要求されたとき。引数は削除対象と、「一覧の結果すべて」かどうか（false なら選択分）。
+    /// 確認・Undo登録は MainForm が行う。
+    /// </summary>
+    public event Action<IReadOnlyList<EntitySearchHit>, bool>? DeleteRequested;
+
     public ObjectListControl()
     {
         Dock = DockStyle.Fill;
@@ -54,9 +60,11 @@ public sealed class ObjectListControl : UserControl
 
         var prevButton = new Button { Text = "▲ 前へ", AutoSize = true };
         var nextButton = new Button { Text = "▼ 次へ", AutoSize = true };
+        var deleteButton = new Button { Text = "選択を削除", AutoSize = true };
         var toolTip = new ToolTip();
         toolTip.SetToolTip(prevButton, "前の結果へ（オブジェクトツール使用中は Shift+F4）");
         toolTip.SetToolTip(nextButton, "次の結果へ（オブジェクトツール使用中は F4）");
+        toolTip.SetToolTip(deleteButton, "一覧で選んだオブジェクトを削除（Delete）");
         Disposed += (_, _) => toolTip.Dispose();
 
         var filters = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 2, Padding = new Padding(3) };
@@ -67,6 +75,7 @@ public sealed class ObjectListControl : UserControl
         AddFilterRow(filters, "Palette:", _paletteCombo);
         AddFilterRow(filters, "", Flow(_currentPageOnlyCheckBox, _highlightCheckBox));
         AddFilterRow(filters, "", Flow(_countLabel, prevButton, nextButton));
+        AddFilterRow(filters, "", Flow(deleteButton));
 
         _listView = new ListView
         {
@@ -91,12 +100,19 @@ public sealed class ObjectListControl : UserControl
 
         prevButton.Click += (_, _) => SelectPrevious();
         nextButton.Click += (_, _) => SelectNext();
+        deleteButton.Click += (_, _) => DeleteSelected();
 
         _listView.ItemActivate += (_, _) =>
         {
             if (_listView.FocusedItem?.Tag is EntitySearchHit hit) HitActivated?.Invoke(hit);
         };
         _listView.ColumnClick += (_, e) => SortBy((Column)e.Column);
+
+        var menu = new ContextMenuStrip();
+        menu.Items.Add("選択を削除...", null, (_, _) => DeleteSelected());
+        menu.Items.Add("一覧の結果をすべて削除...", null, (_, _) => DeleteAllResults());
+        _listView.ContextMenuStrip = menu;
+        Disposed += (_, _) => menu.Dispose();
 
         RebuildFilterCandidates();
         UpdateCount();
@@ -121,6 +137,18 @@ public sealed class ObjectListControl : UserControl
     public void SelectNext() => MoveSelection(+1);
 
     public void SelectPrevious() => MoveSelection(-1);
+
+    /// <summary>一覧で選択中のオブジェクトの削除を要求する（Delete キー・ボタン・右クリックから）。</summary>
+    public void DeleteSelected()
+    {
+        var selected = _listView.SelectedItems.Cast<ListViewItem>()
+            .Select(i => (EntitySearchHit)i.Tag!)
+            .ToList();
+
+        DeleteRequested?.Invoke(selected, false);
+    }
+
+    private void DeleteAllResults() => DeleteRequested?.Invoke(Hits, true);
 
     //========================
     // 検索

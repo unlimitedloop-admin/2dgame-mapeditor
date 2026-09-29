@@ -114,6 +114,25 @@ public partial class MainForm
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
+        // ── Object List にフォーカスがある間は一覧の操作を優先する ─────────────
+        // Delete＝一覧で選んだものを削除、Enter・矢印・Home/End・PageUp/Down（Shift併用の範囲選択含む）は
+        // 一覧自身に渡す（ここで横取りすると、ジャンプ・行移動の代わりにマップ側の操作が動いてしまう）。
+        if (_objectListContent.ContainsFocus)
+        {
+            if (keyData == Keys.Delete)
+            {
+                _objectList.DeleteSelected();
+                return true;
+            }
+
+            var modifiers = keyData & Keys.Modifiers;
+            if ((modifiers == Keys.None || modifiers == Keys.Shift) &&
+                (keyData & Keys.KeyCode) is Keys.Enter or Keys.Up or Keys.Down or Keys.Home or Keys.End or Keys.PageUp or Keys.PageDown)
+            {
+                return false;
+            }
+        }
+
         // ── Objectツールで選択中のエンティティを矢印キーで微調整（Shift で 8px） ──
         if (_currentMode == EditorToolMode.Object && TryNudgeSelectedEntity(keyData))
             return true;

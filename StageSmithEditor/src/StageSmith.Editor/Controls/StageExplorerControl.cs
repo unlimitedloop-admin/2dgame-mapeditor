@@ -47,6 +47,18 @@ public class StageExplorerControl : UserControl
     public event Action<Stage>? StageDeleteRequested;
 
     /// <summary>
+    /// ステージ内の配置オブジェクトの一括削除が要求されたとき発火する。
+    /// 件数の確認・Undo登録は呼び出し側（MainForm）が行う。
+    /// </summary>
+    public event Action<Stage>? StageEntitiesDeleteRequested;
+
+    /// <summary>
+    /// ページ内の配置オブジェクトの一括削除が要求されたとき発火する。
+    /// 件数の確認・Undo登録は呼び出し側（MainForm）が行う。
+    /// </summary>
+    public event Action<Stage, Page>? PageEntitiesDeleteRequested;
+
+    /// <summary>
     /// ブックマークの切り替えがユーザーによって要求されたとき発火する。
     /// 実際のモデル操作（Undo対応含む）は呼び出し側が行う。
     /// </summary>
@@ -86,10 +98,12 @@ public class StageExplorerControl : UserControl
     private ToolStripMenuItem _stageRenameMenuItem = null!;
     private ToolStripMenuItem _stageCloneMenuItem  = null!;
     private ToolStripMenuItem _stageDeleteMenuItem = null!;
+    private ToolStripMenuItem _stageDeleteEntitiesMenuItem = null!;
     private ToolStripMenuItem _stageSetKeyMenuItem = null!;
     private ToolStripMenuItem _pageRenameMenuItem    = null!;
     private ToolStripMenuItem _pageDuplicateMenuItem = null!;
     private ToolStripMenuItem _pageDeleteMenuItem    = null!;
+    private ToolStripMenuItem _pageDeleteEntitiesMenuItem = null!;
 
     /// <summary>
     /// ステージ／ページ名がインライン編集中かどうか。
@@ -421,10 +435,12 @@ public class StageExplorerControl : UserControl
         _stageRenameMenuItem.Enabled    = !IsReadOnly;
         _stageCloneMenuItem.Enabled     = !IsReadOnly;
         _stageDeleteMenuItem.Enabled    = !IsReadOnly;
+        _stageDeleteEntitiesMenuItem.Enabled = !IsReadOnly;
         _stageSetKeyMenuItem.Enabled    = !IsReadOnly;
         _pageRenameMenuItem.Enabled     = !IsReadOnly;
         _pageDuplicateMenuItem.Enabled  = !IsReadOnly;
         _pageDeleteMenuItem.Enabled     = !IsReadOnly;
+        _pageDeleteEntitiesMenuItem.Enabled  = !IsReadOnly;
 
         if (tag.Kind == NodeKind.Stage)
         {
@@ -687,6 +703,8 @@ public class StageExplorerControl : UserControl
         _stageRenameMenuItem = new ToolStripMenuItem("名前変更", null, OnStageRename);
         _stageCloneMenuItem  = new ToolStripMenuItem("複製", null, OnStageClone);
         _stageDeleteMenuItem = new ToolStripMenuItem("削除", null, OnStageDelete);
+        _stageDeleteEntitiesMenuItem = new ToolStripMenuItem("このステージのオブジェクトをすべて削除...", null,
+            (_, _) => { if (_stageMenu.Tag is NodeTag tag) StageEntitiesDeleteRequested?.Invoke(tag.Stage); });
         _stageSetKeyMenuItem = new ToolStripMenuItem("Key を設定...", null, OnStageSetKey);
 
         menu.Items.Add(_stageRenameMenuItem);
@@ -694,6 +712,7 @@ public class StageExplorerControl : UserControl
         menu.Items.Add(_stageCloneMenuItem);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(_stageDeleteMenuItem);
+        menu.Items.Add(_stageDeleteEntitiesMenuItem);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("ステージマップビューアーを起動...", null, OnStageMapViewerLaunch);
         menu.Items.Add(new ToolStripSeparator());
@@ -708,6 +727,8 @@ public class StageExplorerControl : UserControl
         _pageRenameMenuItem    = new ToolStripMenuItem("名前変更", null, OnPageRename);
         _pageDuplicateMenuItem = new ToolStripMenuItem("複製", null, OnPageDuplicate);
         _pageDeleteMenuItem    = new ToolStripMenuItem("削除", null, OnPageDelete);
+        _pageDeleteEntitiesMenuItem = new ToolStripMenuItem("このページのオブジェクトをすべて削除...", null,
+            (_, _) => { if (_pageMenu.Tag is NodeTag { Page: { } page } tag) PageEntitiesDeleteRequested?.Invoke(tag.Stage, page); });
 
         menu.Items.Add(_pageRenameMenuItem);
         menu.Items.Add(new ToolStripSeparator());
@@ -716,6 +737,7 @@ public class StageExplorerControl : UserControl
         menu.Items.Add((ToolStripItem)_pageBookmarkMenuItem);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(_pageDeleteMenuItem);
+        menu.Items.Add(_pageDeleteEntitiesMenuItem);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("ページノードエディタを起動...", null, OnPageNodeEditorLaunch);
         return menu;

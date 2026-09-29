@@ -147,6 +147,7 @@ public partial class MainForm : Form
         BindObjectPalette();
         BindEnemyDefinitions();
         BindObjectList();
+        BindEntityBulkDelete();
         BindMarkerColorPanel();
         BindPageNavigationController();
         
