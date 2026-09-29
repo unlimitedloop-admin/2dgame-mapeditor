@@ -2,6 +2,7 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
+using StageSmith.Editor.Constants;
 using StageSmith.Editor.Tools;
 
 namespace StageSmith.Editor.Utilities;
@@ -50,6 +51,11 @@ public sealed class EntityLayerRenderer
         _isToolActive = isToolActive;
     }
 
+    /// <summary>
+    /// 検索結果としてハイライトするエンティティ（Object List の結果）。空なら何もしない。
+    /// </summary>
+    public IReadOnlySet<Guid> HighlightedEntityIds { get; set; } = new HashSet<Guid>();
+
     public void Draw(Graphics g, int offsetX, int offsetY, float scale)
     {
         var page = _getPage();
@@ -67,6 +73,9 @@ public sealed class EntityLayerRenderer
             if (template == null || !_imageCache.DrawTile(g, sheet, template.TileIndex, dst,
                     recolor: _paletteResolver.Resolve(entity.Properties)))
                 DrawMissing(g, dst, entity.Properties.Kind);
+
+            if (HighlightedEntityIds.Contains(entity.Id))
+                DrawSearchHighlight(g, dst);
 
             if (toolActive)
                 DrawFootMarker(g, entity.X, entity.Y, offsetX, offsetY, scale);
@@ -177,6 +186,13 @@ public sealed class EntityLayerRenderer
         g.DrawLine(shadow, cx, cy - arm, cx, cy + arm);
         g.DrawLine(pen, cx - arm, cy, cx + arm, cy);
         g.DrawLine(pen, cx, cy - arm, cx, cy + arm);
+    }
+
+    /// <summary>タイル検索のハイライトと同じ見た目（黄色の塗り）で重ねる。</summary>
+    private static void DrawSearchHighlight(Graphics g, Rectangle dst)
+    {
+        using var fill = new SolidBrush(SearchVisualConstants.HighlightFillColor);
+        g.FillRectangle(fill, dst);
     }
 
     private static void DrawMissing(Graphics g, Rectangle dst, string kind)

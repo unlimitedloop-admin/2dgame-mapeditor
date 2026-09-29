@@ -953,6 +953,7 @@ public partial class MainForm
         _replaceTileDialog?.SetTileset(null);
         _context.SetSelectedMetaTile(null);
         SyncObjectPaletteProject();
+        RefreshObjectList();
 
         _propertyWindow.RefreshProperties();
         _pageNavBar.UpdateDisplay(_context);

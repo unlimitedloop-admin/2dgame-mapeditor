@@ -107,6 +107,7 @@ public partial class MainForm
         _menuWindowProperties.Click     += (_, _) => ShowDockContent(_propertyWindowContent, DockState.DockRight);
         _menuWindowBookmarkList.Click   += (_, _) => ShowDockContent(_bookmarkListContent, DockState.DockLeft);
         _menuWindowObjectPalette.Click  += (_, _) => ShowDockContent(_objectPaletteContent, DockState.DockLeft);
+        _menuWindowObjectList.Click     += (_, _) => ShowDockContent(_objectListContent, DockState.DockLeft);
         _menuWindowTagManager.Click     += (_, _) => OpenTagManager();
         _menuWindowMarkerManager.Click  += (_, _) => ShowDockContent(_markerColorPanelContent, DockState.DockRight);
         _menuWindowStageMapViewer.Click += (_, _) => OpenStageMapViewer();

@@ -66,9 +66,17 @@ public partial class MainForm
         ExecuteTileSearch(_selectedTileId);
     }
 
-    private void FindNextTile() => _searchState.MoveNext();
+    private void FindNextTile()
+    {
+        if (TryMoveObjectListSelection(forward: true)) return;
+        _searchState.MoveNext();
+    }
 
-    private void FindPrevTile() => _searchState.MovePrevious();
+    private void FindPrevTile()
+    {
+        if (TryMoveObjectListSelection(forward: false)) return;
+        _searchState.MovePrevious();
+    }
 
     private void ClearSearchHighlight() => _searchState.Clear();
 
