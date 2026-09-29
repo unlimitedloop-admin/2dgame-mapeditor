@@ -508,43 +508,69 @@ public partial class MainForm
         if (stage == null) return;
 
         var path = filename;
-        DefExporter.Export(stage, path);
+        DefExporter.Export(stage, path, _enemyDefinitions);
     }
 
     /// <summary>
-    /// def 出力前の検証。ゲーム側が読み込みエラーにする内容があれば一覧を表示して false を返す。
+    /// def 出力前の検証。
+    /// エラー（ゲーム側が読み込みエラーにする・敵が出現しなくなる）があれば一覧を表示して false を返す。
+    /// 警告（出力はできるが意図と違いそうな内容）だけなら、一覧を見せて続行するか確認する。
     /// bin だけ出力されて def が出ない、という中途半端な状態を避けるため、ファイル書き込み前に呼ぶ。
     /// </summary>
     private bool ValidateDefExport(IEnumerable<Stage> stages, string caption)
     {
-        const int MaxLines = 20;
+        var stageList = stages.ToList();
 
+        var errorLines = CollectStageMessages(stageList, s => DefExporter.Validate(s, _enemyDefinitions));
+        if (errorLines.Count > 0)
+        {
+            MessageBox.Show(
+                this,
+                "配置データに問題があるため出力を中止しました。\n\n" + FormatMessageLines(errorLines),
+                caption,
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+
+            return false;
+        }
+
+        var warningLines = CollectStageMessages(stageList, s => DefExporter.CollectWarnings(s, _enemyDefinitions));
+        if (warningLines.Count == 0)
+            return true;
+
+        return MessageBox.Show(
+            this,
+            "次の点を確認してください。このまま出力しますか？\n\n" + FormatMessageLines(warningLines),
+            caption,
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question) == DialogResult.Yes;
+    }
+
+    private static List<string> CollectStageMessages(IEnumerable<Stage> stages, Func<Stage, IReadOnlyList<string>> collect)
+    {
         var lines = new List<string>();
 
         foreach (var stage in stages)
         {
-            var errors = DefExporter.Validate(stage);
-            if (errors.Count == 0) continue;
+            var messages = collect(stage);
+            if (messages.Count == 0) continue;
 
             lines.Add($"■ {stage.Name}");
-            lines.AddRange(errors.Select(e => "  " + e));
+            lines.AddRange(messages.Select(m => "  " + m));
         }
 
-        if (lines.Count == 0)
-            return true;
+        return lines;
+    }
+
+    private static string FormatMessageLines(List<string> lines)
+    {
+        const int MaxLines = 20;
 
         var shown = lines.Take(MaxLines).ToList();
         if (lines.Count > MaxLines)
             shown.Add($"…ほか {lines.Count - MaxLines} 件");
 
-        MessageBox.Show(
-            this,
-            "配置データに問題があるため出力を中止しました。\n\n" + string.Join("\n", shown),
-            caption,
-            MessageBoxButtons.OK,
-            MessageBoxIcon.Warning);
-
-        return false;
+        return string.Join("\n", shown);
     }
 
     private void ExportCurrentStageBin()
@@ -682,7 +708,7 @@ public partial class MainForm
             var bytes = stage.ExportBin();
             File.WriteAllBytes(binPath, bytes);
 
-            DefExporter.Export(stage, defPath);
+            DefExporter.Export(stage, defPath, _enemyDefinitions);
 
             exportedCount++;
         }

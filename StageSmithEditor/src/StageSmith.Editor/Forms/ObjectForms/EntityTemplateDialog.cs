@@ -20,7 +20,10 @@ public sealed class EntityTemplateDialog : Form
     private readonly TextBox _nameTextBox;
     private readonly ComboBox _typeCombo;
     private readonly ComboBox _kindCombo;
-    private readonly TextBox _paletteTextBox;
+    private readonly ComboBox _paletteCombo;
+    private readonly Label _kindInfoLabel;
+    private readonly Panel _preview;
+    private readonly EntityPaletteResolver? _paletteResolver;
     private readonly ComboBox _facingCombo;
     private readonly ComboBox _respawnCombo;
     private readonly ComboBox _despawnCombo;
@@ -36,7 +39,7 @@ public sealed class EntityTemplateDialog : Form
     public EntityProperties Properties => new()
     {
         Kind             = _kindCombo.Text.Trim(),
-        Palette          = string.IsNullOrWhiteSpace(_paletteTextBox.Text) ? null : _paletteTextBox.Text.Trim(),
+        Palette          = ChoiceItem.GetEditableValue(_paletteCombo),
         Facing           = ChoiceItem.GetValue(_facingCombo),
         Respawn          = ChoiceItem.GetValue(_respawnCombo),
         DespawnOffscreen = ChoiceItem.ToBool(ChoiceItem.GetValue(_despawnCombo)),
@@ -49,11 +52,14 @@ public sealed class EntityTemplateDialog : Form
         int tileIndex,
         SpriteSheetImageCache imageCache,
         EntityTemplate? existing,
-        IEnumerable<string> knownKinds)
+        IEnumerable<string> knownKinds,
+        EntityPaletteResolver? paletteResolver = null)
     {
         _sheet = sheet;
         _tileIndex = tileIndex;
         _imageCache = imageCache;
+        _paletteResolver = paletteResolver;
+        var catalog = paletteResolver?.Catalog ?? EnemyDefinitionCatalog.Empty;
 
         Text            = existing == null ? "テンプレート登録" : "テンプレート編集";
         StartPosition   = FormStartPosition.CenterParent;
@@ -73,10 +79,19 @@ public sealed class EntityTemplateDialog : Form
         _typeCombo.Items.Add(EntityConstants.TypeEnemy);
 
         _kindCombo = new ComboBox { Width = 220, DropDownStyle = ComboBoxStyle.DropDown };
-        foreach (var kind in knownKinds.Where(k => !string.IsNullOrWhiteSpace(k)).Distinct().Order())
+        foreach (var kind in knownKinds.Concat(catalog.Definitions.Select(d => d.Id))
+                     .Where(k => !string.IsNullOrWhiteSpace(k)).Distinct().Order())
             _kindCombo.Items.Add(kind);
 
-        _paletteTextBox = new TextBox { Width = 220, PlaceholderText = $"(既定: {EntityConstants.DefaultPalette})" };
+        _paletteCombo = new ComboBox { Width = 220, DropDownStyle = ComboBoxStyle.DropDown };
+
+        _kindInfoLabel = new Label
+        {
+            AutoSize = true,
+            MaximumSize = new Size(300, 0),
+            ForeColor = Color.DimGray,
+            Margin = new Padding(3, 0, 3, 3),
+        };
 
         _facingCombo = CreateDropDownList();
         ChoiceItem.FillFacing(_facingCombo);
@@ -97,7 +112,8 @@ public sealed class EntityTemplateDialog : Form
         AddRow(fields, "名前:", _nameTextBox);
         AddRow(fields, "type:", _typeCombo);
         AddRow(fields, "kind (必須):", _kindCombo);
-        AddRow(fields, "palette:", _paletteTextBox);
+        AddRow(fields, "", _kindInfoLabel);
+        AddRow(fields, "palette:", _paletteCombo);
         AddRow(fields, "facing:", _facingCombo);
         AddRow(fields, "respawn:", _respawnCombo);
         AddRow(fields, "despawnOffscreen:", _despawnCombo);
@@ -105,7 +121,7 @@ public sealed class EntityTemplateDialog : Form
         //========================
         // プレビュー
         //========================
-        var preview = new DoubleBufferedPreview(this)
+        var preview = _preview = new DoubleBufferedPreview(this)
         {
             Size = new Size(
                 Math.Max(64, sheet.TileWidth * PreviewScale + 8),
@@ -182,7 +198,17 @@ public sealed class EntityTemplateDialog : Form
         _typeCombo.SelectedItem = existing?.Type ?? EntityConstants.TypeEnemy;
         if (_typeCombo.SelectedIndex < 0) _typeCombo.SelectedIndex = 0;
         _kindCombo.Text = initial.Kind;
-        _paletteTextBox.Text = initial.Palette ?? string.Empty;
+        ChoiceItem.FillPalette(_paletteCombo, catalog, initial.Kind);
+        ChoiceItem.SetEditableValue(_paletteCombo, initial.Palette);
+        UpdateKindInfo();
+
+        // kind を変えたら palette の選択肢・説明・プレビューを追従させる
+        _kindCombo.TextChanged += (_, _) =>
+        {
+            ChoiceItem.FillPalette(_paletteCombo, catalog, _kindCombo.Text.Trim());
+            UpdateKindInfo();
+        };
+        _paletteCombo.TextChanged += (_, _) => _preview.Invalidate();
         ChoiceItem.Select(_facingCombo, initial.Facing);
         ChoiceItem.Select(_respawnCombo, initial.Respawn);
         ChoiceItem.Select(_despawnCombo, ChoiceItem.FromBool(initial.DespawnOffscreen));
@@ -205,6 +231,51 @@ public sealed class EntityTemplateDialog : Form
             if (string.IsNullOrEmpty(_kindCombo.Text)) _kindCombo.Focus();
             else _nameTextBox.Focus();
         };
+    }
+
+    /// <summary>
+    /// kind の欄の下に、敵定義の状況（名前・プリセット一覧・大きさの食い違い）を表示する。
+    /// </summary>
+    private void UpdateKindInfo()
+    {
+        var catalog = _paletteResolver?.Catalog;
+        var kind = _kindCombo.Text.Trim();
+
+        if (catalog?.HasDefinitions != true || kind.Length == 0)
+        {
+            _kindInfoLabel.Text = string.Empty;
+            _kindInfoLabel.ForeColor = Color.DimGray;
+            _preview?.Invalidate();
+            return;
+        }
+
+        var definition = catalog.Find(kind);
+        if (definition == null)
+        {
+            _kindInfoLabel.Text = $"⚠ 敵定義に「{kind}」が見つかりません（このままではゲーム内で出現しません）。";
+            _kindInfoLabel.ForeColor = Color.Firebrick;
+            _preview?.Invalidate();
+            return;
+        }
+
+        var presets = definition.PalettePresets.Count == 0
+            ? "(なし)"
+            : string.Join(" / ", definition.PalettePresets.Select(p => p.Id));
+        var text = $"{definition.Name}  palette: {presets}";
+        var color = Color.DimGray;
+
+        // ゲームは sprite_half_size でスポーン位置を決めるため、コマの大きさと違うと表示位置がずれる
+        if (definition.SpriteHalfSize is { } half &&
+            (Math.Abs(half.X * 2 - _sheet.TileWidth) > 0.01 || Math.Abs(half.Y * 2 - _sheet.TileHeight) > 0.01))
+        {
+            text += $"\n⚠ sprite_half_size（{half.X}×{half.Y}）がコマの大きさ（{_sheet.TileWidth}×{_sheet.TileHeight}）の半分と一致しません。" +
+                    "エディタ上の位置とゲーム内の位置がずれます。";
+            color = Color.DarkOrange;
+        }
+
+        _kindInfoLabel.Text = text;
+        _kindInfoLabel.ForeColor = color;
+        _preview?.Invalidate();
     }
 
     private static ComboBox CreateDropDownList()
@@ -233,7 +304,8 @@ public sealed class EntityTemplateDialog : Form
         var h = _sheet.TileHeight * PreviewScale;
         var dst = new Rectangle((bounds.Width - w) / 2, (bounds.Height - h) / 2, w, h);
 
-        if (!_imageCache.DrawTile(g, _sheet, _tileIndex, dst))
+        var recolor = _paletteResolver?.Resolve(_kindCombo.Text.Trim(), ChoiceItem.GetEditableValue(_paletteCombo));
+        if (!_imageCache.DrawTile(g, _sheet, _tileIndex, dst, recolor: recolor))
         {
             using var missingPen = new Pen(Color.OrangeRed) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dash };
             g.DrawRectangle(missingPen, dst.X, dst.Y, dst.Width - 1, dst.Height - 1);

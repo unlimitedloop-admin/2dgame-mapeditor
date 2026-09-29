@@ -26,6 +26,7 @@ public sealed class EntityLayerRenderer
     private readonly Func<Stage?> _getStage;
     private readonly Func<Page?> _getPage;
     private readonly Func<EntityTemplate?> _getTemplate;
+    private readonly EntityPaletteResolver _paletteResolver;
     private readonly ObjectTool _tool;
     private readonly Func<bool> _isToolActive;
 
@@ -35,6 +36,7 @@ public sealed class EntityLayerRenderer
         Func<Stage?> getStage,
         Func<Page?> getPage,
         Func<EntityTemplate?> getTemplate,
+        EntityPaletteResolver paletteResolver,
         ObjectTool tool,
         Func<bool> isToolActive)
     {
@@ -43,6 +45,7 @@ public sealed class EntityLayerRenderer
         _getStage = getStage;
         _getPage = getPage;
         _getTemplate = getTemplate;
+        _paletteResolver = paletteResolver;
         _tool = tool;
         _isToolActive = isToolActive;
     }
@@ -61,7 +64,8 @@ public sealed class EntityLayerRenderer
             var template = entity.TemplateId is { } id ? project?.FindEntityTemplate(id) : null;
             var dst = ToScreen(EntityGeometry.GetRoomBounds(project, entity), offsetX, offsetY, scale);
 
-            if (template == null || !_imageCache.DrawTile(g, sheet, template.TileIndex, dst))
+            if (template == null || !_imageCache.DrawTile(g, sheet, template.TileIndex, dst,
+                    recolor: _paletteResolver.Resolve(entity.Properties)))
                 DrawMissing(g, dst, entity.Properties.Kind);
 
             if (toolActive)
@@ -124,7 +128,7 @@ public sealed class EntityLayerRenderer
         using var attributes = new ImageAttributes();
         attributes.SetColorMatrix(new ColorMatrix { Matrix33 = PreviewAlpha });
 
-        if (!_imageCache.DrawTile(g, sheet, template.TileIndex, dst, attributes))
+        if (!_imageCache.DrawTile(g, sheet, template.TileIndex, dst, attributes, _paletteResolver.Resolve(template.Properties)))
             DrawMissing(g, dst, template.Properties.Kind);
 
         DrawFootMarker(g, foot.X, foot.Y, offsetX, offsetY, scale);

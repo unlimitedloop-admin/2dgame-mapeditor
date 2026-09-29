@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using StageSmith.Application.Commands;
 using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
@@ -19,10 +20,10 @@ public sealed partial class PropertyWindowControl
 
     private TextBox _entityIdTextBox = null!;
     private TextBox _entityTypeTextBox = null!;
-    private TextBox _entityKindTextBox = null!;
+    private ComboBox _entityKindCombo = null!;
     private NumericUpDown _entityXNumeric = null!;
     private NumericUpDown _entityYNumeric = null!;
-    private TextBox _entityPaletteTextBox = null!;
+    private ComboBox _entityPaletteCombo = null!;
     private ComboBox _entityFacingCombo = null!;
     private ComboBox _entityRespawnCombo = null!;
     private ComboBox _entityDespawnCombo = null!;
@@ -31,6 +32,15 @@ public sealed partial class PropertyWindowControl
 
     /// <summary>プロパティ表示中のエンティティ（オブジェクトツールの選択）。</summary>
     private EntityPlacement? _entity;
+
+    /// <summary>
+    /// 読み込み済みの敵定義（kind の候補・palette プリセットの選択肢に使う）。未設定なら自由入力のみ。
+    /// </summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public Func<EnemyDefinitionCatalog?>? EnemyDefinitions { get; set; }
+
+    private EnemyDefinitionCatalog Catalog => EnemyDefinitions?.Invoke() ?? EnemyDefinitionCatalog.Empty;
 
     /// <summary>
     /// オブジェクトツールの選択を反映する。
@@ -99,6 +109,19 @@ public sealed partial class PropertyWindowControl
         return combo;
     }
 
+    /// <summary>候補から選べるが自由入力もできるコンボ（kind / palette 用）。</summary>
+    private ComboBox AddEditableComboRow(string labelText)
+    {
+        var combo = new ComboBox
+        {
+            Dock = DockStyle.Fill,
+            DropDownStyle = ComboBoxStyle.DropDown,
+        };
+
+        AddRow(CreateLabel(labelText), combo);
+        return combo;
+    }
+
     private TextBox AddEntityTextRow(string labelText, string? placeholder = null, bool readOnly = false)
     {
         var textBox = AddTextRow(labelText);
@@ -128,18 +151,18 @@ public sealed partial class PropertyWindowControl
 
         _entityIdTextBox = AddEntityTextRow("ID");
         _entityTypeTextBox = AddEntityTextRow("Type", readOnly: true);
-        _entityKindTextBox = AddEntityTextRow("Kind");
+        _entityKindCombo = AddEditableComboRow("Kind");
         _entityXNumeric = AddPixelRow("X", EntityConstants.RoomPixelWidth - 1);
         _entityYNumeric = AddPixelRow("Y", EntityConstants.RoomPixelHeight - 1);
-        _entityPaletteTextBox = AddEntityTextRow("Palette", $"(既定: {EntityConstants.DefaultPalette})");
+        _entityPaletteCombo = AddEditableComboRow("Palette");
         _entityFacingCombo = AddChoiceRow("Facing", ChoiceItem.FillFacing);
         _entityRespawnCombo = AddChoiceRow("Respawn", c => ChoiceItem.FillRespawn(c));
         _entityDespawnCombo = AddChoiceRow("Despawn", ChoiceItem.FillDespawn); // despawnOffscreen（ラベル列の幅に収めるため短縮）
 
         _entityEditors =
         [
-            _entityIdTextBox, _entityTypeTextBox, _entityKindTextBox,
-            _entityXNumeric, _entityYNumeric, _entityPaletteTextBox,
+            _entityIdTextBox, _entityTypeTextBox, _entityKindCombo,
+            _entityXNumeric, _entityYNumeric, _entityPaletteCombo,
             _entityFacingCombo, _entityRespawnCombo, _entityDespawnCombo,
         ];
 
@@ -149,6 +172,21 @@ public sealed partial class PropertyWindowControl
 
         foreach (var combo in new[] { _entityFacingCombo, _entityRespawnCombo, _entityDespawnCombo })
             combo.SelectionChangeCommitted += (_, _) => CommitEntityEdits();
+
+        // 自由入力可のコンボは SelectionChangeCommitted の時点で Text がまだ古いので、処理の後に確定する
+        foreach (var combo in new[] { _entityKindCombo, _entityPaletteCombo })
+            combo.SelectionChangeCommitted += (_, _) =>
+            {
+                if (IsHandleCreated) BeginInvoke(CommitEntityEdits);
+                else CommitEntityEdits();
+            };
+
+        // kind を変えたら、palette の選択肢をその kind のプリセットに入れ替える
+        _entityKindCombo.TextChanged += (_, _) =>
+        {
+            if (_isRefreshing) return;
+            ChoiceItem.FillPalette(_entityPaletteCombo, Catalog, _entityKindCombo.Text.Trim());
+        };
 
         _pageEnemyRespawnCombo.SelectionChangeCommitted += (_, _) => CommitPageEnemyRespawn();
 
@@ -197,10 +235,21 @@ public sealed partial class PropertyWindowControl
 
             _entityIdTextBox.Text = entity?.EntityId ?? "";
             _entityTypeTextBox.Text = entity?.Type ?? "";
-            _entityKindTextBox.Text = entity?.Properties.Kind ?? "";
+            var catalog = Catalog;
+            var kind = entity?.Properties.Kind ?? "";
+
+            _entityKindCombo.BeginUpdate();
+            _entityKindCombo.Items.Clear();
+            foreach (var definition in catalog.Definitions)
+                _entityKindCombo.Items.Add(definition.Id);
+            _entityKindCombo.EndUpdate();
+            _entityKindCombo.Text = kind;
+
             _entityXNumeric.Value = Math.Clamp(entity?.X ?? 0, 0, (int)_entityXNumeric.Maximum);
             _entityYNumeric.Value = Math.Clamp(entity?.Y ?? 0, 0, (int)_entityYNumeric.Maximum);
-            _entityPaletteTextBox.Text = entity?.Properties.Palette ?? "";
+
+            ChoiceItem.FillPalette(_entityPaletteCombo, catalog, kind);
+            ChoiceItem.SetEditableValue(_entityPaletteCombo, entity?.Properties.Palette);
             ChoiceItem.Select(_entityFacingCombo, entity?.Properties.Facing);
             ChoiceItem.Select(_entityRespawnCombo, entity?.Properties.Respawn);
             ChoiceItem.Select(_entityDespawnCombo, ChoiceItem.FromBool(entity?.Properties.DespawnOffscreen));
@@ -227,8 +276,8 @@ public sealed partial class PropertyWindowControl
             (int)_entityYNumeric.Value,
             new EntityProperties
             {
-                Kind             = _entityKindTextBox.Text.Trim(),
-                Palette          = string.IsNullOrWhiteSpace(_entityPaletteTextBox.Text) ? null : _entityPaletteTextBox.Text.Trim(),
+                Kind             = _entityKindCombo.Text.Trim(),
+                Palette          = ChoiceItem.GetEditableValue(_entityPaletteCombo),
                 Facing           = ChoiceItem.GetValue(_entityFacingCombo),
                 Respawn          = ChoiceItem.GetValue(_entityRespawnCombo),
                 DespawnOffscreen = ChoiceItem.ToBool(ChoiceItem.GetValue(_entityDespawnCombo)),

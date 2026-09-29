@@ -30,6 +30,7 @@ public partial class MainForm
             () => _context.CurrentStage,
             () => _page,
             () => _context.SelectedEntityTemplate,
+            PaletteResolver,
             _objectTool,
             () => _currentMode == EditorToolMode.Object
         );

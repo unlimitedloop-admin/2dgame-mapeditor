@@ -53,6 +53,7 @@ public partial class MainForm
             SpriteSheetDefinitionLoader.TryRefresh(sheet);
 
         _objectPalette.SetProject(project, _spriteSheetImages);
+        ReloadEnemyDefinitions();
         _objectPalette.SetReadOnly(_commandManager.IsReadOnly);
     }
 
@@ -246,7 +247,7 @@ public partial class MainForm
         var project = _context.Project;
         if (project == null) return;
 
-        using var dialog = new EntityTemplateDialog(sheet, tileIndex, _spriteSheetImages, null, CollectKnownEntityKinds());
+        using var dialog = new EntityTemplateDialog(sheet, tileIndex, _spriteSheetImages, null, CollectKnownEntityKinds(), PaletteResolver);
         if (dialog.ShowDialog(this) != DialogResult.OK) return;
 
         var template = new EntityTemplate
@@ -289,7 +290,7 @@ public partial class MainForm
             return;
         }
 
-        using var dialog = new EntityTemplateDialog(sheet, template.TileIndex, _spriteSheetImages, template, CollectKnownEntityKinds());
+        using var dialog = new EntityTemplateDialog(sheet, template.TileIndex, _spriteSheetImages, template, CollectKnownEntityKinds(), PaletteResolver);
         if (dialog.ShowDialog(this) != DialogResult.OK) return;
 
         var oldValues = (template.Name, template.Type, Properties: template.Properties.Clone());

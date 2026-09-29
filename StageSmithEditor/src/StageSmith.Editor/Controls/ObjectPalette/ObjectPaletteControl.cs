@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using StageSmith.Core.Models;
 using StageSmith.Editor.Utilities;
 
@@ -15,6 +16,7 @@ public sealed class ObjectPaletteControl : UserControl
     private readonly ComboBox _sheetCombo;
     private readonly Button _addSheetButton;
     private readonly Button _removeSheetButton;
+    private readonly Button _enemySettingsButton;
     private readonly SpriteSheetGridControl _sheetGrid;
     private readonly Button _registerTemplateButton;
     private readonly EntityTemplateListControl _templateList;
@@ -27,6 +29,7 @@ public sealed class ObjectPaletteControl : UserControl
     private bool _isReadOnly;
 
     public event Action? SheetAddRequested;
+    public event Action? EnemyDefinitionSettingsRequested;
     public event Action<SpriteSheet>? SheetRemoveRequested;
     public event Action<SpriteSheet, int>? TemplateCreateRequested;
     public event Action<EntityTemplate>? TemplateEditRequested;
@@ -53,6 +56,7 @@ public sealed class ObjectPaletteControl : UserControl
 
         _addSheetButton = CreateSmallButton("＋", "画像シートを追加...");
         _removeSheetButton = CreateSmallButton("－", "選択中の画像シートを削除");
+        _enemySettingsButton = CreateSmallButton("⚙", "敵定義・パレットの設定（再読込）...");
 
         // NOTE: Dock の追加順は「後から追加したものほど外側」。Fill のコンボを先に、右端のボタンを後に追加する。
         var sheetRow = new Panel
@@ -64,6 +68,7 @@ public sealed class ObjectPaletteControl : UserControl
         sheetRow.Controls.Add(_sheetCombo);
         sheetRow.Controls.Add(_addSheetButton);
         sheetRow.Controls.Add(_removeSheetButton);
+        sheetRow.Controls.Add(_enemySettingsButton);
 
         //========================
         // シートグリッド＋登録ボタン
@@ -165,6 +170,8 @@ public sealed class ObjectPaletteControl : UserControl
 
         _playerStartToggle.CheckedChanged += (_, _) => PlayerStartModeChanged?.Invoke(_playerStartToggle.Checked);
 
+        _enemySettingsButton.Click += (_, _) => EnemyDefinitionSettingsRequested?.Invoke();
+
         _removeSheetButton.Click += (_, _) =>
         {
             if (SelectedSheet is { } sheet)
@@ -216,6 +223,15 @@ public sealed class ObjectPaletteControl : UserControl
     //========================
     // 公開API
     //========================
+
+    /// <summary>テンプレートのサムネイルを palette で色替えするためのリゾルバ。</summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public EntityPaletteResolver? PaletteResolver
+    {
+        get => _templateList.PaletteResolver;
+        set => _templateList.PaletteResolver = value;
+    }
 
     public void SetProject(EditorProject? project, SpriteSheetImageCache? imageCache)
     {
@@ -321,6 +337,7 @@ public sealed class ObjectPaletteControl : UserControl
     {
         _addSheetButton.Enabled = !_isReadOnly && _project != null;
         _removeSheetButton.Enabled = !_isReadOnly && SelectedSheet != null;
+        _enemySettingsButton.Enabled = _project != null;
         _registerTemplateButton.Enabled = !_isReadOnly && SelectedSheet != null && _sheetGrid.SelectedTileIndex >= 0;
     }
 }
