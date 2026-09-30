@@ -12,6 +12,9 @@ namespace StageSmith.Editor.Controls;
 /// </summary>
 public sealed class ObjectPaletteControl : UserControl
 {
+    /// <summary>シート表示（上）とテンプレート一覧（下）の初期の分割比率。</summary>
+    private const double InitialSplitRatio = 0.55;
+
     private readonly ToolTip _toolTip = new();
     private readonly ComboBox _sheetCombo;
     private readonly Button _addSheetButton;
@@ -150,11 +153,15 @@ public sealed class ObjectPaletteControl : UserControl
         Controls.Add(sheetRow);
         Controls.Add(_playerStartToggle);
 
-        // SplitterDistance はハンドル生成後（サイズ確定後）でないと設定できない
-        HandleCreated += (_, _) =>
+        // シート表示とテンプレート一覧の分割位置は、ユーザーが分割線を動かすまで全体の 55% に保つ。
+        // ドッキングの復元中はペインが一時的に小さく、その瞬間に一度だけ設定すると
+        // 例外になる（設定範囲が空）か、極端な比率のまま固定されてしまうため、サイズが変わるたびに
+        // 設定可能な範囲に収まるときだけ合わせ直す（SplitContainerExtensions 参照）。
+        var userMovedSplitter = false;
+        split.SplitterMoving += (_, _) => userMovedSplitter = true;   // マウスでのドラッグ時のみ発生する
+        split.SizeChanged += (_, _) =>
         {
-            if (split.Height > 0)
-                split.SplitterDistance = Math.Max(split.Panel1MinSize, (int)(split.Height * 0.55));
+            if (!userMovedSplitter) split.TrySetSplitterRatio(InitialSplitRatio);
         };
 
         //========================
