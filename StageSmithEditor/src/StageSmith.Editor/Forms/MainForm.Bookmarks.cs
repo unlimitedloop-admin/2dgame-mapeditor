@@ -1,6 +1,7 @@
 using StageSmith.Application.Commands;
 using StageSmith.Core.Models;
 using StageSmith.Editor.Controls;
+using StageSmith.Editor.Utilities;
 
 namespace StageSmith.Editor;
 
@@ -51,6 +52,14 @@ public partial class MainForm
             isBookmarked ? "ブックマークを解除" : "現在のページをブックマークに追加",
             null,
             (_, _) => ToggleBookmark(stage, page));
+
+        // 右クリックした位置のタイルを、検索ダイアログの「検索するタイル番号」に入れて開く
+        var clickedTileId = page.TileMap.GetTile(e.TileX, e.TileY);
+        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add(
+            $"このタイル（{NumberFormatHelper.FormatByte(clickedTileId, _config.NumberDisplayFormat)}）を検索...",
+            null,
+            (_, _) => OpenFindTileDialog(clickedTileId));
 
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(

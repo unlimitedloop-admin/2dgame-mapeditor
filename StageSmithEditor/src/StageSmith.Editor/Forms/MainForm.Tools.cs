@@ -79,7 +79,7 @@ public partial class MainForm
         _tileReplaceButton = CreateButton("TileReplace", "タイル置換 (Ctrl+H)", StageSmithEditor.Properties.Resources.icons8_置換_30);
         _tileSearchPrevHitButton = CreateButton("TileSearchPrevHit", "前の検索結果 (Shift+F4)", StageSmithEditor.Properties.Resources.ai_前を検索_40);
         _tileSearchNextHitButton = CreateButton("TileSearchNextHit", "次の検索結果 (F4)", StageSmithEditor.Properties.Resources.ai_次を検索_40);
-        _tileSearchClearButton = CreateButton("TileSearchClear", "検索結果をクリア (Ctrl+Shift+F)", StageSmithEditor.Properties.Resources.ai_検索結果を削除_40);
+        _tileSearchClearButton = CreateButton("TileSearchClear", "検索結果をクリア (Shift+Esc)", StageSmithEditor.Properties.Resources.ai_検索結果を削除_40);
 
         //========================
         // イベント
@@ -455,6 +455,9 @@ public partial class MainForm
             _selectedTileId = index;
             _mapView.PreviewTileId = index;
             _mapView.Invalidate();
+
+            // 検索／置換ダイアログを開いていれば、選んだタイルを入力欄に反映する
+            ApplyPaletteTileToSearchDialogs(index);
         };
 
         _tilePalette.TilesetImageSelectionRequested += (_, _) =>

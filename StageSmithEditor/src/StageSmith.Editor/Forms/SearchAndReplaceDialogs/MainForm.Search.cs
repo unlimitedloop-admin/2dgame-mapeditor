@@ -2,6 +2,7 @@ using StageSmith.Application.Commands;
 using StageSmith.Application.Services;
 using StageSmith.Core.Models;
 using StageSmith.Editor.Forms;
+using StageSmith.Editor.Utilities;
 
 namespace StageSmith.Editor;
 
@@ -36,17 +37,24 @@ public partial class MainForm
     // メニュー／ショートカットから呼ばれるエントリポイント
     // ------------------------
 
-    private void OpenFindTileDialog()
+    /// <param name="tileId">
+    /// 検索するタイル番号の欄に入れる値（マップの右クリック「このタイルを検索」から）。
+    /// null の場合は従来どおり、パレットで選択中のタイル → 前回の検索対象の順で決める。
+    /// </param>
+    private void OpenFindTileDialog(int? tileId = null)
     {
         if (_findTileDialog is { IsDisposed: false })
         {
+            if (tileId is { } id)
+                _findTileDialog.SetSearchTileId(id);
+
             _findTileDialog.Activate();
             return;
         }
 
-        var initialTileId = _selectedTileId >= 0
+        var initialTileId = tileId ?? (_selectedTileId >= 0
             ? _selectedTileId
-            : _searchState.TargetTileId;
+            : _searchState.TargetTileId);
 
         _findTileDialog = new FindTileDialog(_searchState, initialTileId, _tileset, _config.NumberDisplayFormat);
         _findTileDialog.SearchRequested   += ExecuteTileSearch;                  // 常に新規検索に単純化
@@ -64,6 +72,20 @@ public partial class MainForm
         if (_selectedTileId < 0) return;
 
         ExecuteTileSearch(_selectedTileId);
+    }
+
+    /// <summary>
+    /// タイルパレットで選んだタイルを、開いている検索／置換ダイアログの入力欄に反映する。
+    /// </summary>
+    private void ApplyPaletteTileToSearchDialogs(int tileId)
+    {
+        if (tileId < 0) return;
+
+        if (_findTileDialog is { IsDisposed: false })
+            _findTileDialog.ApplyPaletteTile(tileId);
+
+        if (_replaceTileDialog is { IsDisposed: false })
+            _replaceTileDialog.ApplyPaletteTile(tileId);
     }
 
     private void FindNextTile()
@@ -95,14 +117,26 @@ public partial class MainForm
         var hits = TileSearchService.Search(stage, tileId, scopePageIndex);
         _searchState.SetHits(tileId, hits);
 
-        if (!_searchState.HasHits && _findTileDialog is not { IsDisposed: false } && _replaceTileDialog is not { IsDisposed: false })
+        if (_searchState.HasHits) return;
+
+        // 見つからなかった場合：ダイアログを開いていればダイアログ内に表示し（メッセージボックスは重ねない）、
+        // 開いていなければ（F3 での検索など）メッセージボックスで知らせる
+        var dialogs = new TileSearchDialogBase?[] { _findTileDialog, _replaceTileDialog }
+            .Where(d => d is { IsDisposed: false })
+            .ToList();
+
+        if (dialogs.Count > 0)
         {
-            MessageBox.Show(
-                $"タイル番号 {tileId} は見つかりませんでした。",
-                "タイル検索",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
+            foreach (var dialog in dialogs)
+                dialog!.ShowNotFound(tileId);
+            return;
         }
+
+        MessageBox.Show(
+            $"タイル番号 {NumberFormatHelper.FormatByte(tileId, _config.NumberDisplayFormat)} は見つかりませんでした。",
+            "タイル検索",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Information);
     }
 
     // ------------------------
