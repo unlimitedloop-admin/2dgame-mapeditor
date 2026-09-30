@@ -125,6 +125,13 @@ public partial class MainForm
                 return true;
             }
 
+            // 一覧を見ながらの Ctrl+A はマップのタイル全選択ではなく、一覧の全選択にする
+            if (keyData == (Keys.Control | Keys.A))
+            {
+                _objectList.SelectAll();
+                return true;
+            }
+
             var modifiers = keyData & Keys.Modifiers;
             if ((modifiers == Keys.None || modifiers == Keys.Shift) &&
                 (keyData & Keys.KeyCode) is Keys.Enter or Keys.Up or Keys.Down or Keys.Home or Keys.End or Keys.PageUp or Keys.PageDown)
@@ -315,7 +322,14 @@ public partial class MainForm
     private void ToggleMarkerOverlay(bool show)
     {
         _markerState.ShowOverlay = show;
+        _markerOverlayButton.Checked = show;
         _mapView.Invalidate();
+    }
+
+    private void ApplyShowEntitiesState(bool show)
+    {
+        _mapView.SetShowEntities(show);
+        _showObjectsButton.Checked = show;
     }
 
     private void CancelDrag()

@@ -116,7 +116,7 @@ public partial class MainForm
         ToggleMarkerOverlay(_config.ShowMarkerOverlay);
 
         _menuViewShowEntities.Checked = _config.ShowEntities;
-        _mapView.SetShowEntities(_config.ShowEntities);
+        ApplyShowEntitiesState(_config.ShowEntities);
 
         _objectPalette.SetSnapSize(_config.EntitySnapSize);
 

@@ -43,9 +43,11 @@ public partial class MapViewControl
         DrawColumnNumbers(g);
         DrawRowNumbers(g);
 
+        // 配置オブジェクトはタイルの上に描き、タイル検索のハイライト・マーカーはさらにその上に重ねる
+        // （オブジェクトの下に隠れて見えなくならないようにするため）
+        DrawEntityLayer(g);
         DrawSearchHighlights(g);
         DrawMarkers(g);
-        DrawEntityLayer(g);
         DrawPreview(g);
 
         // SelectionToolに描かせる

@@ -57,6 +57,12 @@ public class EditorConfig
     public bool UseStageDirectoryForExport { get; set; } = false;
 
     /// <summary>
+    /// trueの場合、画像シートの追加時に同名の .json（分割定義）を自動で読み込む。
+    /// falseの場合は毎回、分割定義の選択ダイアログを開く。
+    /// </summary>
+    public bool AutoLoadSheetDefinition { get; set; } = true;
+
+    /// <summary>
     /// EditorPropertiesDialog等でCancel時に元設定を汚さないための複製。
     /// 全プロパティが値型/stringのみのため MemberwiseClone で十分。
     /// </summary>

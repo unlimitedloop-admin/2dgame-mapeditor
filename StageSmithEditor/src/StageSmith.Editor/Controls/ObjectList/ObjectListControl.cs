@@ -109,6 +109,8 @@ public sealed class ObjectListControl : UserControl
         _listView.ColumnClick += (_, e) => SortBy((Column)e.Column);
 
         var menu = new ContextMenuStrip();
+        menu.Items.Add(new ToolStripMenuItem("すべて選択", null, (_, _) => SelectAll()) { ShortcutKeyDisplayString = "Ctrl+A" });
+        menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("選択を削除...", null, (_, _) => DeleteSelected());
         menu.Items.Add("一覧の結果をすべて削除...", null, (_, _) => DeleteAllResults());
         _listView.ContextMenuStrip = menu;
@@ -139,6 +141,15 @@ public sealed class ObjectListControl : UserControl
     public void SelectPrevious() => MoveSelection(-1);
 
     /// <summary>一覧で選択中のオブジェクトの削除を要求する（Delete キー・ボタン・右クリックから）。</summary>
+    /// <summary>一覧の項目をすべて選択する（Ctrl+A・右クリックから）。</summary>
+    public void SelectAll()
+    {
+        _listView.BeginUpdate();
+        foreach (ListViewItem item in _listView.Items)
+            item.Selected = true;
+        _listView.EndUpdate();
+    }
+
     public void DeleteSelected()
     {
         var selected = _listView.SelectedItems.Cast<ListViewItem>()

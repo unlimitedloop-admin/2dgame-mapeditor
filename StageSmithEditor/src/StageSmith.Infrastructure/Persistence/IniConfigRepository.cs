@@ -60,6 +60,7 @@ public class IniConfigRepository : IConfigRepository
         config.ShowNodePreview = GetBool(values, nameof(config.ShowNodePreview), config.ShowNodePreview);
         config.UseStageSubFolder = GetBool(values, nameof(config.UseStageSubFolder), config.UseStageSubFolder);
         config.UseProjectSubDirectory = GetBool(values, nameof(config.UseProjectSubDirectory), config.UseProjectSubDirectory);
+        config.AutoLoadSheetDefinition = GetBool(values, nameof(config.AutoLoadSheetDefinition), config.AutoLoadSheetDefinition);
         config.DefaultProjectSaveDirectory = GetString(values, nameof(config.DefaultProjectSaveDirectory), config.DefaultProjectSaveDirectory);
         config.DefaultClearTileId = (byte)GetInt(values, nameof(config.DefaultClearTileId), config.DefaultClearTileId);
         config.UseStageDirectoryForExport = GetBool(values, nameof(config.UseStageDirectoryForExport), config.UseStageDirectoryForExport);
@@ -108,6 +109,7 @@ public class IniConfigRepository : IConfigRepository
             $"{nameof(config.ShowNodePreview)}={config.ShowNodePreview}",
             $"{nameof(config.UseStageSubFolder)}={config.UseStageSubFolder}",
             $"{nameof(config.UseProjectSubDirectory)}={config.UseProjectSubDirectory}",
+            $"{nameof(config.AutoLoadSheetDefinition)}={config.AutoLoadSheetDefinition}",
             $"{nameof(config.DefaultProjectSaveDirectory)}={config.DefaultProjectSaveDirectory}",
             $"{nameof(config.DefaultClearTileId)}={config.DefaultClearTileId}",
             $"{nameof(config.UseStageDirectoryForExport)}={config.UseStageDirectoryForExport}",

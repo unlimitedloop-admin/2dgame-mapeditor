@@ -27,6 +27,9 @@ public sealed class EditorPropertiesDialog : Form
     // ---- File タブ ----
     private readonly CheckBox _useStageDirectoryForExportCheckBox;
 
+    // ---- Object タブ ----
+    private readonly CheckBox _autoLoadSheetDefinitionCheckBox;
+
     public EditorPropertiesDialog(EditorConfig currentConfig)
     {
         Result = currentConfig.Clone();
@@ -47,9 +50,11 @@ public sealed class EditorPropertiesDialog : Form
         var generalTab = new TabPage("General");
         var projectTab = new TabPage("Project");
         var fileTab    = new TabPage("File");
+        var objectTab  = new TabPage("Object");
         tabControl.TabPages.Add(generalTab);
         tabControl.TabPages.Add(projectTab);
         tabControl.TabPages.Add(fileTab);
+        tabControl.TabPages.Add(objectTab);
 
         // ============================================
         // General タブ
@@ -205,6 +210,28 @@ public sealed class EditorPropertiesDialog : Form
         fileTab.Controls.Add(_useStageDirectoryForExportCheckBox);
 
         // ============================================
+        // Object タブ
+        // ============================================
+        _autoLoadSheetDefinitionCheckBox = new CheckBox
+        {
+            Text     = "画像シートの追加時に、同名の .json（分割定義）を自動で読み込む",
+            Location = new Point(16, 16),
+            AutoSize = true,
+            Checked  = Result.AutoLoadSheetDefinition,
+        };
+
+        var autoLoadNote = new Label
+        {
+            Text      = "OFF の場合は、毎回分割定義の選択ダイアログを開きます\n（同名の .json があれば選択済みの状態で開きます）。",
+            Location  = new Point(34, 40),
+            AutoSize  = true,
+            ForeColor = Color.DimGray,
+        };
+
+        objectTab.Controls.Add(_autoLoadSheetDefinitionCheckBox);
+        objectTab.Controls.Add(autoLoadNote);
+
+        // ============================================
         // OK / Cancel
         // ============================================
         var okButton = new Button
@@ -250,5 +277,6 @@ public sealed class EditorPropertiesDialog : Form
         Result.UseProjectSubDirectory = _useProjectSubDirectoryCheckBox.Checked;
         Result.DefaultProjectSaveDirectory = _defaultSaveDirectoryTextBox.Text.Trim();
         Result.UseStageDirectoryForExport = _useStageDirectoryForExportCheckBox.Checked;
+        Result.AutoLoadSheetDefinition = _autoLoadSheetDefinitionCheckBox.Checked;
     }
 }
