@@ -12,6 +12,7 @@ public partial class MainForm
 {
     private string? _currentProjectPath;
     private int _savedUndoCount = 0;
+    private bool _hasUnrecordedChanges;
 
     private void NewProject()
     {
@@ -31,7 +32,7 @@ public partial class MainForm
         _context.SetPage(0);
 
         _commandManager.Clear();
-        _savedUndoCount = 0;
+        ResetSavedState(0);
 
         BindStageExplorer();
         BindBookmarkList();
@@ -73,7 +74,7 @@ public partial class MainForm
         }
 
         _commandManager.Clear();
-        _savedUndoCount = 0;
+        ResetSavedState(0);
 
         BindStageExplorer();
         BindBookmarkList();
@@ -99,7 +100,7 @@ public partial class MainForm
         BindBookmarkList();
 
         _commandManager.Clear();
-        _savedUndoCount = 0;
+        ResetSavedState(0);
 
         UpdateEditorAvailability();
         UpdateTitle();
@@ -126,7 +127,7 @@ public partial class MainForm
 
         repository.Save(_context.Project, _currentProjectPath);
 
-        _savedUndoCount = _commandManager.UndoCount;
+        ResetSavedState(_commandManager.UndoCount);
 
         _stageExplorer.RebuildTree();
 
@@ -167,7 +168,7 @@ public partial class MainForm
 
         repository.Save(_context.Project, _currentProjectPath);
 
-        _savedUndoCount = _commandManager.UndoCount;
+        ResetSavedState(_commandManager.UndoCount);
 
         _stageExplorer.RebuildTree();
         UpdateTitle();
@@ -196,10 +197,30 @@ public partial class MainForm
     /// 現在のプロジェクトに未保存の変更があるかどうかを判定する。
     /// 保存時点のUndoStackの深さと現在の深さを比較する。
     /// Undoで保存時点まで巻き戻した場合は自動的に「変更なし」に戻る。
+    /// Undo 履歴に残らない変更（Tag Manager でのタグ編集など）は _hasUnrecordedChanges で別に扱う。
     /// </summary>
     private bool IsProjectDirty()
     {
-        return _context.Project != null && _commandManager.UndoCount != _savedUndoCount;
+        return _context.Project != null &&
+               (_commandManager.UndoCount != _savedUndoCount || _hasUnrecordedChanges);
+    }
+
+    /// <summary>
+    /// Undo 履歴に残らない変更があったことを記録する（タイトルの未保存マーク・終了時の確認の対象にする）。
+    /// </summary>
+    private void MarkUnrecordedChange()
+    {
+        _hasUnrecordedChanges = true;
+        UpdateTitle();
+    }
+
+    /// <summary>
+    /// 保存済み（または新規作成・読み込み直後）の状態として、未保存の判定基準を記録し直す。
+    /// </summary>
+    private void ResetSavedState(int undoCount)
+    {
+        _savedUndoCount = undoCount;
+        _hasUnrecordedChanges = false;
     }
 
     /// <summary>
@@ -407,6 +428,9 @@ public partial class MainForm
         // ステージを丸ごと差し替えるため、既存のUndo履歴は整合性を保てなくなる。
         // 他ステージ分も含め、New/Open Projectと同じ扱いで全クリアする（合意済み）。
         _commandManager.Clear();
+
+        // Undo 履歴の基準だけを戻す。タグ編集など .sseproj 側の未保存の変更は、ステージを読み直しても
+        // 保存されたわけではないので _hasUnrecordedChanges は残す（ResetSavedState は使わない）。
         _savedUndoCount = 0;
 
         _context.SetStage(stageIndex); // ContextChanged経由でビュー全体が再同期される

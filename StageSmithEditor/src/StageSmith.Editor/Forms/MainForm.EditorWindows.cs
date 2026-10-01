@@ -96,6 +96,9 @@ public partial class MainForm
             _tagManagerForm = new TagManagerForm(_context.Project);
             _tagManagerForm.TagsChanged += () =>
             {
+                // タグの編集は Undo 履歴を通らないため、未保存の変更として別に記録する
+                MarkUnrecordedChange();
+
                 _nodeEditorForm?.RefreshCurrentPageInfo();
                 _propertyWindow.RefreshProperties();
             };
