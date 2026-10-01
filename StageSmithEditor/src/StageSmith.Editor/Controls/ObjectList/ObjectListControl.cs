@@ -32,8 +32,22 @@ public sealed class ObjectListControl : UserControl
     /// <summary>現在の検索結果（検索順）。</summary>
     public IReadOnlyList<EntitySearchHit> Hits { get; private set; } = [];
 
-    /// <summary>マップ上で検索結果をハイライトするか。</summary>
-    public bool ShowHighlight => _highlightCheckBox.Checked;
+    /// <summary>
+    /// マップ上で検索結果をハイライトするか。
+    /// 絞り込み条件（キーワード・kind・palette）が無いときは全件が一致するだけなので、ハイライトしない。
+    /// （「現在のページのみ」は範囲の指定なので条件に含めない）
+    /// </summary>
+    public bool ShowHighlight => _highlightCheckBox.Checked && HasActiveFilter;
+
+    private bool HasActiveFilter =>
+        !string.IsNullOrWhiteSpace(_keywordTextBox.Text) ||
+        ChoiceItem.GetValue(_kindCombo) != null ||
+        ChoiceItem.GetValue(_paletteCombo) != null;
+
+    /// <summary>
+    /// 一覧（ListView）自体にフォーカスがあるか。Delete / Ctrl+A は、絞り込み欄ではなく一覧を操作しているときだけ扱う。
+    /// </summary>
+    public bool IsListFocused => _listView.Focused;
 
     /// <summary>一覧の項目がダブルクリック・Enter・前へ／次へで選ばれたとき。</summary>
     public event Action<EntitySearchHit>? HitActivated;

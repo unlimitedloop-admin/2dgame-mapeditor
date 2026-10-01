@@ -215,6 +215,27 @@ public partial class MainForm
     }
 
     /// <summary>
+    /// Undo 履歴を通らずにステージが変更された（MarkDirty された）ことを検知し、未保存として扱う。
+    /// コマンドの実行・Undo・Redo 中の MarkDirty は Undo 回数で追跡済みなので対象外にする
+    /// （これにより「Undo で保存時点まで戻すと未保存が消える」動作を保つ）。
+    /// </summary>
+    private void BindDirtyTracking()
+    {
+        Stage.DirtyMarked += OnStageDirtyMarked;
+        FormClosed += (_, _) => Stage.DirtyMarked -= OnStageDirtyMarked;   // static イベントなので解除する
+    }
+
+    private void OnStageDirtyMarked(Stage stage)
+    {
+        if (_commandManager.IsApplying) return;
+
+        // 新規プロジェクト作成中など、まだ開いていないプロジェクトのステージは対象外
+        if (_context.Project?.Stages.Contains(stage) != true) return;
+
+        MarkUnrecordedChange();
+    }
+
+    /// <summary>
     /// 保存済み（または新規作成・読み込み直後）の状態として、未保存の判定基準を記録し直す。
     /// </summary>
     private void ResetSavedState(int undoCount)

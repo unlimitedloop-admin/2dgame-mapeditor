@@ -115,20 +115,18 @@ public partial class MainForm
         }
 
         // ── Object List にフォーカスがある間は一覧の操作を優先する ─────────────
-        // Delete＝一覧で選んだものを削除、Enter・矢印・Home/End・PageUp/Down（Shift併用の範囲選択含む）は
-        // 一覧自身に渡す（ここで横取りすると、ジャンプ・行移動の代わりにマップ側の操作が動いてしまう）。
+        // Delete＝一覧で選んだものを削除、Ctrl+A＝一覧の全選択（どちらも一覧自体にフォーカスがあるときだけ。
+        // 絞り込み欄のコンボ等にフォーカスがあるときはその欄へ渡し、マップ側の削除・全選択にも流さない）。
+        // Enter・矢印・Home/End・PageUp/Down（Shift併用の範囲選択含む）は一覧・コンボ自身に渡す
+        // （ここで横取りすると、ジャンプ・行移動の代わりにマップ側の操作が動いてしまう）。
         if (_objectListContent.ContainsFocus)
         {
-            if (keyData == Keys.Delete)
+            if (keyData == Keys.Delete || keyData == (Keys.Control | Keys.A))
             {
-                _objectList.DeleteSelected();
-                return true;
-            }
+                if (!_objectList.IsListFocused) return false;
 
-            // 一覧を見ながらの Ctrl+A はマップのタイル全選択ではなく、一覧の全選択にする
-            if (keyData == (Keys.Control | Keys.A))
-            {
-                _objectList.SelectAll();
+                if (keyData == Keys.Delete) _objectList.DeleteSelected();
+                else _objectList.SelectAll();
                 return true;
             }
 

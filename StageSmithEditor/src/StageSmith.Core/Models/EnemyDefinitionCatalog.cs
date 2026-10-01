@@ -63,7 +63,11 @@ public sealed class EnemyDefinitionCatalog
     /// <summary>palette 未指定時にゲーム側が使うプリセット名。</summary>
     public const string DefaultPaletteId = "default";
 
-    public static EnemyDefinitionCatalog Empty { get; } = new();
+    /// <summary>
+    /// 敵定義が無い状態のカタログ。呼び出し側での書き換え（TryAdd・Errors・NesPalette）が
+    /// 他の利用箇所へ波及しないよう、共有インスタンスではなく毎回新しく作って返す。
+    /// </summary>
+    public static EnemyDefinitionCatalog Empty => new();
 
     private readonly Dictionary<string, EnemyDefinitionInfo> _definitions = new(StringComparer.Ordinal);
 

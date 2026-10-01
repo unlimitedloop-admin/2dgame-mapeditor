@@ -21,9 +21,31 @@ public sealed class EntityPaletteResolver
     public PaletteRecolor? Resolve(EntityProperties properties)
         => Resolve(properties.Kind, properties.Palette);
 
+    // 描画のたびに呼ばれるため、(kind, palette) ごとの結果をキャッシュする。
+    // 敵定義を読み直すとカタログのインスタンスが変わるので、そのときにキャッシュを捨てる。
+    private readonly Dictionary<(string? Kind, string? Palette), PaletteRecolor?> _cache = [];
+    private EnemyDefinitionCatalog? _cachedCatalog;
+
     public PaletteRecolor? Resolve(string? kind, string? palette)
     {
         var catalog = Catalog;
+
+        if (!ReferenceEquals(catalog, _cachedCatalog))
+        {
+            _cache.Clear();
+            _cachedCatalog = catalog;
+        }
+
+        if (_cache.TryGetValue((kind, palette), out var cached))
+            return cached;
+
+        var resolved = Build(catalog, kind, palette);
+        _cache[(kind, palette)] = resolved;
+        return resolved;
+    }
+
+    private static PaletteRecolor? Build(EnemyDefinitionCatalog catalog, string? kind, string? palette)
+    {
         var nes = catalog.NesPalette;
         if (nes == null) return null;
 

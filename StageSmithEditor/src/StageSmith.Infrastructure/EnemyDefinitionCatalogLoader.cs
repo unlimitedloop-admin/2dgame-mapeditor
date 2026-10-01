@@ -93,7 +93,20 @@ public static class EnemyDefinitionCatalogLoader
             return;
         }
 
-        foreach (var file in Directory.EnumerateFiles(directory, "*.json").OrderBy(f => f, StringComparer.OrdinalIgnoreCase))
+        // 列挙自体も失敗しうる（アクセス権が無い、ネットワークドライブが切断中など）。
+        // プロジェクトを開けなくならないよう、個々のファイルと同じく問題として記録して続行する。
+        List<string> files;
+        try
+        {
+            files = [.. Directory.EnumerateFiles(directory, "*.json").OrderBy(f => f, StringComparer.OrdinalIgnoreCase)];
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+        {
+            catalog.Errors.Add($"敵定義フォルダを読み込めません: {directory}\n{ex.Message}");
+            return;
+        }
+
+        foreach (var file in files)
         {
             var name = Path.GetFileName(file);
 

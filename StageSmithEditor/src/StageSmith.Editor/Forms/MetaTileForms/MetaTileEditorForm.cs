@@ -392,6 +392,8 @@ public sealed class MetaTileEditorForm : Form
 
             if (_stage.UpdateMetaTile(_currentMetaTile))
             {
+                // メタタイルはステージファイルに保存されるため、保存対象（未保存）として印を付ける
+                _stage.MarkDirty();
                 RefreshSavedMetaTileList(selectId: _editingMetaTileId);
                 UpdateStatus("Saved.");
                 return;
@@ -399,6 +401,7 @@ public sealed class MetaTileEditorForm : Form
         }
 
         var saved = _stage.AddMetaTile(_currentMetaTile);
+        _stage.MarkDirty();
         _editingMetaTileId = saved.Id;
         SetWorkingMetaTile(saved, saved.Id);
         RefreshSavedMetaTileList(selectId: saved.Id);
@@ -413,6 +416,7 @@ public sealed class MetaTileEditorForm : Form
         _currentMetaTile.Name = GetMetaTileName();
 
         var saved = _stage.AddMetaTile(_currentMetaTile);
+        _stage.MarkDirty();
         _editingMetaTileId = saved.Id;
 
         SetWorkingMetaTile(saved, saved.Id);
@@ -460,6 +464,7 @@ public sealed class MetaTileEditorForm : Form
             return;
         }
 
+        _stage.MarkDirty();
         RefreshSavedMetaTileList();
         SetWorkingMetaTile(new MetaTile(4, 4), editingMetaTileId: null);
         MetaTilesChanged?.Invoke();

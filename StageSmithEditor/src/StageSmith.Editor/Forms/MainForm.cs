@@ -205,6 +205,7 @@ public partial class MainForm : Form
         };
 
         InitializeSearch();
+        BindDirtyTracking();
 
         FormClosing += (_, e) =>
         {

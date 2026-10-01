@@ -44,7 +44,19 @@ public sealed class Stage
     [JsonIgnore]
     public bool IsDirty { get; set; }
 
-    public void MarkDirty() => IsDirty = true;
+    /// <summary>
+    /// いずれかのステージで MarkDirty() が呼ばれたときに発生する（引数は対象ステージ）。
+    /// エディタはこれを使い、Undo 履歴を通らずに行われた変更（ステージ名の変更・ページの複製など）も
+    /// プロジェクトの未保存として扱う。ステージは複数の経路でプロジェクトに追加されるため、
+    /// インスタンスごとの購読ではなく static イベントにしている。
+    /// </summary>
+    public static event Action<Stage>? DirtyMarked;
+
+    public void MarkDirty()
+    {
+        IsDirty = true;
+        DirtyMarked?.Invoke(this);
+    }
 
     public void ClearDirty() => IsDirty = false;
 

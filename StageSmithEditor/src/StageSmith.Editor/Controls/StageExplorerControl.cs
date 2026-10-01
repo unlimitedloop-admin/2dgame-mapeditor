@@ -505,6 +505,9 @@ public class StageExplorerControl : UserControl
         var insertIndex = _project.Stages.IndexOf(tag.Stage) + 1;
         _project.Stages.Insert(insertIndex, clone);
 
+        // Clone() は IsDirty=true で作られるが、プロジェクトの未保存として通知するため明示的に呼ぶ
+        clone.MarkDirty();
+
         RebuildTree();
         StageListChanged?.Invoke();
     }

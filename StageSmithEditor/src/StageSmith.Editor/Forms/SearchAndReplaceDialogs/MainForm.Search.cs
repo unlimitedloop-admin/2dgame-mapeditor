@@ -57,7 +57,7 @@ public partial class MainForm
             : _searchState.TargetTileId);
 
         _findTileDialog = new FindTileDialog(_searchState, initialTileId, _tileset, _config.NumberDisplayFormat);
-        _findTileDialog.SearchRequested   += ExecuteTileSearch;                  // 常に新規検索に単純化
+        _findTileDialog.SearchRequested   += tileId => ExecuteTileSearch(tileId);                  // 常に新規検索に単純化
         _findTileDialog.NextRequested     += () => _searchState.MoveNext();
         _findTileDialog.PreviousRequested += () => _searchState.MovePrevious();
         _findTileDialog.FormClosed        += (_, _) => _findTileDialog = null;
@@ -105,7 +105,11 @@ public partial class MainForm
     // ------------------------
     // 検索実行本体
     // ------------------------
-    private void ExecuteTileSearch(int tileId)
+    /// <param name="reportNotFound">
+    /// 見つからなかったことを知らせるか。置換後の再検索（最後の1件を置換して0件になった場合など）では、
+    /// 置換が失敗したように見えるため知らせない。
+    /// </param>
+    private void ExecuteTileSearch(int tileId, bool reportNotFound = true)
     {
         var stage = _context.CurrentStage;
         if (stage == null) return;
@@ -117,7 +121,7 @@ public partial class MainForm
         var hits = TileSearchService.Search(stage, tileId, scopePageIndex);
         _searchState.SetHits(tileId, hits);
 
-        if (_searchState.HasHits) return;
+        if (_searchState.HasHits || !reportNotFound) return;
 
         // 見つからなかった場合：ダイアログを開いていればダイアログ内に表示し（メッセージボックスは重ねない）、
         // 開いていなければ（F3 での検索など）メッセージボックスで知らせる
@@ -191,7 +195,7 @@ public partial class MainForm
             : _searchState.TargetTileId;
 
         _replaceTileDialog = new ReplaceTileDialog(_searchState, initialTileId, _tileset, _config.NumberDisplayFormat);
-        _replaceTileDialog.SearchRequested     += ExecuteTileSearch;
+        _replaceTileDialog.SearchRequested     += tileId => ExecuteTileSearch(tileId);
         _replaceTileDialog.NextRequested       += () => _searchState.MoveNext();
         _replaceTileDialog.PreviousRequested   += () => _searchState.MovePrevious();
         _replaceTileDialog.ReplaceRequested    += ReplaceCurrentHit;
@@ -217,7 +221,8 @@ public partial class MainForm
         _commandManager.Execute(command);
 
         // 置換後は対象タイルが消えているはずなので、同条件で再検索して次のヒットへ進む
-        ExecuteTileSearch(searchTileId);
+        // （最後の1件を置換して0件になっても「見つかりません」は出さない）
+        ExecuteTileSearch(searchTileId, reportNotFound: false);
     }
 
     private void ReplaceAllHits(int searchTileId, int replaceTileId)

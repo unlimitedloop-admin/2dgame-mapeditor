@@ -141,10 +141,12 @@ public sealed class EditorProject
         var stage = new Stage
         {
             Name = name,
-            IsDirty = true
         };
 
         Stages.Add(stage);
+
+        // 未保存として扱う（DirtyMarked を通知するため、初期化子ではなく MarkDirty を使う）
+        stage.MarkDirty();
         return stage;
     }
 
