@@ -133,6 +133,16 @@ namespace StageSmithEditor.Properties {
         /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
+        internal static System.Drawing.Bitmap icons8_ビジョン_48 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-ビジョン-48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
         internal static System.Drawing.Bitmap icons8_ファイルを開く_30 {
             get {
                 object obj = ResourceManager.GetObject("icons8-ファイルを開く-30", resourceCulture);
@@ -226,6 +236,16 @@ namespace StageSmithEditor.Properties {
         internal static System.Drawing.Bitmap icons8_数字_30 {
             get {
                 object obj = ResourceManager.GetObject("icons8-数字-30", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
+        internal static System.Drawing.Bitmap icons8_斜めの線_48 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-斜めの線-48", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

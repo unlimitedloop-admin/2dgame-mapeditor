@@ -21,10 +21,11 @@ public static class DefExporter
     /// <summary>
     /// ステージをdefファイルに出力する。
     /// 出力前に Validate() でエラーが無いことを確認しておくこと（エラーがある場合は例外を投げる）。
+    /// 警告（CollectWarnings）は出力を妨げない。
     /// </summary>
-    public static void Export(Stage stage, string filePath)
+    public static void Export(Stage stage, string filePath, EnemyDefinitionCatalog? enemyDefinitions = null)
     {
-        var errors = Validate(stage);
+        var errors = Validate(stage, enemyDefinitions);
         if (errors.Count > 0)
         {
             throw new InvalidOperationException(
@@ -41,10 +42,11 @@ public static class DefExporter
     //========================
 
     /// <summary>
-    /// ゲーム側が読み込みエラーにする内容を出力前に検出する。
+    /// ゲーム側が読み込みエラーにする内容、またはゲーム内で敵が出現しなくなる内容を出力前に検出する。
     /// 戻り値が空なら出力可能。
+    /// enemyDefinitions に敵定義が読み込まれている場合のみ、kind が実在するかも検査する。
     /// </summary>
-    public static IReadOnlyList<string> Validate(Stage stage)
+    public static IReadOnlyList<string> Validate(Stage stage, EnemyDefinitionCatalog? enemyDefinitions = null)
     {
         var errors = new List<string>();
 
@@ -52,8 +54,54 @@ public static class DefExporter
         ValidateNodes(stage, errors);
         ValidateEntities(stage, errors);
         ValidateRoomIdConflicts(stage, errors);
+        ValidateKinds(stage, enemyDefinitions, errors);
 
         return errors;
+    }
+
+    /// <summary>
+    /// 出力は可能だが、ゲーム内の結果が意図と異なりそうな内容を検出する。
+    /// 現在は「palette がその kind のプリセットに無い」（ゲーム側は先頭のプリセットで代用する）のみ。
+    /// </summary>
+    public static IReadOnlyList<string> CollectWarnings(Stage stage, EnemyDefinitionCatalog? enemyDefinitions)
+    {
+        var warnings = new List<string>();
+        if (enemyDefinitions?.HasDefinitions != true) return warnings;
+
+        foreach (var (page, entity) in stage.EnumerateEntities())
+        {
+            if (entity.Type != EntityConstants.TypeEnemy) continue;
+
+            var p = entity.Properties;
+            if (enemyDefinitions.IsKnownPalette(p.Kind, p.Palette) != false) continue;
+
+            var fallback = enemyDefinitions.Find(p.Kind)!.PalettePresets[0].Id;
+            warnings.Add(
+                $"エンティティ「{entity.EntityId}」（ページ「{page.Name}」）: palette「{p.Palette ?? EnemyDefinitionCatalog.DefaultPaletteId}」は " +
+                $"kind「{p.Kind}」のプリセットにありません（ゲーム内では「{fallback}」で表示されます）。");
+        }
+
+        return warnings;
+    }
+
+    /// <summary>
+    /// kind に対応する敵定義が無い敵は、ゲーム側で ignored になり出現しない（EnemySpawnDirector）。
+    /// </summary>
+    private static void ValidateKinds(Stage stage, EnemyDefinitionCatalog? enemyDefinitions, List<string> errors)
+    {
+        if (enemyDefinitions?.HasDefinitions != true) return;
+
+        foreach (var (page, entity) in stage.EnumerateEntities())
+        {
+            if (entity.Type != EntityConstants.TypeEnemy) continue;
+
+            var kind = entity.Properties.Kind;
+            if (string.IsNullOrWhiteSpace(kind) || enemyDefinitions.Find(kind) != null) continue;
+
+            errors.Add(
+                $"エンティティ「{entity.EntityId}」（ページ「{page.Name}」）: kind「{kind}」の敵定義が見つかりません" +
+                "（ゲーム内で出現しません）。");
+        }
     }
 
     private static void ValidatePlayerStart(Stage stage, List<string> errors)

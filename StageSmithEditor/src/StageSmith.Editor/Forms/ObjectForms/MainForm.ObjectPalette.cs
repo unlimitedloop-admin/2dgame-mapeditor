@@ -53,6 +53,7 @@ public partial class MainForm
             SpriteSheetDefinitionLoader.TryRefresh(sheet);
 
         _objectPalette.SetProject(project, _spriteSheetImages);
+        ReloadEnemyDefinitions();
         _objectPalette.SetReadOnly(_commandManager.IsReadOnly);
     }
 
@@ -101,8 +102,10 @@ public partial class MainForm
             return;
         }
 
-        // 分割定義は「同名の .json」を自動で探し、無ければ選ばせる
-        var definitionPath = SpriteSheetDefinitionLoader.FindDefinitionFor(imagePath);
+        // 分割定義は「同名の .json」を探す。自動読み込みが ON で見つかればそのまま使い、
+        // OFF または見つからなければ選ばせる（見つかっていれば選択済みの状態で開く）。
+        var sameNameDefinition = SpriteSheetDefinitionLoader.FindDefinitionFor(imagePath);
+        var definitionPath = _config.AutoLoadSheetDefinition ? sameNameDefinition : null;
 
         if (definitionPath == null)
         {
@@ -111,6 +114,7 @@ public partial class MainForm
                 Title = "シート分割定義(JSON)を選択",
                 Filter = "Sheet Definition (*.json)|*.json|All files (*.*)|*.*",
                 InitialDirectory = Path.GetDirectoryName(imagePath),
+                FileName = sameNameDefinition != null ? Path.GetFileName(sameNameDefinition) : string.Empty,
             };
 
             if (definitionDialog.ShowDialog(this) != DialogResult.OK) return;
@@ -246,7 +250,7 @@ public partial class MainForm
         var project = _context.Project;
         if (project == null) return;
 
-        using var dialog = new EntityTemplateDialog(sheet, tileIndex, _spriteSheetImages, null, CollectKnownEntityKinds());
+        using var dialog = new EntityTemplateDialog(sheet, tileIndex, _spriteSheetImages, null, CollectKnownEntityKinds(), PaletteResolver);
         if (dialog.ShowDialog(this) != DialogResult.OK) return;
 
         var template = new EntityTemplate
@@ -289,7 +293,7 @@ public partial class MainForm
             return;
         }
 
-        using var dialog = new EntityTemplateDialog(sheet, template.TileIndex, _spriteSheetImages, template, CollectKnownEntityKinds());
+        using var dialog = new EntityTemplateDialog(sheet, template.TileIndex, _spriteSheetImages, template, CollectKnownEntityKinds(), PaletteResolver);
         if (dialog.ShowDialog(this) != DialogResult.OK) return;
 
         var oldValues = (template.Name, template.Type, Properties: template.Properties.Clone());

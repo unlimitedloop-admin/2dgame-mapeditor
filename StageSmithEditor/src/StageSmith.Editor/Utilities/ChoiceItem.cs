@@ -1,5 +1,6 @@
 using System.Globalization;
 using StageSmith.Core.Constants;
+using StageSmith.Core.Models;
 
 namespace StageSmith.Editor.Utilities;
 
@@ -43,6 +44,60 @@ public sealed record ChoiceItem(string Label, string? Value)
     }
 
     public static string? GetValue(ComboBox combo) => (combo.SelectedItem as ChoiceItem)?.Value;
+
+    //========================
+    // palette（敵定義のプリセットから選ぶ／敵定義が無ければ自由入力）
+    //========================
+
+    private static readonly string DefaultPaletteLabel = $"(既定: {EntityConstants.DefaultPalette})";
+
+    /// <summary>
+    /// palette 用コンボの選択肢を、kind の敵定義にあるプリセットで作り直す。
+    /// コンボは DropDown（自由入力可）で使う前提。既定（null）とプリセット名を並べる。
+    /// 入力中の値は維持する。
+    /// </summary>
+    public static void FillPalette(ComboBox combo, EnemyDefinitionCatalog catalog, string? kind)
+    {
+        var current = GetEditableValue(combo);
+
+        combo.BeginUpdate();
+        combo.Items.Clear();
+        combo.Items.Add(new ChoiceItem(DefaultPaletteLabel, null));
+
+        foreach (var preset in catalog.Find(kind)?.PalettePresets ?? [])
+        {
+            // "default" は既定（未指定）と同じなので、重複して並べない
+            if (preset.Id == EntityConstants.DefaultPalette) continue;
+            combo.Items.Add(new ChoiceItem(preset.Id, preset.Id));
+        }
+
+        combo.EndUpdate();
+        SetEditableValue(combo, current);
+    }
+
+    /// <summary>自由入力可のコンボから値を取り出す。既定の項目・空欄は null。</summary>
+    public static string? GetEditableValue(ComboBox combo)
+    {
+        var text = combo.Text.Trim();
+        if (text.Length == 0 || text == DefaultPaletteLabel) return null;
+
+        return combo.SelectedItem is ChoiceItem item && item.Label == text ? item.Value : text;
+    }
+
+    public static void SetEditableValue(ComboBox combo, string? value)
+    {
+        for (var i = 0; i < combo.Items.Count; i++)
+        {
+            if (combo.Items[i] is ChoiceItem item && item.Value == value)
+            {
+                combo.SelectedIndex = i;
+                return;
+            }
+        }
+
+        combo.SelectedIndex = -1;
+        combo.Text = value ?? string.Empty;
+    }
 
     public static string? FromBool(bool? value)
         => value?.ToString(CultureInfo.InvariantCulture).ToLowerInvariant();

@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using StageSmith.Core.Models;
 using StageSmith.Editor.Utilities;
 
@@ -17,6 +18,11 @@ public sealed class EntityTemplateListControl : DoubleBufferedPanel
 
     private EditorProject? _project;
     private SpriteSheetImageCache? _imageCache;
+
+    /// <summary>サムネイルをテンプレートの palette で色替えするためのリゾルバ（未設定なら元画像）。</summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public EntityPaletteResolver? PaletteResolver { get; set; }
 
     private readonly List<TemplateLayoutItem> _items = [];
     private readonly ToolTip _toolTip = new();
@@ -154,7 +160,8 @@ public sealed class EntityTemplateListControl : DoubleBufferedPanel
         var thumbRect = new Rectangle(rect.X + (rect.Width - ThumbSize) / 2, rect.Y + 4, ThumbSize, ThumbSize);
         var sheet = _project?.FindSpriteSheet(template.SheetId);
 
-        if (sheet == null || !_imageCache!.DrawTile(g, sheet, template.TileIndex, FitTile(sheet, thumbRect)))
+        if (sheet == null || !_imageCache!.DrawTile(g, sheet, template.TileIndex, FitTile(sheet, thumbRect),
+                recolor: PaletteResolver?.Resolve(template.Properties)))
         {
             using var missingPen = new Pen(Color.FromArgb(160, Color.OrangeRed)) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dash };
             g.DrawRectangle(missingPen, thumbRect.X, thumbRect.Y, thumbRect.Width - 1, thumbRect.Height - 1);
@@ -224,7 +231,7 @@ public sealed class EntityTemplateListControl : DoubleBufferedPanel
 
         var sheetName = _project?.FindSpriteSheet(template.SheetId)?.Name ?? "(シートなし)";
         _toolTip.SetToolTip(this,
-            $"Name: {template.Name}\nType: {template.Type}\nKind: {template.Properties.Kind}\nSheet: {sheetName} #{template.TileIndex}");
+            $"Name: {template.Name}\nType: {template.Type}\nKind: {template.Properties.Kind}\nPalette: {template.Properties.Palette ?? "(既定)"}\nSheet: {sheetName} #{template.TileIndex}");
     }
 
     protected override void OnMouseLeave(EventArgs e)

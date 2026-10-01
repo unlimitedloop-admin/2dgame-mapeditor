@@ -67,6 +67,15 @@ public sealed class EditorProject
     public List<EntityTemplate> EntityTemplates { get; set; } = [];
 
     /// <summary>
+    /// ゲーム側の敵定義フォルダ（例: assets/data/enemies）の絶対パス。
+    /// kind の候補・palette プリセット・色替え表示に使う。空なら敵定義を読まない。
+    /// </summary>
+    public string EnemyDefinitionDirectory { get; set; } = string.Empty;
+
+    /// <summary>ゲーム側の NES パレット（例: assets/system/nes_palette.txt）の絶対パス。色替え表示に使う。</summary>
+    public string NesPalettePath { get; set; } = string.Empty;
+
+    /// <summary>
     /// このプロジェクトがステージファイルをサブフォルダ分けして保存するかどうか。
     /// プロジェクト新規作成時（NewProject）に、その時点の EditorConfig.UseStageSubFolder を
     /// 一度だけ焼き込む。以降はプロジェクトが存在する限り固定値とし、
@@ -102,6 +111,8 @@ public sealed class EditorProject
         Tags ??= [];
         SpriteSheets ??= [];
         EntityTemplates ??= [];
+        EnemyDefinitionDirectory ??= string.Empty;
+        NesPalettePath ??= string.Empty;
         if (LastEditedPageIndex < 0) LastEditedPageIndex = 0;
 
         foreach (var stage in Stages)
@@ -130,10 +141,12 @@ public sealed class EditorProject
         var stage = new Stage
         {
             Name = name,
-            IsDirty = true
         };
 
         Stages.Add(stage);
+
+        // 未保存として扱う（DirtyMarked を通知するため、初期化子ではなく MarkDirty を使う）
+        stage.MarkDirty();
         return stage;
     }
 

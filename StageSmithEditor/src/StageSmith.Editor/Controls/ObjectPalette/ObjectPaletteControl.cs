@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using StageSmith.Core.Models;
 using StageSmith.Editor.Utilities;
 
@@ -11,10 +12,14 @@ namespace StageSmith.Editor.Controls;
 /// </summary>
 public sealed class ObjectPaletteControl : UserControl
 {
+    /// <summary>シート表示（上）とテンプレート一覧（下）の初期の分割比率。</summary>
+    private const double InitialSplitRatio = 0.55;
+
     private readonly ToolTip _toolTip = new();
     private readonly ComboBox _sheetCombo;
     private readonly Button _addSheetButton;
     private readonly Button _removeSheetButton;
+    private readonly Button _enemySettingsButton;
     private readonly SpriteSheetGridControl _sheetGrid;
     private readonly Button _registerTemplateButton;
     private readonly EntityTemplateListControl _templateList;
@@ -27,6 +32,7 @@ public sealed class ObjectPaletteControl : UserControl
     private bool _isReadOnly;
 
     public event Action? SheetAddRequested;
+    public event Action? EnemyDefinitionSettingsRequested;
     public event Action<SpriteSheet>? SheetRemoveRequested;
     public event Action<SpriteSheet, int>? TemplateCreateRequested;
     public event Action<EntityTemplate>? TemplateEditRequested;
@@ -53,6 +59,7 @@ public sealed class ObjectPaletteControl : UserControl
 
         _addSheetButton = CreateSmallButton("＋", "画像シートを追加...");
         _removeSheetButton = CreateSmallButton("－", "選択中の画像シートを削除");
+        _enemySettingsButton = CreateSmallButton("⚙", "敵定義・パレットの設定（再読込）...");
 
         // NOTE: Dock の追加順は「後から追加したものほど外側」。Fill のコンボを先に、右端のボタンを後に追加する。
         var sheetRow = new Panel
@@ -64,6 +71,7 @@ public sealed class ObjectPaletteControl : UserControl
         sheetRow.Controls.Add(_sheetCombo);
         sheetRow.Controls.Add(_addSheetButton);
         sheetRow.Controls.Add(_removeSheetButton);
+        sheetRow.Controls.Add(_enemySettingsButton);
 
         //========================
         // シートグリッド＋登録ボタン
@@ -145,11 +153,15 @@ public sealed class ObjectPaletteControl : UserControl
         Controls.Add(sheetRow);
         Controls.Add(_playerStartToggle);
 
-        // SplitterDistance はハンドル生成後（サイズ確定後）でないと設定できない
-        HandleCreated += (_, _) =>
+        // シート表示とテンプレート一覧の分割位置は、ユーザーが分割線を動かすまで全体の 55% に保つ。
+        // ドッキングの復元中はペインが一時的に小さく、その瞬間に一度だけ設定すると
+        // 例外になる（設定範囲が空）か、極端な比率のまま固定されてしまうため、サイズが変わるたびに
+        // 設定可能な範囲に収まるときだけ合わせ直す（SplitContainerExtensions 参照）。
+        var userMovedSplitter = false;
+        split.SplitterMoving += (_, _) => userMovedSplitter = true;   // マウスでのドラッグ時のみ発生する
+        split.SizeChanged += (_, _) =>
         {
-            if (split.Height > 0)
-                split.SplitterDistance = Math.Max(split.Panel1MinSize, (int)(split.Height * 0.55));
+            if (!userMovedSplitter) split.TrySetSplitterRatio(InitialSplitRatio);
         };
 
         //========================
@@ -164,6 +176,8 @@ public sealed class ObjectPaletteControl : UserControl
         _addSheetButton.Click += (_, _) => SheetAddRequested?.Invoke();
 
         _playerStartToggle.CheckedChanged += (_, _) => PlayerStartModeChanged?.Invoke(_playerStartToggle.Checked);
+
+        _enemySettingsButton.Click += (_, _) => EnemyDefinitionSettingsRequested?.Invoke();
 
         _removeSheetButton.Click += (_, _) =>
         {
@@ -216,6 +230,15 @@ public sealed class ObjectPaletteControl : UserControl
     //========================
     // 公開API
     //========================
+
+    /// <summary>テンプレートのサムネイルを palette で色替えするためのリゾルバ。</summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public EntityPaletteResolver? PaletteResolver
+    {
+        get => _templateList.PaletteResolver;
+        set => _templateList.PaletteResolver = value;
+    }
 
     public void SetProject(EditorProject? project, SpriteSheetImageCache? imageCache)
     {
@@ -321,6 +344,7 @@ public sealed class ObjectPaletteControl : UserControl
     {
         _addSheetButton.Enabled = !_isReadOnly && _project != null;
         _removeSheetButton.Enabled = !_isReadOnly && SelectedSheet != null;
+        _enemySettingsButton.Enabled = _project != null;
         _registerTemplateButton.Enabled = !_isReadOnly && SelectedSheet != null && _sheetGrid.SelectedTileIndex >= 0;
     }
 }

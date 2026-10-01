@@ -44,6 +44,7 @@ public partial class MainForm : Form
     private readonly BookmarkListContent _bookmarkListContent;
     private readonly MarkerColorPanelContent _markerColorPanelContent;
     private readonly ObjectPaletteContent _objectPaletteContent;
+    private readonly ObjectListContent _objectListContent;
 
     //========================
     // EditorForms
@@ -65,6 +66,7 @@ public partial class MainForm : Form
     private BookmarkListControl _bookmarkList => _bookmarkListContent.BookmarkList;
     private MarkerColorPanelControl _markerColorPanel => _markerColorPanelContent.MarkerColorPanel;
     private ObjectPaletteControl _objectPalette => _objectPaletteContent.ObjectPalette;
+    private ObjectListControl _objectList => _objectListContent.ObjectList;
 
     //========================
     // Tools
@@ -117,6 +119,7 @@ public partial class MainForm : Form
         _bookmarkListContent = new BookmarkListContent();
         _markerColorPanelContent = new MarkerColorPanelContent();
         _objectPaletteContent = new ObjectPaletteContent();
+        _objectListContent = new ObjectListContent();
 
         _mapView.ZoomChanged += (_, _) =>
         {
@@ -142,6 +145,9 @@ public partial class MainForm : Form
         BindTilePalette();
         BindMetaTilePalette();
         BindObjectPalette();
+        BindEnemyDefinitions();
+        BindObjectList();
+        BindEntityBulkDelete();
         BindMarkerColorPanel();
         BindPageNavigationController();
         
@@ -193,11 +199,13 @@ public partial class MainForm : Form
                 _bookmarkList?.RefreshList();
                 _pageNavBar?.UpdateDisplay(_context);
                 _propertyWindow?.RefreshProperties();
+                RefreshObjectList();
                 _nodeEditorForm?.SyncPageSelection(_context.CurrentPageIndex);
             });
         };
 
         InitializeSearch();
+        BindDirtyTracking();
 
         FormClosing += (_, e) =>
         {

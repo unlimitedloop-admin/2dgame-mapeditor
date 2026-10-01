@@ -66,7 +66,7 @@ public partial class MainForm
         _menuViewRowNumbers.CheckedChanged      += (_, _) => ApplyRowNumberState(_menuViewRowNumbers.Checked);
         _menuViewColumnNumbers.CheckedChanged   += (_, _) => ApplyColumnNumberState(_menuViewColumnNumbers.Checked);
         _menuViewMarkerOverlay.CheckedChanged   += (_, _) => ToggleMarkerOverlay(_menuViewMarkerOverlay.Checked);
-        _menuViewShowEntities.CheckedChanged    += (_, _) => _mapView.SetShowEntities(_menuViewShowEntities.Checked);
+        _menuViewShowEntities.CheckedChanged    += (_, _) => ApplyShowEntitiesState(_menuViewShowEntities.Checked);
         _menuViewTileInfo.CheckedChanged        += (_, _) => _mapView.SetShowTileInfo(_menuViewTileInfo.Checked);
         _menuViewZoomIn.Click                   += (_, _) => ZoomIn();
         _menuViewZoomOut.Click                  += (_, _) => ZoomOut();
@@ -107,6 +107,7 @@ public partial class MainForm
         _menuWindowProperties.Click     += (_, _) => ShowDockContent(_propertyWindowContent, DockState.DockRight);
         _menuWindowBookmarkList.Click   += (_, _) => ShowDockContent(_bookmarkListContent, DockState.DockLeft);
         _menuWindowObjectPalette.Click  += (_, _) => ShowDockContent(_objectPaletteContent, DockState.DockLeft);
+        _menuWindowObjectList.Click     += (_, _) => ShowDockContent(_objectListContent, DockState.DockLeft);
         _menuWindowTagManager.Click     += (_, _) => OpenTagManager();
         _menuWindowMarkerManager.Click  += (_, _) => ShowDockContent(_markerColorPanelContent, DockState.DockRight);
         _menuWindowStageMapViewer.Click += (_, _) => OpenStageMapViewer();
