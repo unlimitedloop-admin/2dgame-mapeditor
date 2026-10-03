@@ -86,6 +86,10 @@ public partial class MainForm
         if ((ModifierKeys & Keys.Alt) != 0)
             return false;
 
+        // オブジェクト配置ツール使用中はマップへのクリックをエンティティ配置に使うため、MetaTile は置かない。
+        if (_currentMode == Core.Constants.EditorToolMode.Object)
+            return false;
+
         return _page?.TileMap != null
             && _context.CurrentBrushKind == EditorBrushKind.MetaTile
             && _context.SelectedMetaTile != null;

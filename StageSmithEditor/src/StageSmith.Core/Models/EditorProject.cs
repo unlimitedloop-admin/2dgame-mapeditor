@@ -56,6 +56,26 @@ public sealed class EditorProject
     public List<Tag> Tags { get; set; } = [];
 
     /// <summary>
+    /// 敵・アイテムなどの画像シート（プロジェクト全体で共有）。
+    /// </summary>
+    public List<SpriteSheet> SpriteSheets { get; set; } = [];
+
+    /// <summary>
+    /// 配置用の画像（シートの1コマ＋エンティティ既定値）。プロジェクト全体で共有する。
+    /// 各ステージの EntityPlacement.TemplateId から参照される。
+    /// </summary>
+    public List<EntityTemplate> EntityTemplates { get; set; } = [];
+
+    /// <summary>
+    /// ゲーム側の敵定義フォルダ（例: assets/data/enemies）の絶対パス。
+    /// kind の候補・palette プリセット・色替え表示に使う。空なら敵定義を読まない。
+    /// </summary>
+    public string EnemyDefinitionDirectory { get; set; } = string.Empty;
+
+    /// <summary>ゲーム側の NES パレット（例: assets/system/nes_palette.txt）の絶対パス。色替え表示に使う。</summary>
+    public string NesPalettePath { get; set; } = string.Empty;
+
+    /// <summary>
     /// このプロジェクトがステージファイルをサブフォルダ分けして保存するかどうか。
     /// プロジェクト新規作成時（NewProject）に、その時点の EditorConfig.UseStageSubFolder を
     /// 一度だけ焼き込む。以降はプロジェクトが存在する限り固定値とし、
@@ -89,11 +109,25 @@ public sealed class EditorProject
         StageFilePaths ??= [];
         Bookmarks ??= [];
         Tags ??= [];
+        SpriteSheets ??= [];
+        EntityTemplates ??= [];
+        EnemyDefinitionDirectory ??= string.Empty;
+        NesPalettePath ??= string.Empty;
         if (LastEditedPageIndex < 0) LastEditedPageIndex = 0;
 
         foreach (var stage in Stages)
         {
             stage.Normalize();
+        }
+
+        foreach (var sheet in SpriteSheets)
+        {
+            sheet.Normalize();
+        }
+
+        foreach (var template in EntityTemplates)
+        {
+            template.Normalize();
         }
 
         foreach (var bookmark in Bookmarks)
@@ -107,10 +141,12 @@ public sealed class EditorProject
         var stage = new Stage
         {
             Name = name,
-            IsDirty = true
         };
 
         Stages.Add(stage);
+
+        // 未保存として扱う（DirtyMarked を通知するため、初期化子ではなく MarkDirty を使う）
+        stage.MarkDirty();
         return stage;
     }
 
@@ -180,6 +216,10 @@ public sealed class EditorProject
     }
 
     public Tag? FindTag(Guid tagId) => Tags.FirstOrDefault(t => t.Id == tagId);
+
+    public SpriteSheet? FindSpriteSheet(Guid sheetId) => SpriteSheets.FirstOrDefault(s => s.Id == sheetId);
+
+    public EntityTemplate? FindEntityTemplate(Guid templateId) => EntityTemplates.FirstOrDefault(t => t.Id == templateId);
 
     /// <summary>
     /// LastEditedStageId に対応する Stages 上のインデックスを解決する。

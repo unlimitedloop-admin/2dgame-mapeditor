@@ -71,6 +71,8 @@ public partial class MainForm
         _config.ShowColumnNumbers = _menuViewColumnNumbers.Checked;
         _config.ShowTileInfo = _menuViewTileInfo.Checked;
         _config.ShowMarkerOverlay = _menuViewMarkerOverlay.Checked;
+        _config.ShowEntities = _menuViewShowEntities.Checked;
+        _config.EntitySnapSize = _objectPalette.SnapSize;
         _config.ShowToolBar = _menuViewToolBar.Checked;
         _config.ShowStatusBar = _menuViewStatusBar.Checked;
 
@@ -112,6 +114,11 @@ public partial class MainForm
 
         _menuViewMarkerOverlay.Checked = _config.ShowMarkerOverlay;
         ToggleMarkerOverlay(_config.ShowMarkerOverlay);
+
+        _menuViewShowEntities.Checked = _config.ShowEntities;
+        ApplyShowEntitiesState(_config.ShowEntities);
+
+        _objectPalette.SetSnapSize(_config.EntitySnapSize);
 
         _menuViewToolBar.Checked = _config.ShowToolBar;
         _editorToolStrip.Visible = _config.ShowToolBar;

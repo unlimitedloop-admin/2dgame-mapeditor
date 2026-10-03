@@ -297,6 +297,13 @@ public sealed class TagManagerForm : Form
                 IconPath = _currentTag.IconPath,
             };
 
+            // 値が何も変わっていなければ、未保存の変更として通知しない
+            if (_project.FindTag(target.Id) is { } existing && IsSameTag(existing, target))
+            {
+                UpdateStatus("No changes.");
+                return;
+            }
+
             if (_project.UpdateTag(target))
             {
                 RefreshTagList(selectId: _editingTagId);
@@ -312,6 +319,12 @@ public sealed class TagManagerForm : Form
         TagsChanged?.Invoke();
         UpdateStatus("Saved as new.");
     }
+
+    private static bool IsSameTag(Tag a, Tag b)
+        => a.Label == b.Label
+        && a.Color == b.Color
+        && a.Priority == b.Priority
+        && a.IconPath == b.IconPath;
 
     private void DeleteCurrentTag()
     {

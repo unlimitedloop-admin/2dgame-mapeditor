@@ -78,6 +78,9 @@ public partial class MainForm
 
         if (importedNames.Count == 0) return;
 
+        // ステージファイル自体は保存済みだが、ステージ一覧（.sseproj）は未保存なので記録する
+        MarkUnrecordedChange();
+
         _stageExplorer.RebuildTree();
 
         MessageBox.Show(

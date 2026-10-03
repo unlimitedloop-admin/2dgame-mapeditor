@@ -35,6 +35,7 @@ public class IniConfigRepository : IConfigRepository
         config.LastSelectedStageIndex = GetInt(values, nameof(config.LastSelectedStageIndex), config.LastSelectedStageIndex);
         config.LastSelectedPageIndex = GetInt(values, nameof(config.LastSelectedPageIndex), config.LastSelectedPageIndex);
         config.LastZ = GetInt(values, nameof(config.LastZ), config.LastZ);
+        config.EntitySnapSize = GetInt(values, nameof(config.EntitySnapSize), config.EntitySnapSize);
         config.LastToolMode = GetEnum(values, nameof(config.LastToolMode), config.LastToolMode);
 
         config.MainWindowX = GetInt(values, nameof(config.MainWindowX), config.MainWindowX);
@@ -50,6 +51,7 @@ public class IniConfigRepository : IConfigRepository
         config.ShowColumnNumbers = GetBool(values, nameof(config.ShowColumnNumbers), config.ShowColumnNumbers);
         config.ShowTileInfo = GetBool(values, nameof(config.ShowTileInfo), config.ShowTileInfo);
         config.ShowMarkerOverlay = GetBool(values, nameof(config.ShowMarkerOverlay), config.ShowMarkerOverlay);
+        config.ShowEntities = GetBool(values, nameof(config.ShowEntities), config.ShowEntities);
         config.ShowToolBar = GetBool(values, nameof(config.ShowToolBar), config.ShowToolBar);
         config.ShowStatusBar = GetBool(values, nameof(config.ShowStatusBar), config.ShowStatusBar);
 
@@ -58,6 +60,7 @@ public class IniConfigRepository : IConfigRepository
         config.ShowNodePreview = GetBool(values, nameof(config.ShowNodePreview), config.ShowNodePreview);
         config.UseStageSubFolder = GetBool(values, nameof(config.UseStageSubFolder), config.UseStageSubFolder);
         config.UseProjectSubDirectory = GetBool(values, nameof(config.UseProjectSubDirectory), config.UseProjectSubDirectory);
+        config.AutoLoadSheetDefinition = GetBool(values, nameof(config.AutoLoadSheetDefinition), config.AutoLoadSheetDefinition);
         config.DefaultProjectSaveDirectory = GetString(values, nameof(config.DefaultProjectSaveDirectory), config.DefaultProjectSaveDirectory);
         config.DefaultClearTileId = (byte)GetInt(values, nameof(config.DefaultClearTileId), config.DefaultClearTileId);
         config.UseStageDirectoryForExport = GetBool(values, nameof(config.UseStageDirectoryForExport), config.UseStageDirectoryForExport);
@@ -78,6 +81,7 @@ public class IniConfigRepository : IConfigRepository
             $"{nameof(config.LastSelectedStageIndex)}={config.LastSelectedStageIndex}",
             $"{nameof(config.LastSelectedPageIndex)}={config.LastSelectedPageIndex}",
             $"{nameof(config.LastZ)}={config.LastZ}",
+            $"{nameof(config.EntitySnapSize)}={config.EntitySnapSize}",
             $"{nameof(config.LastToolMode)}={config.LastToolMode}",
             "",
             "[Window]",
@@ -95,6 +99,7 @@ public class IniConfigRepository : IConfigRepository
             $"{nameof(config.ShowColumnNumbers)}={config.ShowColumnNumbers}",
             $"{nameof(config.ShowTileInfo)}={config.ShowTileInfo}",
             $"{nameof(config.ShowMarkerOverlay)}={config.ShowMarkerOverlay}",
+            $"{nameof(config.ShowEntities)}={config.ShowEntities}",
             $"{nameof(config.ShowToolBar)}={config.ShowToolBar}",
             $"{nameof(config.ShowStatusBar)}={config.ShowStatusBar}",
             "",
@@ -104,6 +109,7 @@ public class IniConfigRepository : IConfigRepository
             $"{nameof(config.ShowNodePreview)}={config.ShowNodePreview}",
             $"{nameof(config.UseStageSubFolder)}={config.UseStageSubFolder}",
             $"{nameof(config.UseProjectSubDirectory)}={config.UseProjectSubDirectory}",
+            $"{nameof(config.AutoLoadSheetDefinition)}={config.AutoLoadSheetDefinition}",
             $"{nameof(config.DefaultProjectSaveDirectory)}={config.DefaultProjectSaveDirectory}",
             $"{nameof(config.DefaultClearTileId)}={config.DefaultClearTileId}",
             $"{nameof(config.UseStageDirectoryForExport)}={config.UseStageDirectoryForExport}",

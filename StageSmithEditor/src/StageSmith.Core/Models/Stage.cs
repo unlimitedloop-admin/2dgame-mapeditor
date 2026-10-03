@@ -29,6 +29,11 @@ public sealed class Stage
     /// <summary>付与されているTag.Idの一覧。マスターはEditorProject.Tagsが持つ。</summary>
     public List<string> TagIds { get; set; } = [];
 
+    /// <summary>
+    /// プレイヤー開始位置（.def の stage.start）。null なら出力しない。
+    /// </summary>
+    public PlayerStart? PlayerStart { get; set; }
+
     [JsonIgnore]
     public string? FilePath { get; set; }
 
@@ -39,7 +44,19 @@ public sealed class Stage
     [JsonIgnore]
     public bool IsDirty { get; set; }
 
-    public void MarkDirty() => IsDirty = true;
+    /// <summary>
+    /// いずれかのステージで MarkDirty() が呼ばれたときに発生する（引数は対象ステージ）。
+    /// エディタはこれを使い、Undo 履歴を通らずに行われた変更（ステージ名の変更・ページの複製など）も
+    /// プロジェクトの未保存として扱う。ステージは複数の経路でプロジェクトに追加されるため、
+    /// インスタンスごとの購読ではなく static イベントにしている。
+    /// </summary>
+    public static event Action<Stage>? DirtyMarked;
+
+    public void MarkDirty()
+    {
+        IsDirty = true;
+        DirtyMarked?.Invoke(this);
+    }
 
     public void ClearDirty() => IsDirty = false;
 
@@ -148,12 +165,82 @@ public sealed class Stage
         MetaTiles ??= [];
         TagIds ??= [];
 
+        foreach (var page in Pages)
+        {
+            page.Normalize();
+        }
+
         foreach (var metaTile in MetaTiles)
         {
             metaTile.Normalize();
         }
 
         NormalizeMetaTileIds();
+    }
+
+    // =========================
+    // エンティティ配置
+    // =========================
+
+    /// <summary>
+    /// ステージ内の全エンティティを、所属ページと組にしてページ順・配置順で列挙する。
+    /// </summary>
+    public IEnumerable<(Page Page, EntityPlacement Entity)> EnumerateEntities()
+    {
+        foreach (var page in Pages)
+        {
+            foreach (var entity in page.Entities)
+            {
+                yield return (page, entity);
+            }
+        }
+    }
+
+    /// <summary>
+    /// ステージ内で未使用の EntityId を「{kind}_{連番}」形式で採番する。
+    /// </summary>
+    public string GenerateEntityId(string kind)
+    {
+        var used = EnumerateEntities()
+            .Select(x => x.Entity.EntityId)
+            .ToHashSet(StringComparer.Ordinal);
+
+        return GenerateEntityId(kind, used);
+    }
+
+    private static string GenerateEntityId(string kind, HashSet<string> used)
+    {
+        var prefix = string.IsNullOrWhiteSpace(kind) ? "entity" : kind.Trim();
+
+        for (var n = 1; ; n++)
+        {
+            var candidate = $"{prefix}_{n}";
+            if (!used.Contains(candidate))
+                return candidate;
+        }
+    }
+
+    /// <summary>
+    /// 指定ページのエンティティのうち、ステージ内の他ページと EntityId が重複するもの・空のものを採番し直す。
+    /// ページ複製など、同一ステージ内にエンティティを複製した直後に呼ぶ。
+    /// </summary>
+    public void EnsureUniqueEntityIds(Page page)
+    {
+        var used = Pages
+            .Where(p => !ReferenceEquals(p, page))
+            .SelectMany(p => p.Entities)
+            .Select(e => e.EntityId)
+            .ToHashSet(StringComparer.Ordinal);
+
+        foreach (var entity in page.Entities)
+        {
+            if (string.IsNullOrWhiteSpace(entity.EntityId) || used.Contains(entity.EntityId))
+            {
+                entity.EntityId = GenerateEntityId(entity.Properties.Kind, used);
+            }
+
+            used.Add(entity.EntityId);
+        }
     }
 
     private void NormalizeMetaTileIds()
@@ -200,7 +287,17 @@ public sealed class Stage
         };
 
         foreach (var page in Pages)
-            clone.Pages.Add(page.Clone());
+        {
+            var pageClone = page.Clone();
+            clone.Pages.Add(pageClone);
+
+            // Page.Clone() は Id を新規発行するため、開始位置の参照先も複製後のページへ付け替える
+            if (PlayerStart != null && PlayerStart.PageId == page.Id)
+            {
+                clone.PlayerStart = PlayerStart.Clone();
+                clone.PlayerStart.PageId = pageClone.Id;
+            }
+        }
 
         foreach (var metaTile in MetaTiles)
             clone.MetaTiles.Add(metaTile.Clone(keepId: true));

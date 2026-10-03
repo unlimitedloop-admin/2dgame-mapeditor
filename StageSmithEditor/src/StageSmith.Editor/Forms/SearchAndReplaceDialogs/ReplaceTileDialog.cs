@@ -55,6 +55,7 @@ public sealed class ReplaceTileDialog : TileSearchDialogBase
             BorderStyle = BorderStyle.FixedSingle
         };
         SetupTilePreview(_replacePreviewPanel, _replaceTileIdTextBox);
+        RegisterTileIdInput(_replaceTileIdTextBox);
 
         _scopeCurrentPageOnlyCheckBox = new CheckBox
         {

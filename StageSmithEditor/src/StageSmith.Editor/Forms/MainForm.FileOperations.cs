@@ -12,6 +12,7 @@ public partial class MainForm
 {
     private string? _currentProjectPath;
     private int _savedUndoCount = 0;
+    private bool _hasUnrecordedChanges;
 
     private void NewProject()
     {
@@ -31,7 +32,7 @@ public partial class MainForm
         _context.SetPage(0);
 
         _commandManager.Clear();
-        _savedUndoCount = 0;
+        ResetSavedState(0);
 
         BindStageExplorer();
         BindBookmarkList();
@@ -73,7 +74,7 @@ public partial class MainForm
         }
 
         _commandManager.Clear();
-        _savedUndoCount = 0;
+        ResetSavedState(0);
 
         BindStageExplorer();
         BindBookmarkList();
@@ -99,7 +100,7 @@ public partial class MainForm
         BindBookmarkList();
 
         _commandManager.Clear();
-        _savedUndoCount = 0;
+        ResetSavedState(0);
 
         UpdateEditorAvailability();
         UpdateTitle();
@@ -126,7 +127,7 @@ public partial class MainForm
 
         repository.Save(_context.Project, _currentProjectPath);
 
-        _savedUndoCount = _commandManager.UndoCount;
+        ResetSavedState(_commandManager.UndoCount);
 
         _stageExplorer.RebuildTree();
 
@@ -167,7 +168,7 @@ public partial class MainForm
 
         repository.Save(_context.Project, _currentProjectPath);
 
-        _savedUndoCount = _commandManager.UndoCount;
+        ResetSavedState(_commandManager.UndoCount);
 
         _stageExplorer.RebuildTree();
         UpdateTitle();
@@ -196,10 +197,51 @@ public partial class MainForm
     /// 現在のプロジェクトに未保存の変更があるかどうかを判定する。
     /// 保存時点のUndoStackの深さと現在の深さを比較する。
     /// Undoで保存時点まで巻き戻した場合は自動的に「変更なし」に戻る。
+    /// Undo 履歴に残らない変更（Tag Manager でのタグ編集など）は _hasUnrecordedChanges で別に扱う。
     /// </summary>
     private bool IsProjectDirty()
     {
-        return _context.Project != null && _commandManager.UndoCount != _savedUndoCount;
+        return _context.Project != null &&
+               (_commandManager.UndoCount != _savedUndoCount || _hasUnrecordedChanges);
+    }
+
+    /// <summary>
+    /// Undo 履歴に残らない変更があったことを記録する（タイトルの未保存マーク・終了時の確認の対象にする）。
+    /// </summary>
+    private void MarkUnrecordedChange()
+    {
+        _hasUnrecordedChanges = true;
+        UpdateTitle();
+    }
+
+    /// <summary>
+    /// Undo 履歴を通らずにステージが変更された（MarkDirty された）ことを検知し、未保存として扱う。
+    /// コマンドの実行・Undo・Redo 中の MarkDirty は Undo 回数で追跡済みなので対象外にする
+    /// （これにより「Undo で保存時点まで戻すと未保存が消える」動作を保つ）。
+    /// </summary>
+    private void BindDirtyTracking()
+    {
+        Stage.DirtyMarked += OnStageDirtyMarked;
+        FormClosed += (_, _) => Stage.DirtyMarked -= OnStageDirtyMarked;   // static イベントなので解除する
+    }
+
+    private void OnStageDirtyMarked(Stage stage)
+    {
+        if (_commandManager.IsApplying) return;
+
+        // 新規プロジェクト作成中など、まだ開いていないプロジェクトのステージは対象外
+        if (_context.Project?.Stages.Contains(stage) != true) return;
+
+        MarkUnrecordedChange();
+    }
+
+    /// <summary>
+    /// 保存済み（または新規作成・読み込み直後）の状態として、未保存の判定基準を記録し直す。
+    /// </summary>
+    private void ResetSavedState(int undoCount)
+    {
+        _savedUndoCount = undoCount;
+        _hasUnrecordedChanges = false;
     }
 
     /// <summary>
@@ -407,6 +449,9 @@ public partial class MainForm
         // ステージを丸ごと差し替えるため、既存のUndo履歴は整合性を保てなくなる。
         // 他ステージ分も含め、New/Open Projectと同じ扱いで全クリアする（合意済み）。
         _commandManager.Clear();
+
+        // Undo 履歴の基準だけを戻す。タグ編集など .sseproj 側の未保存の変更は、ステージを読み直しても
+        // 保存されたわけではないので _hasUnrecordedChanges は残す（ResetSavedState は使わない）。
         _savedUndoCount = 0;
 
         _context.SetStage(stageIndex); // ContextChanged経由でビュー全体が再同期される
@@ -508,7 +553,69 @@ public partial class MainForm
         if (stage == null) return;
 
         var path = filename;
-        DefExporter.Export(stage, path);
+        DefExporter.Export(stage, path, _enemyDefinitions);
+    }
+
+    /// <summary>
+    /// def 出力前の検証。
+    /// エラー（ゲーム側が読み込みエラーにする・敵が出現しなくなる）があれば一覧を表示して false を返す。
+    /// 警告（出力はできるが意図と違いそうな内容）だけなら、一覧を見せて続行するか確認する。
+    /// bin だけ出力されて def が出ない、という中途半端な状態を避けるため、ファイル書き込み前に呼ぶ。
+    /// </summary>
+    private bool ValidateDefExport(IEnumerable<Stage> stages, string caption)
+    {
+        var stageList = stages.ToList();
+
+        var errorLines = CollectStageMessages(stageList, s => DefExporter.Validate(s, _enemyDefinitions));
+        if (errorLines.Count > 0)
+        {
+            MessageBox.Show(
+                this,
+                "配置データに問題があるため出力を中止しました。\n\n" + FormatMessageLines(errorLines),
+                caption,
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+
+            return false;
+        }
+
+        var warningLines = CollectStageMessages(stageList, s => DefExporter.CollectWarnings(s, _enemyDefinitions));
+        if (warningLines.Count == 0)
+            return true;
+
+        return MessageBox.Show(
+            this,
+            "次の点を確認してください。このまま出力しますか？\n\n" + FormatMessageLines(warningLines),
+            caption,
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question) == DialogResult.Yes;
+    }
+
+    private static List<string> CollectStageMessages(IEnumerable<Stage> stages, Func<Stage, IReadOnlyList<string>> collect)
+    {
+        var lines = new List<string>();
+
+        foreach (var stage in stages)
+        {
+            var messages = collect(stage);
+            if (messages.Count == 0) continue;
+
+            lines.Add($"■ {stage.Name}");
+            lines.AddRange(messages.Select(m => "  " + m));
+        }
+
+        return lines;
+    }
+
+    private static string FormatMessageLines(List<string> lines)
+    {
+        const int MaxLines = 20;
+
+        var shown = lines.Take(MaxLines).ToList();
+        if (lines.Count > MaxLines)
+            shown.Add($"…ほか {lines.Count - MaxLines} 件");
+
+        return string.Join("\n", shown);
     }
 
     private void ExportCurrentStageBin()
@@ -524,6 +631,9 @@ public partial class MainForm
                 MessageBoxIcon.Warning);
             return;
         }
+
+        if (!ValidateDefExport([stage], "Export BIN"))
+            return;
 
         // 1. 確認ダイアログ
         var confirm = MessageBox.Show(
@@ -586,6 +696,9 @@ public partial class MainForm
             return;
         }
 
+        if (!ValidateDefExport(project.Stages, "Export All Stages"))
+            return;
+
         string? sharedOutputDir = null;
         var perStageFolder = false;
 
@@ -640,7 +753,7 @@ public partial class MainForm
             var bytes = stage.ExportBin();
             File.WriteAllBytes(binPath, bytes);
 
-            DefExporter.Export(stage, defPath);
+            DefExporter.Export(stage, defPath, _enemyDefinitions);
 
             exportedCount++;
         }
@@ -884,6 +997,8 @@ public partial class MainForm
         _findTileDialog?.SetTileset(null);
         _replaceTileDialog?.SetTileset(null);
         _context.SetSelectedMetaTile(null);
+        SyncObjectPaletteProject();
+        RefreshObjectList();
 
         _propertyWindow.RefreshProperties();
         _pageNavBar.UpdateDisplay(_context);

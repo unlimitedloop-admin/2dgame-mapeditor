@@ -79,6 +79,7 @@ public abstract class TileSearchDialogBase : Form
             BorderStyle = BorderStyle.FixedSingle
         };
         SetupTilePreview(_previewPanel, _tileIdTextBox);
+        RegisterTileIdInput(_tileIdTextBox);
 
         _wrapAroundCheckBox = new CheckBox
         {
@@ -231,9 +232,48 @@ public abstract class TileSearchDialogBase : Form
         _hitCountLabel.Text = totalCount > 0
             ? $"{currentIndex + 1}/{totalCount}件"
             : "0件";
+        _hitCountLabel.ForeColor = SystemColors.GrayText;
 
         _nextButton.Enabled = totalCount > 0;
         _prevButton.Enabled = totalCount > 0;
+    }
+
+    /// <summary>
+    /// 検索した結果、該当タイルが無かったことを件数欄に目立つ色で表示する。
+    /// （ダイアログを開いたまま操作するため、メッセージボックスは重ねない）
+    /// </summary>
+    public void ShowNotFound(int tileId)
+    {
+        _hitCountLabel.Text = $"タイル {NumberFormatHelper.FormatByte(tileId, _format)} は見つかりません";
+        _hitCountLabel.ForeColor = Color.Firebrick;
+    }
+
+    //========================
+    // 外部からのタイル番号入力（マップの右クリック・タイルパレット選択）
+    //========================
+
+    private TextBox? _activeTileIdTextBox;
+
+    /// <summary>
+    /// パレット選択などで値を入れる対象として、タイル番号の入力欄を登録する。
+    /// 最後にカーソルを置いた欄が入力先になる（最初は検索欄）。
+    /// </summary>
+    protected void RegisterTileIdInput(TextBox textBox)
+    {
+        textBox.Enter += (_, _) => _activeTileIdTextBox = textBox;
+    }
+
+    /// <summary>「検索するタイル番号」欄に値を入れる（マップの右クリック「このタイルを検索」から）。</summary>
+    public void SetSearchTileId(int tileId)
+    {
+        _tileIdTextBox.Text = NumberFormatHelper.FormatByte(tileId, _format);
+        _activeTileIdTextBox = _tileIdTextBox;
+    }
+
+    /// <summary>タイルパレットで選んだタイル番号を、最後にカーソルを置いた入力欄に入れる。</summary>
+    public void ApplyPaletteTile(int tileId)
+    {
+        (_activeTileIdTextBox ?? _tileIdTextBox).Text = NumberFormatHelper.FormatByte(tileId, _format);
     }
 
     protected override bool ProcessCmdKey(ref Message msg, Keys keyData)

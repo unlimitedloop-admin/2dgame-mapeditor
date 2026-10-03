@@ -1,6 +1,7 @@
 using StageSmith.Core.Constants;
 using StageSmith.Core.Models;
 using StageSmith.Editor.Constants;
+using StageSmith.Editor.Tools;
 using StageSmith.Editor.Utilities;
 
 namespace StageSmith.Editor.Controls;
@@ -42,6 +43,9 @@ public partial class MapViewControl
         DrawColumnNumbers(g);
         DrawRowNumbers(g);
 
+        // 配置オブジェクトはタイルの上に描き、タイル検索のハイライト・マーカーはさらにその上に重ねる
+        // （オブジェクトの下に隠れて見えなくならないようにするため）
+        DrawEntityLayer(g);
         DrawSearchHighlights(g);
         DrawMarkers(g);
         DrawPreview(g);
@@ -145,9 +149,35 @@ public partial class MapViewControl
         }
     }
 
+    private void DrawEntityLayer(Graphics g)
+    {
+        if (!_showEntities || EntityLayer == null || _tileMap == null) return;
+
+        // 部屋の端に置いたエンティティのスプライトが、番号帯や余白へはみ出さないようにマップ領域でクリップする
+        var mapRect = new Rectangle(
+            OffsetX,
+            OffsetY,
+            _tileMap.Width * CurrentTileRenderSize,
+            _tileMap.Height * CurrentTileRenderSize);
+
+        var state = g.Save();
+        try
+        {
+            g.SetClip(mapRect);
+            EntityLayer.Draw(g, OffsetX, OffsetY, RoomPixelScale);
+        }
+        finally
+        {
+            g.Restore(state);
+        }
+    }
+
     private void DrawPreview(Graphics g)
     {
         if (!_showPreview) return;
+
+        // ピクセル座標ツール（オブジェクト配置）使用中はタイルのプレビューを出さない
+        if (_toolManager?.CurrentTool is IPixelTool) return;
         if (GetUsableTileset() == null) return;
         if (_hoverTile.X < 0 || _hoverTile.Y < 0) return;
 

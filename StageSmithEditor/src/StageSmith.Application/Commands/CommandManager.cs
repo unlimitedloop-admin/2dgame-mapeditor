@@ -12,14 +12,23 @@ public class CommandManager
 
     public bool IsReadOnly { get; set; }
 
+    /// <summary>
+    /// コマンドの実行・Undo・Redo・履歴クリアの最中（HistoryChanged の通知中を含む）かどうか。
+    /// この間に起きたモデルの変更は Undo 履歴で追跡されているので、
+    /// 「履歴に残らない変更」と区別するために使う（MainForm の未保存判定）。
+    /// </summary>
+    public bool IsApplying { get; private set; }
+
     public void Execute(ICommand command)
     {
         if (IsReadOnly) return;
 
-        command.Execute();
-        _undoStack.Push(command);
-        _redoStack.Clear();
-        HistoryChanged?.Invoke();
+        Apply(() =>
+        {
+            command.Execute();
+            _undoStack.Push(command);
+            _redoStack.Clear();
+        });
     }
 
     public void Undo()
@@ -27,10 +36,12 @@ public class CommandManager
         if (IsReadOnly) return;
         if (_undoStack.Count == 0) return;
 
-        var cmd = _undoStack.Pop();
-        cmd.Undo();
-        _redoStack.Push(cmd);
-        HistoryChanged?.Invoke();
+        Apply(() =>
+        {
+            var cmd = _undoStack.Pop();
+            cmd.Undo();
+            _redoStack.Push(cmd);
+        });
     }
 
     public void Redo()
@@ -38,21 +49,40 @@ public class CommandManager
         if (IsReadOnly) return;
         if (_redoStack.Count == 0) return;
 
-        var cmd = _redoStack.Pop();
-        cmd.Execute();
-        _undoStack.Push(cmd);
-        HistoryChanged?.Invoke();
+        Apply(() =>
+        {
+            var cmd = _redoStack.Pop();
+            cmd.Execute();
+            _undoStack.Push(cmd);
+        });
     }
 
     public void Clear()
     {
-        _undoStack.Clear();
-        _redoStack.Clear();
-        HistoryChanged?.Invoke();
+        Apply(() =>
+        {
+            _undoStack.Clear();
+            _redoStack.Clear();
+        });
     }
 
     public bool CanUndo => _undoStack.Count > 0;
     public bool CanRedo => _redoStack.Count > 0;
 
     public int UndoCount => _undoStack.Count;
+
+    private void Apply(Action change)
+    {
+        var wasApplying = IsApplying;
+        IsApplying = true;
+        try
+        {
+            change();
+            HistoryChanged?.Invoke();
+        }
+        finally
+        {
+            IsApplying = wasApplying;
+        }
+    }
 }

@@ -114,12 +114,42 @@ public partial class MainForm
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
+        // ── Object List にフォーカスがある間は一覧の操作を優先する ─────────────
+        // Delete＝一覧で選んだものを削除、Ctrl+A＝一覧の全選択（どちらも一覧自体にフォーカスがあるときだけ。
+        // 絞り込み欄のコンボ等にフォーカスがあるときはその欄へ渡し、マップ側の削除・全選択にも流さない）。
+        // Enter・矢印・Home/End・PageUp/Down（Shift併用の範囲選択含む）は一覧・コンボ自身に渡す
+        // （ここで横取りすると、ジャンプ・行移動の代わりにマップ側の操作が動いてしまう）。
+        if (_objectListContent.ContainsFocus)
+        {
+            if (keyData == Keys.Delete || keyData == (Keys.Control | Keys.A))
+            {
+                if (!_objectList.IsListFocused) return false;
+
+                if (keyData == Keys.Delete) _objectList.DeleteSelected();
+                else _objectList.SelectAll();
+                return true;
+            }
+
+            var modifiers = keyData & Keys.Modifiers;
+            if ((modifiers == Keys.None || modifiers == Keys.Shift) &&
+                (keyData & Keys.KeyCode) is Keys.Enter or Keys.Up or Keys.Down or Keys.Home or Keys.End or Keys.PageUp or Keys.PageDown)
+            {
+                return false;
+            }
+        }
+
+        // ── Objectツールで選択中のエンティティを矢印キーで微調整（Shift で 8px） ──
+        if (_currentMode == EditorToolMode.Object && TryNudgeSelectedEntity(keyData))
+            return true;
+
         // ── 単体キー（TextBox 以外のとき有効） ───────────────────────
         switch (keyData)
         {
             case Keys.Escape:
                 CancelDrag();
                 _selectionTool?.ClearSelection();
+                _objectTool?.ClearSelection();
+                _objectPalette.SetPlayerStartMode(false);
                 _mapView.Invalidate();
                 return true;
 
@@ -153,6 +183,14 @@ public partial class MainForm
 
             case Keys.K:
                 SetToolMode(EditorToolMode.Marker);
+                return true;
+
+            case Keys.O:
+                SetToolMode(EditorToolMode.Object);
+                return true;
+
+            case Keys.E:
+                _menuViewShowEntities.Checked = !_menuViewShowEntities.Checked;
                 return true;
 
             case Keys.B:
@@ -202,7 +240,10 @@ public partial class MainForm
                 return true;
 
             case Keys.Delete:
-                DeleteSelection();
+                if (_currentMode == EditorToolMode.Object)
+                    _objectTool?.DeleteSelected();
+                else
+                    DeleteSelection();
                 return true;
 
             case Keys.Control | Keys.D1:
@@ -223,6 +264,11 @@ public partial class MainForm
             case Keys.Control | Keys.D4:
             case Keys.Control | Keys.NumPad4:
                 SetToolMode(EditorToolMode.Marker);
+                return true;
+
+            case Keys.Control | Keys.D5:
+            case Keys.Control | Keys.NumPad5:
+                SetToolMode(EditorToolMode.Object);
                 return true;
         }
 
@@ -274,7 +320,14 @@ public partial class MainForm
     private void ToggleMarkerOverlay(bool show)
     {
         _markerState.ShowOverlay = show;
+        _markerOverlayButton.Checked = show;
         _mapView.Invalidate();
+    }
+
+    private void ApplyShowEntitiesState(bool show)
+    {
+        _mapView.SetShowEntities(show);
+        _showObjectsButton.Checked = show;
     }
 
     private void CancelDrag()

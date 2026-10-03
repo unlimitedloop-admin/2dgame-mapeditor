@@ -23,9 +23,12 @@ public partial class MainForm
     private ToolStripButton _selectionButton = null!;
     private ToolStripButton _bucketButton = null!;
     private ToolStripButton _markerButton = null!;
+    private ToolStripButton _objectButton = null!;
     private ToolStripButton _showGridButton = null!;
     private ToolStripButton _tilePreviewButton = null!;
     private ToolStripButton _numberLabelButton = null!;
+    private ToolStripButton _showObjectsButton = null!;
+    private ToolStripButton _markerOverlayButton = null!;
     private ToolStripButton _addPageButton = null!;
     private ToolStripButton _removePageButton = null!;
     private ToolStripButton _tileSearchButton = null!;
@@ -61,10 +64,13 @@ public partial class MainForm
         _selectionButton = CreateButton("Selection", "選択 (S)", StageSmithEditor.Properties.Resources.icons8_選択_24, true);
         _bucketButton = CreateButton("Bucket", "バケツ (B)", StageSmithEditor.Properties.Resources.icons8_バケツ_24, true);
         _markerButton = CreateButton("Marker", "マーカー (K)", StageSmithEditor.Properties.Resources.icons8_マーカー_24, true);
+        _objectButton = CreateButton("Object", "オブジェクト配置 (O)", StageSmithEditor.Properties.Resources.icons8_材料_30, true);
 
         _showGridButton = CreateButton("ShowGrid", "グリッド表示切替 (G)", StageSmithEditor.Properties.Resources.icons8_グリッド_24, true);
         _tilePreviewButton = CreateButton("TilePreview", "タイルプレビュー切替 (T)", StageSmithEditor.Properties.Resources.icons8_目に見える_24, true);
         _numberLabelButton = CreateButton("NumberLabel", "番号ラベル切替 (L)", StageSmithEditor.Properties.Resources.icons8_数字_30, true);
+        _showObjectsButton = CreateButton("ShowObjects", "オブジェクト表示切替 (E)", StageSmithEditor.Properties.Resources.icons8_ビジョン_48, true);
+        _markerOverlayButton = CreateButton("MarkerOverlay", "マーカー表示切替 (M)", StageSmithEditor.Properties.Resources.icons8_斜めの線_48, true);
 
         _addPageButton = CreateButton("AddPage", "ページを追加 (Ctrl+T)", StageSmithEditor.Properties.Resources.icons8_ファイル追加_30);
         _removePageButton = CreateButton("RemovePage", "ページを削除 (Ctrl+Shift+T)", StageSmithEditor.Properties.Resources.icons8_delete_file_30);
@@ -73,7 +79,7 @@ public partial class MainForm
         _tileReplaceButton = CreateButton("TileReplace", "タイル置換 (Ctrl+H)", StageSmithEditor.Properties.Resources.icons8_置換_30);
         _tileSearchPrevHitButton = CreateButton("TileSearchPrevHit", "前の検索結果 (Shift+F4)", StageSmithEditor.Properties.Resources.ai_前を検索_40);
         _tileSearchNextHitButton = CreateButton("TileSearchNextHit", "次の検索結果 (F4)", StageSmithEditor.Properties.Resources.ai_次を検索_40);
-        _tileSearchClearButton = CreateButton("TileSearchClear", "検索結果をクリア (Ctrl+Shift+F)", StageSmithEditor.Properties.Resources.ai_検索結果を削除_40);
+        _tileSearchClearButton = CreateButton("TileSearchClear", "検索結果をクリア (Shift+Esc)", StageSmithEditor.Properties.Resources.ai_検索結果を削除_40);
 
         //========================
         // イベント
@@ -139,6 +145,12 @@ public partial class MainForm
                 ChangeTool(_markerTool);
         };
 
+        _objectButton.Click += (_, _) =>
+        {
+            if (_objectTool != null)
+                ChangeTool(_objectTool);
+        };
+
         _openTileSetButton.Click += (_, _) =>
         {
             OpenTilesetImage();
@@ -157,6 +169,17 @@ public partial class MainForm
         _numberLabelButton.Click += (_, _) =>
         {
             _menuViewShowTileNumbers.Checked = !_menuViewShowTileNumbers.Checked;
+        };
+
+        // View メニューの Checked を単一の真実とし、ボタンの状態はメニュー側の変更から追従させる
+        _showObjectsButton.Click += (_, _) =>
+        {
+            _menuViewShowEntities.Checked = !_menuViewShowEntities.Checked;
+        };
+
+        _markerOverlayButton.Click += (_, _) =>
+        {
+            _menuViewMarkerOverlay.Checked = !_menuViewMarkerOverlay.Checked;
         };
 
         _addPageButton.Click += (_, _) =>
@@ -215,10 +238,13 @@ public partial class MainForm
             _selectionButton,
             _bucketButton,
             _markerButton,
+            _objectButton,
             new ToolStripSeparator(),
             _showGridButton,
             _tilePreviewButton,
             _numberLabelButton,
+            _showObjectsButton,
+            _markerOverlayButton,
             new ToolStripSeparator(),
             _addPageButton,
             _removePageButton,
@@ -307,6 +333,9 @@ public partial class MainForm
 
         _markerState.Changed += () => _mapView.Invalidate();
 
+        // Object（敵などのエンティティ配置）
+        InitializeObjectTool();
+
         // MapView接続（DockContent 生成後なので直接参照可能）
         _mapView.ToolManager = _toolManager;
         _mapView.PickerTool = _pickerTool;
@@ -358,11 +387,23 @@ public partial class MainForm
                 _currentMode = EditorToolMode.Bucket;
             else if (ReferenceEquals(tool, _markerTool))
                 _currentMode = EditorToolMode.Marker;
+            else if (ReferenceEquals(tool, _objectTool))
+                _currentMode = EditorToolMode.Object;
 
             // ツールバー/メニュー/ショートカットキーいずれの経路で切り替わっても
             // 必ずこのイベントを通るため、モード変更に伴う副作用はここに集約する。
             if (_currentMode != EditorToolMode.Selection)
                 _selectionTool?.ClearSelection();
+
+            if (_currentMode != EditorToolMode.Object)
+            {
+                _objectTool?.ClearSelection();
+                _objectPalette.SetPlayerStartMode(false);
+            }
+
+            // Objectツールに切り替えたら、オブジェクト表示を自動的にONにする（Markerと同じ流儀）
+            if (_currentMode == EditorToolMode.Object && !_menuViewShowEntities.Checked)
+                _menuViewShowEntities.Checked = true;
 
             // Markerツールに切り替えたら、マーカーオーバーレイを自動的に表示する
             if (_currentMode == EditorToolMode.Marker && !_menuViewMarkerOverlay.Checked)
@@ -396,6 +437,7 @@ public partial class MainForm
             EditorToolMode.Pen => _penTool,
             EditorToolMode.Selection => _selectionTool,
             EditorToolMode.Marker => _markerTool,
+            EditorToolMode.Object => _objectTool,
             EditorToolMode.Bucket => _fillTool,
             _ => null
         };
@@ -413,6 +455,9 @@ public partial class MainForm
             _selectedTileId = index;
             _mapView.PreviewTileId = index;
             _mapView.Invalidate();
+
+            // 検索／置換ダイアログを開いていれば、選んだタイルを入力欄に反映する
+            ApplyPaletteTileToSearchDialogs(index);
         };
 
         _tilePalette.TilesetImageSelectionRequested += (_, _) =>
@@ -449,18 +494,20 @@ public partial class MainForm
     //========================
     private void UpdateToolbarCheckedState()
     {
-        if (_penButton == null || _selectionButton == null || _bucketButton == null || _markerButton == null)
+        if (_penButton == null || _selectionButton == null || _bucketButton == null || _markerButton == null || _objectButton == null)
             return;
 
         _penButton.Checked = _currentMode == EditorToolMode.Pen;
         _selectionButton.Checked = _currentMode == EditorToolMode.Selection;
         _bucketButton.Checked = _currentMode == EditorToolMode.Bucket;
         _markerButton.Checked = _currentMode == EditorToolMode.Marker;
+        _objectButton.Checked = _currentMode == EditorToolMode.Object;
 
         _menuToolsPen.Checked = _currentMode == EditorToolMode.Pen;
         _menuToolsSelection.Checked = _currentMode == EditorToolMode.Selection;
         _menuToolsBucket.Checked = _currentMode == EditorToolMode.Bucket;
         _menuToolsMarker.Checked = _currentMode == EditorToolMode.Marker;
+        _menuToolsObject.Checked = _currentMode == EditorToolMode.Object;
     }
 
     //========================

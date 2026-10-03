@@ -74,6 +74,7 @@ public partial class MapViewControl : DoubleBufferedPanel
             _lastIsAlt = false;
             _lastIsShift = false;
             _tileInfoToolTip.Hide(this);
+            (_toolManager?.CurrentTool as IPixelTool)?.OnPixelMouseLeave();
         };
     }
 
@@ -158,6 +159,22 @@ public partial class MapViewControl : DoubleBufferedPanel
     public void SetMarkerColor(Color color)
     {
         _markerColor = color;
+        Invalidate();
+    }
+
+    // ===== Entity Layer =====
+    /// <summary>
+    /// エンティティ（敵など）の描画レイヤー。null なら描画しない。
+    /// </summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public EntityLayerRenderer? EntityLayer { get; set; }
+
+    private bool _showEntities = true;
+
+    public void SetShowEntities(bool show)
+    {
+        _showEntities = show;
         Invalidate();
     }
 

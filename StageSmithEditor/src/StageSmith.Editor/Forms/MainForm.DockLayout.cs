@@ -25,11 +25,28 @@ public partial class MainForm
             _bookmarkListContent.Show(_stageExplorerContent.Pane, null);
         }
 
+        // Object List は Stage Explorer / Bookmark List と同じペインにタブで並べる
+        if (!_objectListContent.IsDisposed &&
+            !_stageExplorerContent.IsDisposed &&
+            _stageExplorerContent.Pane != null)
+        {
+            _objectListContent.Show(_stageExplorerContent.Pane, null);
+        }
+
         if (!_metaTilePaletteContent.IsDisposed &&
             !_stageExplorerContent.IsDisposed &&
             _stageExplorerContent.Pane != null)
         {
             _metaTilePaletteContent.Show(_stageExplorerContent.Pane, DockAlignment.Bottom, 0.35);
+        }
+
+        // Object Palette は MetaTile Palette と同じペインにタブで並べる（MetaTile 側を前面のままにする）
+        if (!_objectPaletteContent.IsDisposed &&
+            !_metaTilePaletteContent.IsDisposed &&
+            _metaTilePaletteContent.Pane != null)
+        {
+            _objectPaletteContent.Show(_metaTilePaletteContent.Pane, null);
+            _metaTilePaletteContent.Activate();
         }
 
         if (!_propertyWindowContent.IsDisposed)
@@ -87,6 +104,8 @@ public partial class MainForm
             HideDockContent(_bookmarkListContent);
             HideDockContent(_propertyWindowContent);
             HideDockContent(_metaTilePaletteContent);
+            HideDockContent(_objectPaletteContent);
+            HideDockContent(_objectListContent);
 
             InitializeDockLayout();
 
@@ -140,6 +159,8 @@ public partial class MainForm
         if (persistString == typeof(MetaTilePaletteContent).ToString()) return _metaTilePaletteContent;
         if (persistString == typeof(BookmarkListContent).ToString()) return _bookmarkListContent;
         if (persistString == typeof(MarkerColorPanelContent).ToString()) return _markerColorPanelContent;
+        if (persistString == typeof(ObjectPaletteContent).ToString()) return _objectPaletteContent;
+        if (persistString == typeof(ObjectListContent).ToString()) return _objectListContent;
         return null;
     }
 

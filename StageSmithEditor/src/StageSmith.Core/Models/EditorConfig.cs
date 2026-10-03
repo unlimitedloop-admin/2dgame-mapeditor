@@ -15,6 +15,9 @@ public class EditorConfig
     public int LastSelectedStageIndex { get; set; } = -1;
     public int LastSelectedPageIndex { get; set; } = -1;
     public int LastZ { get; set; } = 0;
+
+    /// <summary>オブジェクト配置のスナップ間隔（px）。1 ならスナップなし。</summary>
+    public int EntitySnapSize { get; set; } = 1;
     public EditorToolMode LastToolMode { get; set; } = EditorToolMode.Pen;
 
     // MainWindow の位置・サイズ（-1 は未保存を示すセンチネル値）
@@ -32,6 +35,7 @@ public class EditorConfig
     public bool ShowColumnNumbers { get; set; } = false;
     public bool ShowTileInfo { get; set; } = false;
     public bool ShowMarkerOverlay { get; set; } = false;
+    public bool ShowEntities { get; set; } = true;
     public bool ShowToolBar { get; set; } = true;
     public bool ShowStatusBar { get; set; } = true;
 
@@ -51,6 +55,12 @@ public class EditorConfig
     /// ステージファイルの保存先ディレクトリにする。
     /// </summary>
     public bool UseStageDirectoryForExport { get; set; } = false;
+
+    /// <summary>
+    /// trueの場合、画像シートの追加時に同名の .json（分割定義）を自動で読み込む。
+    /// falseの場合は毎回、分割定義の選択ダイアログを開く。
+    /// </summary>
+    public bool AutoLoadSheetDefinition { get; set; } = true;
 
     /// <summary>
     /// EditorPropertiesDialog等でCancel時に元設定を汚さないための複製。
